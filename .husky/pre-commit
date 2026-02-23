@@ -1,0 +1,5 @@
+# Verificar tipos TypeScript en todo el proyecto
+npm run type-check
+
+# Ejecutar ESLint sobre los archivos staged
+npx lint-staged
