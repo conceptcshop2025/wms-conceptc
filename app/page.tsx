@@ -45,7 +45,7 @@ export default function Home() {
       }, 3000); */
       const res = await getQuickProducts();
       setStatus("Datos recibidos. Revisa la consola.");
-      console.log("🚀 QUICK PRODUCTS:", res);
+      console.log(" QUICK PRODUCTS:", res);
       
 
     } catch (error: unknown) {
