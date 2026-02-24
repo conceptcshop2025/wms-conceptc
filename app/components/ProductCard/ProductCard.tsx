@@ -1,4 +1,7 @@
-export default function ProductCard() {
+import { type ProductProps } from "../../types/types"
+
+export default function ProductCard({ product }: { product: ProductProps }) {
+  console.log(product);
   return (
     <div className="product-card">
       <div className="product-card-inner">
@@ -11,8 +14,8 @@ export default function ProductCard() {
           {/* Row 1 */}
           <div className="product-row-1">
             <div>
-              <div className="product-name">Paul Mitchell · Démêlant Pour Enfants Taming Spray</div>
-              <div className="product-variant">250 ml</div>
+              <div className="product-name">{ product.title }</div>
+              <div className="product-variant">{ product.variant_title }</div>
             </div>
             <span className="status-badge status-empty">
               <span className="status-dot"></span>
@@ -21,22 +24,22 @@ export default function ProductCard() {
           </div>
           {/* Row 2: Codes */}
           <div className="product-row-2">
-            <span className="code-tag"><span className="code-label">SKU</span> 670000004260</span>
-            <span className="code-tag"><span className="code-label">UPC</span> 009531138756</span>
+            <span className="code-tag"><span className="code-label">SKU</span> { product.sku }</span>
+            <span className="code-tag"><span className="code-label">UPC</span> { product.upc }</span>
           </div>
           {/* Row 3: Data */}
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-start" }}>
             <div className="data-cell">
               <span className="data-cell-label">Qty Total</span>
-              <span className="data-cell-value">8</span>
+              <span className="data-cell-value">{ product.inventory_quantity }</span>
             </div>
             <div className="data-cell">
               <span className="data-cell-label">Max Bin</span>
-              <span className="data-cell-value">16</span>
+              <span className="data-cell-value">{ product.bin_max_quantity }</span>
             </div>
             <div className="data-cell">
               <span className="data-cell-label">Restante</span>
-              <span className="restante-value" style={{ color: "var(--status-empty)" }}>0</span>
+              <span className="restante-value" style={{ color: "var(--status-empty)" }}>{ product.bin_current_quantity }</span>
               <span className="restante-pct" style={{ color: "var(--status-empty)" }}>0%</span>
               <div className="progress-mini"><div className="progress-mini-fill progress-empty" style={{ width: "0%" }}></div></div>
             </div>

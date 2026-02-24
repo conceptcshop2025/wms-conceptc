@@ -1,52 +1,30 @@
 "use client";
 
 import { useState } from "react";
-/* import { startBulkOperation, getBulkOperationStatus, getQuickProducts } from "./actions/shopify"; */
-import { getQuickProducts } from "./actions/shopify";
+import { fetchBulkProducts } from "./actions/shopify";
 import Header from "./components/Header/Header";
 import ControlPanel from "./components/ControlPanel/ControlPanel";
 import ProductCounter from "./components/ProductCounter/ProductCounter";
 import PaginationBar from "./components/PaginationBar/PaginationBar";
 import ProductCard from "./components/ProductCard/ProductCard";
+import { type ProductProps } from "./types/types";
 
 export default function Home() {
 
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
+  const [products, setProducts] = useState<ProductProps[]>([]);
 
   const handleSync = async () => {
     setLoading(true);
     setStatus("Solicitando datos a Shopify...");
 
     try {
-      /* // 1. Iniciamos la operación (Esto corre en el servidor)
-      const startRes = await startBulkOperation();
-      
-      if (startRes.data?.bulkOperationRunQuery?.userErrors?.length > 0) {
-        throw new Error(startRes.data.bulkOperationRunQuery.userErrors[0].message);
-      }
-
-      // 2. Polling: Preguntamos cada 3 segundos
-      const poll = setInterval(async () => {
-        setStatus("Shopify está preparando el archivo... (Polling)");
-        
-        const result = await getBulkOperationStatus(); // Esto corre en el servidor
-
-        if (result.status === "COMPLETED") {
-          clearInterval(poll);
-          setLoading(false);
-          setStatus("¡Carga completa! Revisa la consola.");
-          console.log("🚀 DATA FINAL:", result.data);
-        } else if (result.status === "FAILED" || result.status === "CANCELED") {
-          clearInterval(poll);
-          setLoading(false);
-          setStatus("La operación falló en Shopify.");
-        }
-      }, 3000); */
-      const res = await getQuickProducts();
-      setStatus("Datos recibidos. Revisa la consola.");
-      console.log(" QUICK PRODUCTS:", res);
-      
+      setStatus("Shopify está preparando el archivo... (Bulk Operation)");
+      const bulkProducts = await fetchBulkProducts();
+      console.log("BULK PRODUCTS:", bulkProducts);
+      setProducts(bulkProducts);
+      setStatus(`¡Sincronización completa! ${bulkProducts.length} productos cargados.`);
 
     } catch (error: unknown) {
       console.error("Error:", error);
@@ -75,10 +53,14 @@ export default function Home() {
           <ProductCounter/>
 
           {/* <!-- ===== PRODUCT CARD 1 — Sin stock ===== --> */}
-          <ProductCard />
+          {
+            products.length > 0 && products.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          }
 
           {/* ===== PRODUCT CARD 2 — Bajo stock ===== */}
-          <div className="product-card">
+          {/* <div className="product-card">
             <div className="product-card-inner">
               <div className="product-image-col">
                 <div className="product-thumb">
@@ -161,10 +143,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* ===== PRODUCT CARD 3 — Stock medio ===== */}
-          <div className="product-card">
+          {/* <div className="product-card">
             <div className="product-card-inner">
               <div className="product-image-col">
                 <div className="product-thumb">
@@ -248,10 +230,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* ===== PRODUCT CARD 4 — Alto stock ===== */}
-          <div className="product-card">
+          {/* <div className="product-card">
             <div className="product-card-inner">
               <div className="product-image-col">
                 <div className="product-thumb">
@@ -334,10 +316,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* ===== PRODUCT CARD 5 — Stock medio with variant ===== */}
-          <div className="product-card">
+          {/* <div className="product-card">
             <div className="product-card-inner">
               <div className="product-image-col">
                 <div className="product-thumb">
@@ -421,7 +403,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* ==================== PAGINATION ==================== */}
           <PaginationBar />
