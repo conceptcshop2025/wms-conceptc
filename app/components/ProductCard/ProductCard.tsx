@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { type ProductProps } from "../../types/types"
 
 export default function ProductCard({ product }: { product: ProductProps }) {
@@ -6,16 +7,28 @@ export default function ProductCard({ product }: { product: ProductProps }) {
     <div className="product-card">
       <div className="product-card-inner">
         <div className="product-image-col">
-          <div className="product-thumb">
-            <div className="product-thumb-placeholder">📦</div>
-          </div>
+          {
+            product.image_url ? (
+              <Image src={product.image_url} alt={product.title} className="product-image" />
+            ) : (
+              <div className="product-thumb">
+                <div className="product-thumb-placeholder">📦</div>
+              </div>
+            )
+          }
         </div>
         <div className="product-details-col">
           {/* Row 1 */}
           <div className="product-row-1">
             <div>
               <div className="product-name">{ product.title }</div>
-              <div className="product-variant">{ product.variant_title }</div>
+              {
+                product.variants[0] && product.variants[0].title !== "Default Title" ? (
+                  <div className="product-variant">
+                    { product.variants[0].title }
+                  </div>
+                ) : null
+              }
             </div>
             <span className="status-badge status-empty">
               <span className="status-dot"></span>
@@ -24,10 +37,10 @@ export default function ProductCard({ product }: { product: ProductProps }) {
           </div>
           {/* Row 2: Codes */}
           <div className="product-row-2">
-            <span className="code-tag"><span className="code-label">SKU</span> { product.sku }</span>
+            <span className="code-tag"><span className="code-label">SKU</span> { product.variants[0]?.sku || "N/A" }</span>
             <span className="code-tag"><span className="code-label">UPC</span>
               {
-                product.upc === "" ? <div className="skeleton"></div> : product.upc
+                product.variants[0]?.barcode === "" ? <div className="skeleton"></div> : product.variants[0]?.barcode || "N/A"
               }
             </span>
           </div>
@@ -35,11 +48,15 @@ export default function ProductCard({ product }: { product: ProductProps }) {
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-start" }}>
             <div className="data-cell">
               <span className="data-cell-label">Qty Total</span>
-              <span className="data-cell-value">{ product.inventory_quantity }</span>
+              <span className="data-cell-value">{ product.variants[0]?.inventoryQuantity }</span>
             </div>
             <div className="data-cell">
               <span className="data-cell-label">Max Bin</span>
-              <span className="data-cell-value">{ product.bin_max_quantity }</span>
+              <span className="data-cell-value">
+                { 
+                  product.bin_max_quantity !== null ? product.bin_max_quantity : "N/A"
+                }
+              </span>
             </div>
             <div className="data-cell">
               <span className="data-cell-label">Restant</span>
@@ -75,8 +92,12 @@ export default function ProductCard({ product }: { product: ProductProps }) {
           <div style={{ marginTop: "8px" }}>
             <span className="data-cell-label" style={{ marginBottom: "4px", display: "block" }}>Locations</span>
             <div className="bin-locations">
-              <span className="bin-tag">238.02.03.G</span>
-              <span className="bin-tag">238.02.03.H</span>
+              {
+                product.bin_location === "" ? <div className="skeleton skeleton-bin"></div> : 
+                (Array.isArray(product.bin_location) ? product.bin_location : [product.bin_location]).map((location:string, index:number) => (
+                  <div key={index} className="bin-tag">{ location }</div>
+                ))
+              }
             </div>
           </div>
           {/* Actions */}

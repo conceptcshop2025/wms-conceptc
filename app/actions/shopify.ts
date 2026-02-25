@@ -1,6 +1,6 @@
 "use server";
 
-import type { ProductProps } from '../types/types';
+import type { ProductProps, VariantProps } from '../types/types';
 
 const baseUrl = process.env.SHOPIFY_DOMAIN_NAME || "";
 const apiVersion = process.env.SHOPIFY_API_VERSION || "";
@@ -135,7 +135,7 @@ function parseProductsJSONL(jsonlText: string): ProductProps[] {
   const lines = jsonlText.split("\n").filter(Boolean).map((line) => JSON.parse(line));
 
   const productMap = new Map<string, ProductProps>();
-  const variantsByParent = new Map<string, ProductProps[]>();
+  const variantsByParent = new Map<string, VariantProps[]>();
 
   lines.forEach((item) => {
     if (item.__parentId) {
@@ -150,48 +150,26 @@ function parseProductsJSONL(jsonlText: string): ProductProps[] {
   // Limitar a los primeros 200 productos
   const productEntries = Array.from(productMap.entries()).slice(0, 200);
   const result: ProductProps[] = [];
-  let seq = 1;
+  // let seq = 1;
 
   for (const [productId, product] of productEntries) {
     const variants = variantsByParent.get(productId) || [];
 
-    if (variants.length === 0) {
-      result.push({
-        id: product.id,
-        shopify_id: product.shopify_id,
-        title: product.title,
-        sku: "",
-        upc: "",
-        image_url: product.image_url || "",
-        vendor: product.vendor,
-        product_type: product.product_type,
-        updated_at: product.updated_at,
-        variant_title: "",
-        inventory_quantity: 0,
-        bin_max_quantity: 0,
-        bin_current_quantity: 0,
-        bin_location: "",
-      });
-    } else {
-      for (const variant of variants) {
-        result.push({
-          id: seq++,
-          shopify_id: product.shopify_id,
-          title: product.title,
-          sku: variant.sku || "",
-          upc: variant.upc || "",
-          image_url: product.image_url || "",
-          vendor: product.vendor,
-          product_type: product.product_type,
-          updated_at: product.updated_at,
-          variant_title: variant.title || "",
-          inventory_quantity: variant.inventory_quantity || 0,
-          bin_max_quantity: 0,
-          bin_current_quantity: 0,
-          bin_location: "",
-        });
-      }
-    }
+    result.push({
+      id: product.id,
+      shopify_id: product.shopify_id,
+      title: product.title,
+      image_url: product.image_url || "",
+      vendor: product.vendor,
+      product_type: product.product_type,
+      updated_at: product.updated_at,
+      bin_max_quantity: 0,
+      bin_current_quantity: 0,
+      bin_location: "",
+      variants: variants.map((variant: VariantProps) => ({
+        ...variant
+      })),
+    });
   }
 
   return result;
