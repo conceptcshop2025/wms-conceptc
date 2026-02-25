@@ -201,7 +201,7 @@ function parseProductsJSONL(jsonlText: string): ProductProps[] {
   });
 
   // Limitar a los primeros 200 productos
-  const productEntries = Array.from(productMap.entries()).slice(0, 200);
+  const productEntries = Array.from(productMap.entries());
   const result: ProductProps[] = [];
   let seq = 1;
 

@@ -22,6 +22,8 @@ export default function Home() {
   const totalPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_PAGE));
   const paginatedProducts = products.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
+  /* Get data from shopify and iPacky only for get all data (first time) */
+
   const handleSync = async () => {
     setLoading(true);
     setStatus("Solicitando datos a Shopify...");
@@ -96,6 +98,8 @@ export default function Home() {
       console.error("Error saving products in DB:", error);
     }
   }
+
+  /* END Get data from shopify and iPacky only for get all data (first time) */
 
   return (
     <div>
