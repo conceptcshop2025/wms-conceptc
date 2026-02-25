@@ -14,6 +14,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [products, setProducts] = useState<ProductProps[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const ITEMS_PER_PAGE = 20;
+  const totalPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_PAGE));
+  const paginatedProducts = products.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const handleSync = async () => {
     setLoading(true);
@@ -24,6 +29,7 @@ export default function Home() {
       const bulkProducts = await fetchBulkProducts();
       console.log("BULK PRODUCTS:", bulkProducts);
       setProducts(bulkProducts);
+      setCurrentPage(1);
       setStatus(`¡Sincronización completa! ${bulkProducts.length} productos cargados.`);
 
     } catch (error: unknown) {
@@ -54,7 +60,7 @@ export default function Home() {
 
           {/* <!-- ===== PRODUCT CARD 1 — Sin stock ===== --> */}
           {
-            products.length > 0 && products.map(product => (
+            products.length > 0 && paginatedProducts.map(product => (
               <ProductCard key={product.id} product={product} />
             ))
           }
@@ -406,7 +412,7 @@ export default function Home() {
           </div> */}
 
           {/* ==================== PAGINATION ==================== */}
-          <PaginationBar />
+          <PaginationBar currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
         </div>
       </main>
