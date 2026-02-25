@@ -19,13 +19,17 @@ export default function ProductCard({ product }: { product: ProductProps }) {
             </div>
             <span className="status-badge status-empty">
               <span className="status-dot"></span>
-              Sin stock
+              Sans stock
             </span>
           </div>
           {/* Row 2: Codes */}
           <div className="product-row-2">
             <span className="code-tag"><span className="code-label">SKU</span> { product.sku }</span>
-            <span className="code-tag"><span className="code-label">UPC</span> { product.upc }</span>
+            <span className="code-tag"><span className="code-label">UPC</span>
+              {
+                product.upc === "" ? <div className="skeleton"></div> : product.upc
+              }
+            </span>
           </div>
           {/* Row 3: Data */}
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-start" }}>
@@ -38,7 +42,7 @@ export default function ProductCard({ product }: { product: ProductProps }) {
               <span className="data-cell-value">{ product.bin_max_quantity }</span>
             </div>
             <div className="data-cell">
-              <span className="data-cell-label">Restante</span>
+              <span className="data-cell-label">Restant</span>
               <span className="restante-value" style={{ color: "var(--status-empty)" }}>{ product.bin_current_quantity }</span>
               <span className="restante-pct" style={{ color: "var(--status-empty)" }}>0%</span>
               <div className="progress-mini"><div className="progress-mini-fill progress-empty" style={{ width: "0%" }}></div></div>
@@ -46,7 +50,7 @@ export default function ProductCard({ product }: { product: ProductProps }) {
 
             <div className="editable-section" style={{ marginLeft: "auto" }}>
               <div className="editable-block">
-                <span className="editable-block-label">Restante (editar)</span>
+                <span className="editable-block-label">Restant (éditer)</span>
                 <div className="qty-control">
                   <button className="qty-btn qty-btn-fast">−10</button>
                   <button className="qty-btn">−</button>
@@ -56,7 +60,7 @@ export default function ProductCard({ product }: { product: ProductProps }) {
                 </div>
               </div>
               <div className="editable-block">
-                <span className="editable-block-label">A aprovisionar</span>
+                <span className="editable-block-label">à approvisionner </span>
                 <div className="qty-control">
                   <button className="qty-btn qty-btn-fast">−10</button>
                   <button className="qty-btn">−</button>
@@ -69,7 +73,7 @@ export default function ProductCard({ product }: { product: ProductProps }) {
           </div>
           {/* Bins */}
           <div style={{ marginTop: "8px" }}>
-            <span className="data-cell-label" style={{ marginBottom: "4px", display: "block" }}>Ubicaciones</span>
+            <span className="data-cell-label" style={{ marginBottom: "4px", display: "block" }}>Locations</span>
             <div className="bin-locations">
               <span className="bin-tag">238.02.03.G</span>
               <span className="bin-tag">238.02.03.H</span>
@@ -79,15 +83,15 @@ export default function ProductCard({ product }: { product: ProductProps }) {
           <div className="product-row-4">
             <button className="action-btn action-btn-delete">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-              Quitar
+              Enlever
             </button>
             <button className="action-btn action-btn-fill">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-              Bin llena
+              Bin plein
             </button>
             <button className="action-btn action-btn-confirm">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Confirmar
+              Confirmer
             </button>
           </div>
         </div>
