@@ -29,7 +29,6 @@ export default function Home() {
     try {
       setStatus("Shopify está preparando el archivo... (Bulk Operation)");
       const bulkProducts = await fetchBulkProducts();
-      console.log("BULK PRODUCTS:", bulkProducts);
       setCurrentPage(1);
       setStatus(`¡Sincronización completa! ${bulkProducts.length} productos cargados.`);
       await getDataFromIpacky(bulkProducts);
@@ -76,6 +75,26 @@ export default function Home() {
       )
     )
     setProducts([...syncProducts]);
+    saveProductsInDB(syncProducts);
+    console.log([...syncProducts]);
+  }
+
+  const saveProductsInDB = async (products: ProductProps[]) => {
+    const baseUrl = `/api/warehouse`;
+    try {
+      const res = await fetch(baseUrl,{
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(products)
+      });
+      if (res.ok) {
+        console.log("Products saved in DB successfully");
+      }
+    } catch(error) {
+      console.error("Error saving products in DB:", error);
+    }
   }
 
   return (

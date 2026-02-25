@@ -2,14 +2,13 @@ import Image from "next/image";
 import { type ProductProps } from "../../types/types"
 
 export default function ProductCard({ product }: { product: ProductProps }) {
-  console.log(product);
   return (
     <div className="product-card">
       <div className="product-card-inner">
         <div className="product-image-col">
           {
             product.image_url ? (
-              <Image src={product.image_url} alt={product.title} className="product-image" />
+              <Image src={product.image_url} alt={product.title} width={52} height={52} className="product-image product-thumb" />
             ) : (
               <div className="product-thumb">
                 <div className="product-thumb-placeholder">📦</div>
@@ -60,7 +59,12 @@ export default function ProductCard({ product }: { product: ProductProps }) {
             </div>
             <div className="data-cell">
               <span className="data-cell-label">Restant</span>
-              <span className="restante-value" style={{ color: "var(--status-empty)" }}>{ product.bin_current_quantity }</span>
+              <span className="restante-value relative" style={{ color: "var(--status-empty)" }}>
+                { product.bin_current_quantity }
+                {
+                  product.variants[0] && product.variants[0].commitedInventory > 0 && <small className="absolute top-0 left-3">-{ product.variants[0]?.commitedInventory }</small>
+                }
+              </span>
               <span className="restante-pct" style={{ color: "var(--status-empty)" }}>0%</span>
               <div className="progress-mini"><div className="progress-mini-fill progress-empty" style={{ width: "0%" }}></div></div>
             </div>

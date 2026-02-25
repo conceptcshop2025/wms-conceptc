@@ -18,5 +18,6 @@ export type VariantProps = {
   sku: string;
   barcode: string;
   inventoryQuantity: number;
+  commitedInventory: number;
   __parentId: string;
 }

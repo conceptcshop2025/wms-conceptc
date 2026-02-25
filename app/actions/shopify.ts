@@ -80,6 +80,19 @@ export async function startProductsBulkOperation(): Promise<string> {
                       sku
                       barcode
                       inventoryQuantity
+                      inventoryItem {
+                        id
+                        inventoryLevels {
+                          edges {
+                            node {
+                              quantities(names: ["committed"]) {
+                                name
+                                quantity
+                              }
+                            }
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -131,43 +144,89 @@ async function pollBulkOperation(operationId: string): Promise<string> {
   return pollBulkOperation(operationId);
 }
 
-function parseProductsJSONL(jsonlText: string): ProductProps[] {
-  const lines = jsonlText.split("\n").filter(Boolean).map((line) => JSON.parse(line));
+type RawProduct = {
+  id: string;
+  title: string;
+  vendor: string;
+  productType: string;
+  updatedAt: string;
+  featuredImage?: { url: string };
+};
 
-  const productMap = new Map<string, ProductProps>();
-  const variantsByParent = new Map<string, VariantProps[]>();
+type RawVariant = {
+  id: string;
+  title: string;
+  sku: string;
+  barcode: string;
+  inventoryQuantity: number;
+  inventoryItem?: { id: string };
+  __parentId: string;
+};
+
+type RawInventoryLevel = {
+  id: string;
+  quantities?: { name: string; quantity: number }[];
+  __parentId: string;
+};
+
+type RawJSONLLine = { id: string; __parentId?: string } & Record<string, unknown>;
+
+function parseProductsJSONL(jsonlText: string): ProductProps[] {
+  const lines = jsonlText.split("\n").filter(Boolean).map((line) => JSON.parse(line) as RawJSONLLine);
+
+  // Bucket 1: productos (sin __parentId)
+  const productMap = new Map<string, RawProduct>();
+  // Bucket 2: variantes (id contiene "ProductVariant", __parentId = productId)
+  const variantsByProduct = new Map<string, RawVariant[]>();
+  // Bucket 3: niveles de inventario (id contiene "InventoryLevel", __parentId = inventoryItemId)
+  //           → acumulamos committed por inventoryItemId
+  const committedByInventoryItem = new Map<string, number>();
 
   lines.forEach((item) => {
-    if (item.__parentId) {
-      const list = variantsByParent.get(item.__parentId) || [];
-      list.push(item);
-      variantsByParent.set(item.__parentId, list);
-    } else {
-      productMap.set(item.id, item);
+    if (!item.__parentId) {
+      productMap.set(item.id, item as RawProduct);
+    } else if (item.id?.includes("ProductVariant")) {
+      const variant = item as RawVariant;
+      const list = variantsByProduct.get(item.__parentId) || [];
+      list.push(variant);
+      variantsByProduct.set(item.__parentId, list);
+    } else if (item.id?.includes("InventoryLevel")) {
+      const level = item as RawInventoryLevel;
+      const committed = level.quantities?.find((q) => q.name === "committed")?.quantity ?? 0;
+      committedByInventoryItem.set(
+        item.__parentId,
+        (committedByInventoryItem.get(item.__parentId) ?? 0) + committed
+      );
     }
   });
 
   // Limitar a los primeros 200 productos
   const productEntries = Array.from(productMap.entries()).slice(0, 200);
   const result: ProductProps[] = [];
-  // let seq = 1;
+  let seq = 1;
 
   for (const [productId, product] of productEntries) {
-    const variants = variantsByParent.get(productId) || [];
+    const variants = variantsByProduct.get(productId) || [];
 
     result.push({
-      id: product.id,
-      shopify_id: product.shopify_id,
+      id: seq++,
+      shopify_id: product.id,
       title: product.title,
-      image_url: product.image_url || "",
+      image_url: product.featuredImage?.url || "",
       vendor: product.vendor,
-      product_type: product.product_type,
-      updated_at: product.updated_at,
+      product_type: product.productType,
+      updated_at: product.updatedAt,
       bin_max_quantity: 0,
       bin_current_quantity: 0,
       bin_location: "",
-      variants: variants.map((variant: VariantProps) => ({
-        ...variant
+      variants: variants.map((variant): VariantProps => ({
+        variant_id: variant.id,
+        title: variant.title,
+        sku: variant.sku || "",
+        barcode: variant.barcode || "",
+        inventoryQuantity: variant.inventoryQuantity ?? 0,
+        commitedInventory: committedByInventoryItem.get(variant.inventoryItem?.id ?? "") ?? 0,
+        __parentId: variant.__parentId,
       })),
     });
   }
