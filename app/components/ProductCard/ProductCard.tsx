@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { type ProductProps } from "../../types/types";
 import RemainingStock from "../RemainingStock/RemainingStock";
+import ProductStatusBadge from "../ProductStatusBadge/ProductStatusBadge";
 
 export default function ProductCard({ product }: { product: ProductProps }) {
 
@@ -50,10 +51,7 @@ export default function ProductCard({ product }: { product: ProductProps }) {
                 ) : null
               }
             </div>
-            <span className="status-badge status-empty">
-              <span className="status-dot"></span>
-              Sans stock
-            </span>
+            <ProductStatusBadge product={product} />
           </div>
           {/* Row 2: Codes */}
           <div className="product-row-2">
