@@ -101,16 +101,53 @@ export default function Home() {
 
   /* END Get data from shopify and iPacky only for get all data (first time) */
 
+  /* Get all products from Neon DB */
+  const handleGetAllProductsFromNeon = async () => {
+    setLoading(true);
+    setStatus("Connexion à la base de données...");
+
+    try {
+      const LIMIT = 200;
+
+      const firstRes = await fetch(`/api/warehouse?page=1&limit=${LIMIT}`);
+      if (!firstRes.ok) throw new Error(`Error ${firstRes.status}`);
+      const firstData = await firstRes.json();
+
+      let allProducts: ProductProps[] = [...firstData.products];
+      const { total, totalPages } = firstData as { total: number; totalPages: number };
+
+      setStatus(`Chargement des produits... (${allProducts.length} / ${total})`);
+
+      for (let page = 2; page <= totalPages; page++) {
+        const res = await fetch(`/api/warehouse?page=${page}&limit=${LIMIT}`);
+        if (!res.ok) throw new Error(`Error ${res.status} en página ${page}`);
+        const data = await res.json();
+        allProducts = [...allProducts, ...data.products];
+        setStatus(`Chargement des produits... (${allProducts.length} / ${total})`);
+      }
+
+      setProducts(allProducts);
+      setCurrentPage(1);
+      setStatus(`${allProducts.length} produits chargés depuis la base de données.`);
+    } catch (error: unknown) {
+      console.error("Error:", error);
+      setStatus(`Error: ${error}`);
+    } finally {
+      setLoading(false);
+      console.log(status);
+    }
+  }
+  /* END Get all products from Neon DB */
+
   return (
     <div>
       <main>
-        <p>{status}</p>
         
         {/* <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"> */}
 
 
         {/* <!-- ==================== TOP BAR ==================== --> */}
-        <Header onSync={handleSync}/>
+        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
         <ControlPanel/>

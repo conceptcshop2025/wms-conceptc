@@ -1,7 +1,28 @@
 import Image from "next/image";
-import { type ProductProps } from "../../types/types"
+import { type ProductProps } from "../../types/types";
+import RemainingStock from "../RemainingStock/RemainingStock";
 
 export default function ProductCard({ product }: { product: ProductProps }) {
+
+  // Format bin location for display
+  function binFormat(bin_location: string | string[] | null) {
+    if (typeof bin_location === "string") {
+      if (bin_location === "") {
+        return <div className="skeleton skeleton-bin"></div>;
+      } else {
+        return bin_location.split(',').map((loc, idx) => (
+          <div key={idx} className="bin-tag">{loc.trim()}</div>
+        ));
+      }
+    } else if (Array.isArray(product.bin_location)) { 
+      return product.bin_location
+    } else {
+      return [product.bin_location].map((location:string, index:number) => (
+        <div key={index} className="bin-tag">{ location }</div>
+      ));
+    }
+  }
+
   return (
     <div className="product-card">
       <div className="product-card-inner">
@@ -59,14 +80,7 @@ export default function ProductCard({ product }: { product: ProductProps }) {
             </div>
             <div className="data-cell">
               <span className="data-cell-label">Restant</span>
-              <span className="restante-value relative" style={{ color: "var(--status-empty)" }}>
-                { product.bin_current_quantity }
-                {
-                  product.variants[0] && product.variants[0].commitedInventory > 0 && <small className="absolute top-0 left-3">-{ product.variants[0]?.commitedInventory }</small>
-                }
-              </span>
-              <span className="restante-pct" style={{ color: "var(--status-empty)" }}>0%</span>
-              <div className="progress-mini"><div className="progress-mini-fill progress-empty" style={{ width: "0%" }}></div></div>
+              <RemainingStock product={product} />
             </div>
 
             <div className="editable-section" style={{ marginLeft: "auto" }}>
@@ -97,10 +111,7 @@ export default function ProductCard({ product }: { product: ProductProps }) {
             <span className="data-cell-label" style={{ marginBottom: "4px", display: "block" }}>Locations</span>
             <div className="bin-locations">
               {
-                product.bin_location === "" ? <div className="skeleton skeleton-bin"></div> : 
-                (Array.isArray(product.bin_location) ? product.bin_location : [product.bin_location]).map((location:string, index:number) => (
-                  <div key={index} className="bin-tag">{ location }</div>
-                ))
+                binFormat(product.bin_location)
               }
             </div>
           </div>
