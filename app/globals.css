@@ -20,7 +20,7 @@
   --info-light: #E8F0FC;
   --status-empty: #C4392A;
   --status-low: #D97706;
-  --status-medium: #2D5A27;
+  --status-medium: #848e18;
   --status-high: #1B7A5A;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -856,4 +856,24 @@ body {
     0% { opacity: 1; }
     50% { opacity: 0.4; }
     100% { opacity: 1; }
+  }
+
+  .confirmed {
+    position: relative;
+  }
+
+  .confirmed:before {
+    content: "Récemment changé";
+    position: absolute;
+    bottom: -5px;
+    left: 60px;
+    color: var(--accent-hover);
+    text-transform: uppercase;
+    line-height: 1;
+    opacity: .5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 60px;
+    font-weight: 600;
+    letter-spacing: -6px;
   }

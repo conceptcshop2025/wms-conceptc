@@ -3,10 +3,6 @@ import { type ProductProps } from "@/app/types/types"
 export default function RemainingStock({ product }: { product: ProductProps }) {
 
   /* const remainingPercentage =  */
-  console.log("qty total", product.variants[0]?.inventoryQuantity);
-  console.log("qty in bins", product.bin_current_quantity);
-  console.log("max in bins", product.bin_max_quantity);
-  console.log("-------------------------------------");
 
   const maxBin = product.bin_max_quantity;
   // const productTotal = product.variants[0]?.inventoryQuantity;
@@ -20,8 +16,8 @@ export default function RemainingStock({ product }: { product: ProductProps }) {
   const statusColorByPercentage = () => {
     const percentage = remainingPercentage();
     if (percentage >= 80) return "var(--status-high)";
-    if (percentage >= 50) return "var(--status-medium)";
-    if (percentage >= 25) return "var(--status-low)";
+    if (percentage >= 50 && percentage < 80) return "var(--status-medium)";
+    if (percentage >= 1 && percentage < 50) return "var(--status-low)";
     if (percentage == 0) return "var(--status-empty)";
     return "var(--status-empty)";
   }

@@ -1,4 +1,11 @@
-export default function ControlPanel() {
+"use client";
+
+interface ControlPanelProps {
+  onFilterChange: (value: string) => void;
+  onSortChange: (value: string) => void;
+}
+
+export default function ControlPanel({ onFilterChange, onSortChange }: ControlPanelProps) {
   return (
     <section className="controls-panel sticky top-[68px] z-1">
       {/* <!-- Row 1: Add product + Search --> */}
@@ -25,20 +32,26 @@ export default function ControlPanel() {
 
         <div className="separator"></div>
 
-        <select className="form-select" style={{ width: "180px" }}>
+        <select
+          className="form-select"
+          style={{ width: "180px" }}
+          onChange={e => onFilterChange(e.target.value)}
+        >
           <option value="">Filtrer par % de stock</option>
           <option value="empty">Sans stock (0%)</option>
           <option value="low">Stock faible (&lt; 25%)</option>
-          <option value="medium">Stock moyen (25-75%)</option>
-          <option value="high">Stock élevé (&gt; 75%)</option>
+          <option value="medium">Stock moyen (25%-79%)</option>
+          <option value="high">Stock élevé (&gt; 80%)</option>
         </select>
 
-        <select className="form-select" style={{ width: "180px" }}>
+        <select
+          className="form-select"
+          style={{ width: "180px" }}
+          onChange={e => onSortChange(e.target.value)}
+        >
           <option value="">Trier par...</option>
-          <option value="pct-asc">% restant ↑</option>
-          <option value="pct-desc">% restant ↓</option>
-          <option value="bin-asc">Emplacement A→Z</option>
-          <option value="bin-desc">Emplacement Z→A</option>
+          <option value="pct-asc">% restant</option>
+          <option value="bin-desc">Emplacement de Bin</option>
         </select>
       </div>
 

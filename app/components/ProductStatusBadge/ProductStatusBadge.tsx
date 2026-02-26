@@ -13,8 +13,8 @@ export default function ProductStatusBadge({ product }: { product: ProductProps 
   const statusBadge = () => {
     const percentage = remainingPercentage();
     if (percentage >= 80) return "Stock élevé";
-    if (percentage >= 50) return "Stock moyen";
-    if (percentage >= 25) return "Stock faible";
+    if (percentage >= 50 && percentage < 80) return "Stock moyen";
+    if (percentage >= 1 && percentage < 50) return "Stock faible";
     if (percentage == 0) return "Sans stock";
     return "Pas disponible";
   }
@@ -22,8 +22,8 @@ export default function ProductStatusBadge({ product }: { product: ProductProps 
   const statusColorBadge = () => {
     const percentage = remainingPercentage();
     if (percentage >= 80) return "var(--status-high)";
-    if (percentage >= 50) return "var(--status-medium)";
-    if (percentage >= 25) return "var(--status-low)";
+    if (percentage >= 50 && percentage < 80) return "var(--status-medium)";
+    if (percentage >= 1 && percentage < 50) return "var(--status-low)";
     if (percentage == 0) return "var(--status-empty)";
     return "var(--status-empty)";
   }

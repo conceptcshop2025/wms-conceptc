@@ -82,6 +82,32 @@ export async function GET(req: Request) {
   }
 }
 
+export async function PATCH(req: Request) {
+  try {
+    const { sku, bin_current_quantity, update_at } = await req.json() as {
+      sku: string;
+      bin_current_quantity: number;
+      update_at: string;
+    };
+
+    await sql`
+      UPDATE products
+      SET
+        bin_current_quantity = ${bin_current_quantity},
+        update_at = ${update_at}
+      WHERE sku = ${sku}
+    `;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error", details: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(req: Request) {
   try {
     const products: ProductProps[] = await req.json();
