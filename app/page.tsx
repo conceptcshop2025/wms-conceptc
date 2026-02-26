@@ -225,7 +225,11 @@ export default function Home() {
             <div className="main-content">
               {/* <!-- ===== PRODUCT COUNTER ===== --> */}
 
-              <ProductCounter/>
+              <ProductCounter
+                currentPage={currentPage}
+                itemsPerPage={ITEMS_PER_PAGE}
+                totalItems={filteredAndSortedProducts.length}
+              />
 
               {/* <!-- ===== PRODUCT CARD ===== --> */}
 
