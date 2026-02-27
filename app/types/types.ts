@@ -10,6 +10,8 @@ export type ProductProps = {
   bin_current_quantity: number;
   bin_location: string | string[];
   variants: VariantProps[];
+  inventoryQuantity: number;
+  inventory_quantity?:number;
 }
 
 export type VariantProps = {

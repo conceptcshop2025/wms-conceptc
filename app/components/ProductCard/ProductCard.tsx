@@ -100,7 +100,7 @@ export default function ProductCard({ product, onConfirm, foundedProductId }: Pr
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-start" }}>
             <div className="data-cell">
               <span className="data-cell-label">Qty Total</span>
-              <span className="data-cell-value">{ product.variants[0]?.inventoryQuantity }</span>
+              <span className="data-cell-value">{ product.inventoryQuantity || product.inventory_quantity }</span>
             </div>
             <div className="data-cell">
               <span className="data-cell-label">Max Bin</span>

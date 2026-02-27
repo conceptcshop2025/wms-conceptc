@@ -8,7 +8,7 @@ const CHUNK_SIZE = 25;
 
 function upsertProduct(product: ProductProps) {
   const sku = product.variants[0]?.sku || '';
-  const inventoryQuantity = product.variants[0]?.inventoryQuantity ?? 0;
+  const inventoryQuantity = product?.inventoryQuantity ?? 0;
   const binLocation = Array.isArray(product.bin_location)
     ? product.bin_location.join(', ')
     : (product.bin_location || '');
@@ -61,7 +61,7 @@ export async function GET(req: Request) {
       sql`
         SELECT
           id, shopify_id, title, image_url, vendor, product_type,
-          update_at AS updated_at, bin_max_quantity,
+          update_at AS updated_at, inventory_quantity, bin_max_quantity,
           bin_current_quantity, bin_location, variants
         FROM products
         ORDER BY id

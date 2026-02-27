@@ -7,6 +7,8 @@ const apiVersion = process.env.SHOPIFY_API_VERSION || "";
 const apiToken = process.env.SHOPIFY_ADMIN_API_TOKEN || "";
 
 const SHOPIFY_URL = `https://${ baseUrl }/admin/api/${ apiVersion }/graphql.json`;
+const locationID = "gid://shopify/Location/67343220887"; // Location from Quebec warehouse
+const locationNumericId = locationID.split("/").pop() ?? "";
 
 async function fetchShopify(query: string) {
   const res = await fetch(SHOPIFY_URL, {
@@ -79,13 +81,12 @@ export async function startProductsBulkOperation(): Promise<string> {
                       title
                       sku
                       barcode
-                      inventoryQuantity
                       inventoryItem {
                         id
-                        inventoryLevels {
+                        inventoryLevels(query: "location_id:${locationNumericId}") {
                           edges {
                             node {
-                              quantities(names: ["committed"]) {
+                              quantities(names: ["available", "committed"]) {
                                 name
                                 quantity
                               }
@@ -151,6 +152,7 @@ type RawProduct = {
   productType: string;
   updatedAt: string;
   featuredImage?: { url: string };
+  inventoryQuantity: number;
 };
 
 type RawVariant = {
@@ -158,7 +160,6 @@ type RawVariant = {
   title: string;
   sku: string;
   barcode: string;
-  inventoryQuantity: number;
   inventoryItem?: { id: string };
   __parentId: string;
 };
@@ -179,7 +180,8 @@ function parseProductsJSONL(jsonlText: string): ProductProps[] {
   // Bucket 2: variantes (id contiene "ProductVariant", __parentId = productId)
   const variantsByProduct = new Map<string, RawVariant[]>();
   // Bucket 3: niveles de inventario (id contiene "InventoryLevel", __parentId = inventoryItemId)
-  //           → acumulamos committed por inventoryItemId
+  //           → ya filtrados por location en la query, contienen available y committed
+  const availableByInventoryItem = new Map<string, number>();
   const committedByInventoryItem = new Map<string, number>();
 
   lines.forEach((item) => {
@@ -192,11 +194,10 @@ function parseProductsJSONL(jsonlText: string): ProductProps[] {
       variantsByProduct.set(item.__parentId, list);
     } else if (item.id?.includes("InventoryLevel")) {
       const level = item as RawInventoryLevel;
+      const available = level.quantities?.find((q) => q.name === "available")?.quantity ?? 0;
       const committed = level.quantities?.find((q) => q.name === "committed")?.quantity ?? 0;
-      committedByInventoryItem.set(
-        item.__parentId,
-        (committedByInventoryItem.get(item.__parentId) ?? 0) + committed
-      );
+      availableByInventoryItem.set(item.__parentId, available);
+      committedByInventoryItem.set(item.__parentId, committed);
     }
   });
 
@@ -219,12 +220,13 @@ function parseProductsJSONL(jsonlText: string): ProductProps[] {
       bin_max_quantity: 0,
       bin_current_quantity: 0,
       bin_location: "",
+      inventoryQuantity: product.inventoryQuantity,
       variants: variants.map((variant): VariantProps => ({
         variant_id: variant.id,
         title: variant.title,
         sku: variant.sku || "",
         barcode: variant.barcode || "",
-        inventoryQuantity: variant.inventoryQuantity ?? 0,
+        inventoryQuantity: availableByInventoryItem.get(variant.inventoryItem?.id ?? "") ?? 0,
         commitedInventory: committedByInventoryItem.get(variant.inventoryItem?.id ?? "") ?? 0,
         __parentId: variant.__parentId,
       })),
