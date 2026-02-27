@@ -9,9 +9,10 @@ import ProductStatusBadge from "../ProductStatusBadge/ProductStatusBadge";
 interface ProductCardProps {
   product: ProductProps;
   onConfirm: (sku: string, bin_current_quantity: number, update_at: string) => void;
+  foundedProductId?: number | null;
 }
 
-export default function ProductCard({ product, onConfirm }: ProductCardProps) {
+export default function ProductCard({ product, onConfirm, foundedProductId }: ProductCardProps) {
   const [remaining, setRemaining] = useState<number>(Number(product.bin_current_quantity) || 0);
   const [restock, setRestock] = useState<number>(0);
   const [confirmed, setConfirmed] = useState(false);
@@ -58,7 +59,7 @@ export default function ProductCard({ product, onConfirm }: ProductCardProps) {
   }
 
   return (
-    <div className={`product-card${confirmed ? " confirmed" : ""}`}>
+    <div className={`product-card${confirmed ? " confirmed" : ""} ${foundedProductId === product.id ? " founded" : ""}`} data-product-id={product.id}>
       <div className="product-card-inner">
         <div className="product-image-col">
           {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import pLimit from "p-limit";
 import { fetchBulkProducts } from "./actions/shopify";
 import Header from "./components/Header/Header";
@@ -19,6 +19,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState("");
   const [sort, setSort] = useState("");
+  const [foundedProductId, setFoundedProductId] = useState<number | null>(null);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -78,6 +79,36 @@ export default function Home() {
     setSort(value);
     setCurrentPage(1);
   }, []);
+
+  const handleProductSearch = useCallback((query: string) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return;
+
+    const idx = filteredAndSortedProducts.findIndex(p =>
+      p.variants[0]?.sku?.toLowerCase() === q ||
+      p.variants[0]?.barcode?.toLowerCase() === q
+    );
+
+    if (idx === -1) {
+      console.error(`Product not found: "${query}"`);
+      setFoundedProductId(null);
+      return;
+    }
+
+    const found = filteredAndSortedProducts[idx];
+    if (!found) return;
+    const targetPage = Math.floor(idx / ITEMS_PER_PAGE) + 1;
+    setCurrentPage(targetPage);
+    setFoundedProductId(found.id);
+  }, [filteredAndSortedProducts]);
+
+  useEffect(() => {
+    if (!foundedProductId) return;
+    const el = document.querySelector(`[data-product-id="${foundedProductId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [foundedProductId, currentPage]);
 
   /* Get data from shopify and iPacky only for get all data (first time) */
 
@@ -216,7 +247,7 @@ export default function Home() {
         <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
-        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} />
+        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} />
 
         {/* ==================== MAIN CONTENT ==================== */}
         {
@@ -235,7 +266,7 @@ export default function Home() {
 
               {
                 products.length > 0 && paginatedProducts.map(product => (
-                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} />
+                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} foundedProductId={foundedProductId} />
                 ))
               }
 

@@ -1,11 +1,29 @@
 "use client";
 
+import { useRef, useState } from "react";
+
 interface ControlPanelProps {
   onFilterChange: (value: string) => void;
   onSortChange: (value: string) => void;
+  onProductSearch: (query: string) => void;
 }
 
-export default function ControlPanel({ onFilterChange, onSortChange }: ControlPanelProps) {
+export default function ControlPanel({ onFilterChange, onSortChange, onProductSearch }: ControlPanelProps) {
+  const [searchValue, setSearchValue] = useState("");
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchValue(value);
+
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    searchTimerRef.current = setTimeout(() => {
+      onProductSearch(value);
+      setSearchValue("");
+    }, 500);
+  };
+
   return (
     <section className="controls-panel sticky top-[68px] z-1">
       {/* <!-- Row 1: Add product + Search --> */}
@@ -23,11 +41,18 @@ export default function ControlPanel({ onFilterChange, onSortChange }: ControlPa
 
         <div className="separator"></div>
 
-        <div className="input-group" style={{ width: "220px" }}>
+        <div className="input-group search-product" style={{ width: "220px" }}>
           <span className="input-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </span>
-          <input type="text" className="form-input" placeholder="Rechercher dans la liste..." style={{ width: "100%" }}/>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Rechercher dans la liste..."
+            style={{ width: "100%" }}
+            value={searchValue}
+            onChange={handleSearchInput}
+          />
         </div>
 
         <div className="separator"></div>

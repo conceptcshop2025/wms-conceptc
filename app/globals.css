@@ -877,3 +877,13 @@ body {
     font-weight: 600;
     letter-spacing: -6px;
   }
+
+  .founded {
+    animation: pulseHighlight 1s ease infinite;
+  }
+
+  @keyframes pulseHighlight {
+    0% { box-shadow: 0 0 10px 4px rgba(45, 90, 39, 0.5); }
+    50% { box-shadow: 0 0 10px 8px rgb(13, 221, 211); }
+    100% { box-shadow: 0 0 10px 4px rgba(45, 90, 39, 0.5); }
+  }
