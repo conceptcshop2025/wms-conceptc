@@ -10,16 +10,18 @@ import Modal from "../Modal/Modal";
 interface ProductCardProps {
   product: ProductProps;
   onConfirm: (sku: string, bin_current_quantity: number, update_at: string) => void;
+  onDelete: (id: number) => void;
   foundedProductId?: number | null;
 }
 
-export default function ProductCard({ product, onConfirm, foundedProductId }: ProductCardProps) {
+export default function ProductCard({ product, onConfirm, onDelete, foundedProductId }: ProductCardProps) {
   const [remaining, setRemaining] = useState<number>(Number(product.bin_current_quantity) || 0);
   const [restock, setRestock] = useState<number>(0);
   const [confirmed, setConfirmed] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showFillModal, setShowFillModal] = useState(false);
   const [showNoMaxModal, setShowNoMaxModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   async function handleConfirm() {
     const sku = product.variants[0]?.sku;
@@ -41,6 +43,23 @@ export default function ProductCard({ product, onConfirm, foundedProductId }: Pr
       }
     } catch (error) {
       console.error("Error confirming product:", error);
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    try {
+      const res = await fetch("/api/warehouse", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: product.id }),
+      });
+
+      if (res.ok) {
+        console.log(`Product deleted successfully: ${product.title} (SKU: ${product.variants[0]?.sku || "N/A"})`);
+        onDelete(product.id);
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
     }
   }
 
@@ -188,7 +207,7 @@ export default function ProductCard({ product, onConfirm, foundedProductId }: Pr
           </div>
           {/* Actions */}
           <div className="product-row-4">
-            <button className="action-btn action-btn-delete">
+            <button className="action-btn action-btn-delete" onClick={() => setShowDeleteModal(true)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
               Enlever
             </button>
@@ -237,6 +256,22 @@ export default function ProductCard({ product, onConfirm, foundedProductId }: Pr
         cancelText="Annuler"
         onConfirm={handleFillBinConfirm}
         onClose={() => setShowFillModal(false)}
+      />
+
+      <Modal
+        isOpen={showDeleteModal}
+        title="Supprimer le produit"
+        message={
+          <div>
+            <p>Voulez-vous supprimer ce produit de la liste&nbsp;?</p>
+            <p style={{ marginTop: "8px" }}><strong>{product.title}</strong></p>
+            <span className="modal-sku">SKU: {product.variants[0]?.sku || "N/A"}</span>
+          </div>
+        }
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        onConfirm={handleDeleteConfirm}
+        onClose={() => setShowDeleteModal(false)}
       />
 
       <Modal

@@ -189,6 +189,10 @@ export default function Home() {
 
   /* END Get data from shopify and iPacky only for get all data (first time) */
 
+  const handleProductDelete = useCallback((id: number) => {
+    setProducts(prev => prev.filter(p => p.id !== id));
+  }, []);
+
   const handleProductConfirm = (sku: string, bin_current_quantity: number, update_at: string) => {
     setProducts(prev =>
       prev.map(p =>
@@ -299,7 +303,7 @@ export default function Home() {
 
               {
                 products.length > 0 && paginatedProducts.map(product => (
-                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} foundedProductId={foundedProductId} />
+                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedProductId={foundedProductId} />
                 ))
               }
 

@@ -108,6 +108,22 @@ export async function PATCH(req: Request) {
   }
 }
 
+export async function DELETE(req: Request) {
+  try {
+    const { id } = await req.json() as { id: number };
+
+    await sql`DELETE FROM products WHERE id = ${id}`;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error", details: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(req: Request) {
   try {
     const products: ProductProps[] = await req.json();
