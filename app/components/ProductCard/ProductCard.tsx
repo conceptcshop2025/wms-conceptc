@@ -18,6 +18,8 @@ export default function ProductCard({ product, onConfirm, foundedProductId }: Pr
   const [restock, setRestock] = useState<number>(0);
   const [confirmed, setConfirmed] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showFillModal, setShowFillModal] = useState(false);
+  const [showNoMaxModal, setShowNoMaxModal] = useState(false);
 
   async function handleConfirm() {
     const sku = product.variants[0]?.sku;
@@ -39,6 +41,41 @@ export default function ProductCard({ product, onConfirm, foundedProductId }: Pr
       }
     } catch (error) {
       console.error("Error confirming product:", error);
+    }
+  }
+
+  function handleFillBinClick() {
+    const maxQty = Number(product.bin_max_quantity);
+    if (!product.bin_max_quantity || maxQty === 0) {
+      setShowNoMaxModal(true);
+      return;
+    }
+    setShowFillModal(true);
+  }
+
+  async function handleFillBinConfirm() {
+    const sku = product.variants[0]?.sku;
+    if (!sku) return;
+
+    const bin_current_quantity = Number(product.bin_max_quantity);
+    const update_at = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+
+    try {
+      const res = await fetch("/api/warehouse", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sku, bin_current_quantity, update_at }),
+      });
+
+      if (res.ok) {
+        setRemaining(bin_current_quantity);
+        setRestock(0);
+        setConfirmed(true);
+        onConfirm(sku, bin_current_quantity, update_at);
+        console.log(`Bin filled successfully for SKU: ${sku}. New quantity: ${bin_current_quantity}`);
+      }
+    } catch (error) {
+      console.error("Error filling bin:", error);
     }
   }
 
@@ -155,7 +192,7 @@ export default function ProductCard({ product, onConfirm, foundedProductId }: Pr
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
               Enlever
             </button>
-            <button className="action-btn action-btn-fill">
+            <button className="action-btn action-btn-fill" onClick={handleFillBinClick}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               Bin plein
             </button>
@@ -181,6 +218,41 @@ export default function ProductCard({ product, onConfirm, foundedProductId }: Pr
         cancelText="Annuler"
         onConfirm={handleConfirm}
         onClose={() => setShowModal(false)}
+      />
+
+      <Modal
+        isOpen={showFillModal}
+        title="Remplir la bin"
+        message={
+          <div>
+            <p>Voulez-vous marquer la bin comme pleine&nbsp;?</p>
+            <p style={{ marginTop: "8px" }}><strong>{product.title}</strong></p>
+            <span className="modal-sku">SKU: {product.variants[0]?.sku || "N/A"}</span>
+            <p style={{ marginTop: "10px" }}>
+              La quantité sera mise à <strong>{product.bin_max_quantity}</strong> (max bin).
+            </p>
+          </div>
+        }
+        confirmText="Remplir"
+        cancelText="Annuler"
+        onConfirm={handleFillBinConfirm}
+        onClose={() => setShowFillModal(false)}
+      />
+
+      <Modal
+        isOpen={showNoMaxModal}
+        title="Quantité max non définie"
+        message={
+          <div>
+            <p>Impossible de remplir la bin — la quantité maximale de ce produit n&apos;est pas définie.</p>
+            <p style={{ marginTop: "8px" }}><strong>{product.title}</strong></p>
+            <span className="modal-sku">SKU: {product.variants[0]?.sku || "N/A"}</span>
+          </div>
+        }
+        confirmText="OK"
+        cancelText="Fermer"
+        onConfirm={() => setShowNoMaxModal(false)}
+        onClose={() => setShowNoMaxModal(false)}
       />
     </div>
   )
