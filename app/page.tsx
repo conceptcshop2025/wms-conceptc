@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import pLimit from "p-limit";
 import { fetchBulkProducts } from "./actions/shopify";
+import { getSalesBetweenDates } from "./actions/sales-shopify";
 import Header from "./components/Header/Header";
 import ControlPanel from "./components/ControlPanel/ControlPanel";
 import ProductCounter from "./components/ProductCounter/ProductCounter";
@@ -236,6 +237,38 @@ export default function Home() {
   }
   /* END Get all products from Neon DB */
 
+  const handleGetSelledProducts = async () => {
+    const clickTime = new Date().toISOString();
+
+    const res = await fetch("/api/sync");
+    const data = await res.json();
+    const lastSyncDate: string | null = data.data?.date ?? null;
+
+    if (!lastSyncDate) {
+      console.error("No sync date found in sync_history table");
+      return;
+    }
+
+    const sales = await getSalesBetweenDates(lastSyncDate, clickTime);
+
+    const salesMap = new Map(sales.map(s => [s.sku, s.quantity]));
+
+    const updatedProducts = products.map(p => {
+      const sku = p.variants[0]?.sku;
+      if (!sku) return p;
+      const sold = salesMap.get(sku);
+      if (!sold) return p;
+      return {
+        ...p,
+        bin_current_quantity: Math.max(0, Number(p.bin_current_quantity) - sold),
+        inventory_quantity: Math.max(0, (Number(p.inventory_quantity) ?? 0) - sold),
+      };
+    });
+
+    setProducts(updatedProducts);
+    saveProductsInDB(updatedProducts);
+  };
+
   return (
     <div>
       <main>
@@ -244,7 +277,7 @@ export default function Home() {
 
 
         {/* <!-- ==================== TOP BAR ==================== --> */}
-        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} />
+        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
         <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} />

@@ -1,29 +1,12 @@
 "use client";
 
-import { getSalesBetweenDates } from "../../actions/sales-shopify";
-
 interface HeaderProps {
   onSync: () => void;
   onGetAllProducts: () => void;
+  onGetSelledProducts: () => Promise<void>;
 }
 
-export default function Header({ onSync, onGetAllProducts }: HeaderProps) {
-
-  const handleGetSelledProducts = async () => {
-    const clickTime = new Date().toISOString();
-
-    const res = await fetch("/api/sync");
-    const data = await res.json();
-    const lastSyncDate: string | null = data.data?.date ?? null;
-
-    if (!lastSyncDate) {
-      console.error("No sync date found in sync_history table");
-      return;
-    }
-
-    const sales = await getSalesBetweenDates(lastSyncDate, clickTime);
-    console.log(sales);
-  };
+export default function Header({ onSync, onGetAllProducts, onGetSelledProducts }: HeaderProps) {
 
   return (
     <header className="topbar">
@@ -35,7 +18,7 @@ export default function Header({ onSync, onGetAllProducts }: HeaderProps) {
             <div className="logo-sub">WMS · Québec</div>
           </div>
         </div>
-        <span className="version-badge">v1.2.0</span>
+        <span className="version-badge">v1.3.0</span>
       </div>
       <div className="topbar-actions">
         <button
@@ -52,7 +35,7 @@ export default function Header({ onSync, onGetAllProducts }: HeaderProps) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           Tous les produits
         </button>
-        <button className="btn btn-secondary get-selled-products-button" onClick={handleGetSelledProducts}>
+        <button className="btn btn-secondary get-selled-products-button" onClick={onGetSelledProducts}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
           Obtenir les ventes plus récents
         </button>
