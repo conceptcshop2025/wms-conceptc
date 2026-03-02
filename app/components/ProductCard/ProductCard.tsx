@@ -5,6 +5,7 @@ import Image from "next/image";
 import { type ProductProps } from "../../types/types";
 import RemainingStock from "../RemainingStock/RemainingStock";
 import ProductStatusBadge from "../ProductStatusBadge/ProductStatusBadge";
+import Modal from "../Modal/Modal";
 
 interface ProductCardProps {
   product: ProductProps;
@@ -16,6 +17,7 @@ export default function ProductCard({ product, onConfirm, foundedProductId }: Pr
   const [remaining, setRemaining] = useState<number>(Number(product.bin_current_quantity) || 0);
   const [restock, setRestock] = useState<number>(0);
   const [confirmed, setConfirmed] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   async function handleConfirm() {
     const sku = product.variants[0]?.sku;
@@ -157,13 +159,29 @@ export default function ProductCard({ product, onConfirm, foundedProductId }: Pr
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               Bin plein
             </button>
-            <button className="action-btn action-btn-confirm" onClick={handleConfirm}>
+            <button className="action-btn action-btn-confirm" onClick={() => setShowModal(true)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               Confirmer
             </button>
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={showModal}
+        title="Confirmer la mise à jour"
+        message={
+          <div>
+            <p>Voulez-vous confirmer la mise à jour du produit&nbsp;?</p>
+            <p style={{ marginTop: "8px" }}><strong>{product.title}</strong></p>
+            <span className="modal-sku">SKU: {product.variants[0]?.sku || "N/A"}</span>
+          </div>
+        }
+        confirmText="Confirmer"
+        cancelText="Annuler"
+        onConfirm={handleConfirm}
+        onClose={() => setShowModal(false)}
+      />
     </div>
   )
 }
