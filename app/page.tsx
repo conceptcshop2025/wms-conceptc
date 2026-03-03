@@ -255,7 +255,6 @@ export default function Home() {
     }
 
     const sales = await getSalesBetweenDates(lastSyncDate, clickTime);
-    console.log(sales);
     const salesMap = new Map(sales.map(s => [s.sku, s.quantity]));
 
     const updatedProducts = products.map(p => {
