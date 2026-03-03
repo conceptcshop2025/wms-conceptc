@@ -6,9 +6,10 @@ interface ControlPanelProps {
   onFilterChange: (value: string) => void;
   onSortChange: (value: string) => void;
   onProductSearch: (query: string) => void;
+  onNewList: () => void;
 }
 
-export default function ControlPanel({ onFilterChange, onSortChange, onProductSearch }: ControlPanelProps) {
+export default function ControlPanel({ onFilterChange, onSortChange, onProductSearch, onNewList }: ControlPanelProps) {
   const [searchValue, setSearchValue] = useState("");
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -82,7 +83,7 @@ export default function ControlPanel({ onFilterChange, onSortChange, onProductSe
 
       {/* <!-- Row 2: List management --> */}
       <div className="controls-row">
-        <button className="btn btn-primary">
+        <button className="btn btn-primary new-list-button" onClick={onNewList}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Nouvelle liste
         </button>

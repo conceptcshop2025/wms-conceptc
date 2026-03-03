@@ -273,18 +273,19 @@ export default function Home() {
     saveProductsInDB(updatedProducts);
   };
 
+  /* New list function */
+  const handleNewList = () => {
+    setProducts([]);
+  }
+
   return (
     <div>
       <main>
-        
-        {/* <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"> */}
-
-
         {/* <!-- ==================== TOP BAR ==================== --> */}
         <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
-        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} />
+        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} />
 
         {/* ==================== MAIN CONTENT ==================== */}
         {

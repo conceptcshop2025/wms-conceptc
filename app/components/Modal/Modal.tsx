@@ -11,6 +11,7 @@ interface ModalProps {
   cancelText?: string;
   onConfirm: () => void;
   onClose: () => void;
+  inline?: boolean;
 }
 
 export default function Modal({
@@ -21,6 +22,7 @@ export default function Modal({
   cancelText = "Annuler",
   onConfirm,
   onClose,
+  inline = false,
 }: ModalProps) {
   const [isClosing, setIsClosing] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -58,7 +60,7 @@ export default function Modal({
 
   return (
     <div
-      className={`modal-overlay${isClosing ? " closing" : ""}`}
+      className={`modal-overlay${isClosing ? " closing" : ""}${inline ? " inline" : ""}`}
       ref={overlayRef}
       onClick={(e) => { if (e.target === overlayRef.current) close(); }}
     >

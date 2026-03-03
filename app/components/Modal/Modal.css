@@ -21,6 +21,13 @@
   animation: overlayOut 0.18s ease both;
 }
 
+/* ---------- Inline (embedded within a positioned parent) ---------- */
+.modal-overlay.inline {
+  position: absolute;
+  border-radius: inherit;
+  z-index: 10;
+}
+
 /* ---------- Card ---------- */
 .modal-popup {
   background: var(--surface);

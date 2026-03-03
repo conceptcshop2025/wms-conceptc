@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { type ProductProps } from "../../types/types";
 import RemainingStock from "../RemainingStock/RemainingStock";
@@ -22,6 +22,21 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
   const [showFillModal, setShowFillModal] = useState(false);
   const [showNoMaxModal, setShowNoMaxModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isAnyModalOpen = showModal || showFillModal || showNoMaxModal || showDeleteModal || showImageModal;
+
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    if (isAnyModalOpen) {
+      const h = card.scrollHeight;
+      card.style.minHeight = `${h * 2}px`;
+    } else {
+      card.style.minHeight = "";
+    }
+  }, [isAnyModalOpen]);
 
   async function handleConfirm() {
     const sku = product.variants[0]?.sku;
@@ -117,12 +132,17 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
   }
 
   return (
-    <div className={`product-card${confirmed ? " confirmed" : ""} ${foundedProductId === product.id ? " founded" : ""}`} data-product-id={product.id}>
+    <div
+      ref={cardRef}
+      className={`product-card${confirmed ? " confirmed" : ""} ${foundedProductId === product.id ? " founded" : ""}`}
+      data-product-id={product.id}
+      style={{ position: "relative", overflow: "hidden", transition: "min-height 0.25s ease" }}
+    >
       <div className="product-card-inner">
         <div className="product-image-col">
           {
             product.image_url ? (
-              <Image src={product.image_url} alt={product.title} width={52} height={52} className="product-image product-thumb" />
+              <Image src={product.image_url} alt={product.title} width={100} height={100} className="product-image product-thumb" style={{ cursor: "zoom-in" }} onClick={() => setShowImageModal(true)} />
             ) : (
               <div className="product-thumb">
                 <div className="product-thumb-placeholder">📦</div>
@@ -237,6 +257,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
         cancelText="Annuler"
         onConfirm={handleConfirm}
         onClose={() => setShowModal(false)}
+        inline
       />
 
       <Modal
@@ -256,6 +277,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
         cancelText="Annuler"
         onConfirm={handleFillBinConfirm}
         onClose={() => setShowFillModal(false)}
+        inline
       />
 
       <Modal
@@ -272,6 +294,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
         cancelText="Annuler"
         onConfirm={handleDeleteConfirm}
         onClose={() => setShowDeleteModal(false)}
+        inline
       />
 
       <Modal
@@ -288,7 +311,31 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
         cancelText="Fermer"
         onConfirm={() => setShowNoMaxModal(false)}
         onClose={() => setShowNoMaxModal(false)}
+        inline
       />
+
+      {product.image_url && (
+        <Modal
+          isOpen={showImageModal}
+          title={product.title}
+          message={
+            <div style={{ textAlign: "center" }}>
+              <Image
+                src={product.image_url}
+                alt={product.title}
+                width={400}
+                height={400}
+                style={{ width: "100%", height: "auto", objectFit: "contain", borderRadius: "6px" }}
+              />
+            </div>
+          }
+          confirmText="Fermer"
+          cancelText=""
+          onConfirm={() => setShowImageModal(false)}
+          onClose={() => setShowImageModal(false)}
+          inline
+        />
+      )}
     </div>
   )
 }
