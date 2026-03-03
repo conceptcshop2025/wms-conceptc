@@ -255,7 +255,7 @@ export default function Home() {
     }
 
     const sales = await getSalesBetweenDates(lastSyncDate, clickTime);
-
+    console.log(sales);
     const salesMap = new Map(sales.map(s => [s.sku, s.quantity]));
 
     const updatedProducts = products.map(p => {
@@ -272,6 +272,26 @@ export default function Home() {
 
     setProducts(updatedProducts);
     saveProductsInDB(updatedProducts);
+
+    /* try {
+      const postDate = fetch(`/api/sync`,{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          date: clickTime
+        })
+      });
+      const responsePostDate = await postDate;
+
+      if (!responsePostDate.ok) {
+        console.error(`Error ${responsePostDate.status} updating sync date in DB`);
+      }
+      console.log("Sync date updated in DB successfully");
+    } catch(error) {
+      console.error("Error updating sync date in DB:", error);
+    } */
   };
 
   /* New list function */
