@@ -21,6 +21,7 @@ export default function Home() {
   const [filter, setFilter] = useState("");
   const [sort, setSort] = useState("");
   const [foundedProductId, setFoundedProductId] = useState<number | null>(null);
+  // const [mode, setMode] = useState<"list" | "warehouse">("warehouse");
 
   const ITEMS_PER_PAGE = 20;
 
