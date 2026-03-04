@@ -23,11 +23,12 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
+    const { last_date } = await req.json();
     const result = await sql`
-      INSERT INTO history_sales
-      DEFAULT VALUES
+      INSERT INTO history_sales (last_date)
+      VALUES (${last_date})
       RETURNING id, last_date;
     `;
 
