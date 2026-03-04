@@ -6,7 +6,7 @@ const sql = neon(process.env.DATABASE_URL || "");
 export async function GET() {
   try {
     const result = await sql`
-      SELECT * FROM sync_history ORDER BY date DESC LIMIT 1;
+      SELECT * FROM history_sales ORDER BY last_date DESC LIMIT 1;
     `;
 
     return NextResponse.json(
@@ -26,9 +26,9 @@ export async function GET() {
 export async function POST() {
   try {
     const result = await sql`
-      INSERT INTO sync_history
+      INSERT INTO history_sales
       DEFAULT VALUES
-      RETURNING id, date;
+      RETURNING id, last_date;
     `;
 
     return NextResponse.json(

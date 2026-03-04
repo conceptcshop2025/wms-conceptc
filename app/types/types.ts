@@ -23,3 +23,44 @@ export type VariantProps = {
   commitedInventory: number;
   __parentId: string;
 }
+
+export type SalesDataProps = {
+  node: {
+    id: string;
+    number: number;
+    lineItems: {
+      edges: {
+        node: {
+          sku: string;
+          quantity: number;
+          product_title: string;
+          variant: {
+            sku: string;
+          },
+          product: {
+            title: string;
+          }
+        }
+      }[];
+    }
+  }
+}
+
+export type SummarizedItemProps = {
+  sku: string;
+  quantity: number;
+  product_title: string;
+}
+
+export type SummarizedOrderProps = {
+  orderShopifyId: string;
+  orderId: number;
+  items: SummarizedItemProps[];
+}
+
+export type SummarizedAccProps = {
+  [sku: string]: {
+    quantity: number;
+    sku: string;
+  }
+}

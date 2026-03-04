@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import pLimit from "p-limit";
 import { fetchBulkProducts } from "./actions/shopify";
-import { getSalesBetweenDates } from "./actions/sales-shopify";
+// import { getSalesBetweenDates } from "./actions/sales-shopify";
 import Header from "./components/Header/Header";
 import ControlPanel from "./components/ControlPanel/ControlPanel";
 import ProductCounter from "./components/ProductCounter/ProductCounter";
@@ -247,50 +247,71 @@ export default function Home() {
 
     const res = await fetch("/api/sync");
     const data = await res.json();
-    const lastSyncDate: string | null = data.data?.date ?? null;
+    const lastSyncDate: string | null = data.data?.last_date ?? null;
+
 
     if (!lastSyncDate) {
       console.error("No sync date found in sync_history table");
       return;
     }
 
-    const sales = await getSalesBetweenDates(lastSyncDate, clickTime);
-    const salesMap = new Map(sales.map(s => [s.sku, s.quantity]));
-
-    const updatedProducts = products.map(p => {
-      const sku = p.variants[0]?.sku;
-      if (!sku) return p;
-      const sold = salesMap.get(sku);
-      if (!sold) return p;
-      return {
-        ...p,
-        bin_current_quantity: Math.max(0, Number(p.bin_current_quantity) - sold),
-        inventory_quantity: Math.max(0, (Number(p.inventory_quantity) ?? 0) - sold),
-      };
-    });
-
-    setProducts(updatedProducts);
-    saveProductsInDB(updatedProducts);
-
-    /* try {
-      const postDate = fetch(`/api/sync`,{
+    try {
+      const getSales = fetch(`/api/shopify`,{
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          last_date: lastSyncDate,
           date: clickTime
         })
       });
-      const responsePostDate = await postDate;
+      const responseSales = await getSales;
+      const data = await responseSales.json();
 
-      if (!responsePostDate.ok) {
-        console.error(`Error ${responsePostDate.status} updating sync date in DB`);
+      if (!responseSales.ok) {
+        console.error(`Error ${responseSales.status} getting sales data from Shopify`);
       }
-      console.log("Sync date updated in DB successfully");
+      
+      const updatedProducts = products.map(p => {
+        const sku = p.variants[0]?.sku;
+        if (!sku) return p;
+        const sold = data.data.find((item: { sku: string; quantity: number }) => item.sku === sku)?.quantity;
+        if (!sold) return p;
+        return {
+          ...p,
+          bin_current_quantity: Math.max(0, Number(p.bin_current_quantity) - sold),
+          inventory_quantity: Math.max(0, (Number(p.inventory_quantity) ?? 0) - sold),
+        };
+      });
+
+      setProducts(updatedProducts);
+      saveProductsInDB(updatedProducts);
+
+      try {
+        const postDate = fetch(`/api/sync`,{
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            date: clickTime
+          })
+        });
+        const responsePostDate = await postDate;
+
+        if (!responsePostDate.ok) {
+          console.error(`Error ${responsePostDate.status} updating sync date in DB`);
+        }
+        console.log("Sync date updated in DB successfully");
+      } catch(error) {
+        console.error("Error updating sync date in DB:", error);
+      }
+
     } catch(error) {
-      console.error("Error updating sync date in DB:", error);
-    } */
+      console.error("error:", error);
+    }
+
   };
 
   /* New list function */
