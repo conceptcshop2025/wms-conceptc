@@ -8,7 +8,7 @@ const CHUNK_SIZE = 25;
 
 function upsertProduct(product: ProductProps) {
   const sku = product.variants[0]?.sku || '';
-  const inventoryQuantity = product?.inventoryQuantity ?? 0;
+  const inventory_quantity = product?.inventory_quantity;
   const binLocation = Array.isArray(product.bin_location)
     ? product.bin_location.join(', ')
     : (product.bin_location || '');
@@ -28,7 +28,7 @@ function upsertProduct(product: ProductProps) {
       ${product.vendor},
       ${product.product_type},
       ${product.updated_at},
-      ${inventoryQuantity},
+      ${inventory_quantity},
       ${product.bin_max_quantity},
       ${product.bin_current_quantity},
       ${binLocation},

@@ -166,6 +166,7 @@ export default function Home() {
         })
       )
     )
+    console.log("syncProducts:", syncProducts);
     setProducts([...syncProducts]);
     saveProductsInDB(syncProducts);
   }
@@ -268,25 +269,24 @@ export default function Home() {
       });
       const responseSales = await getSales;
       const data = await responseSales.json();
+      
 
       if (!responseSales.ok) {
         console.error(`Error ${responseSales.status} getting sales data from Shopify`);
       }
       
-      const updatedProducts = products.map(p => {
-        const sku = p.variants[0]?.sku;
-        if (!sku) return p;
-        const sold = data.data.find((item: { sku: string; quantity: number }) => item.sku === sku)?.quantity;
-        if (!sold) return p;
-        return {
-          ...p,
-          bin_current_quantity: Math.max(0, Number(p.bin_current_quantity) - sold),
-          inventory_quantity: Math.max(0, (Number(p.inventory_quantity) ?? 0) - sold),
-        };
+      const productsCopy = [...products];
+      
+      data.data.forEach((sale: { sku: string; quantity: number }) => {
+        const findProduct = productsCopy.find(p => p.variants[0]?.sku === sale.sku);
+        if (findProduct) {
+          findProduct.bin_current_quantity = Number(findProduct.bin_current_quantity) - sale.quantity;
+          findProduct.inventory_quantity = Number(findProduct.inventory_quantity) - sale.quantity;
+        }
       });
-
-      setProducts(updatedProducts);
-      saveProductsInDB(updatedProducts);
+      
+      setProducts(productsCopy);
+      saveProductsInDB(productsCopy);
 
       try {
         const postDate = fetch(`/api/sync`,{
@@ -319,6 +319,19 @@ export default function Home() {
     setProducts([]);
   }
 
+  /* Get refresh product function */
+  async function handleRefreshProduct(sku:string | undefined) {
+    console.log(`Refreshing product with SKU: ${sku}`);
+    const findedProduct = products.find(p => p.variants[0]?.sku === sku);
+    if (!findedProduct) {
+      console.error(`Product with SKU ${sku} not found in current products list.`);
+      return;
+    } else {
+      console.log(`Product found:`, findedProduct);
+      getDataFromIpacky([findedProduct]);
+    }
+  }
+
   return (
     <div>
       <main>
@@ -345,7 +358,7 @@ export default function Home() {
 
               {
                 products.length > 0 && paginatedProducts.map(product => (
-                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedProductId={foundedProductId} />
+                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedProductId={foundedProductId} onRefresh={handleRefreshProduct} />
                 ))
               }
 
