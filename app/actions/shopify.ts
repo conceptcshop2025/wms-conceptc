@@ -153,6 +153,7 @@ type RawProduct = {
   updatedAt: string;
   featuredImage?: { url: string };
   inventoryQuantity: number;
+  inventory_quantity?: number;
 };
 
 type RawVariant = {
@@ -220,7 +221,8 @@ function parseProductsJSONL(jsonlText: string): ProductProps[] {
       bin_max_quantity: 0,
       bin_current_quantity: 0,
       bin_location: "",
-      inventoryQuantity: product.inventoryQuantity,
+      inventoryQuantity: product.inventory_quantity ?? product.inventoryQuantity,
+      inventory_quantity: product.inventory_quantity,
       variants: variants.map((variant): VariantProps => ({
         variant_id: variant.id,
         title: variant.title,

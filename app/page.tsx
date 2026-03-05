@@ -154,7 +154,7 @@ export default function Home() {
                 bin_location: result.data[0].binLocations || "",
                 bin_max_quantity: result.data[0].htsUS || null,
                 image_url: result.data[0].imageURL || '',
-                inventoryQuantity: result.data[0].quantityOnHand,
+                inventory_quantity: result.data[0].quantityOnHand,
                 bin_current_quantity: 0,
               }
             }
@@ -284,7 +284,7 @@ export default function Home() {
           findProduct.inventory_quantity = Number(findProduct.inventory_quantity) - sale.quantity;
         }
       });
-      
+
       setProducts(productsCopy);
       saveProductsInDB(productsCopy);
 
@@ -310,6 +310,8 @@ export default function Home() {
 
     } catch(error) {
       console.error("error:", error);
+    } finally {
+      alert("Stock mis à jour avec les ventes récentes !");
     }
 
   };
