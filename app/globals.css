@@ -473,7 +473,6 @@ body {
     align-items: center;
     gap: 4px;
     font-family: var(--font-mono);
-    font-size: 11px;
     color: var(--text-secondary);
   }
 
@@ -501,7 +500,6 @@ body {
   }
 
   .data-cell-label {
-    font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -510,7 +508,6 @@ body {
   }
 
   .data-cell-value {
-    font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
     font-feature-settings: 'tnum';
@@ -526,13 +523,12 @@ body {
   .bin-locations {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 12px;
     margin-top: 2px;
   }
 
   .bin-tag {
     font-family: var(--font-mono);
-    font-size: 11px;
     background: var(--surface-alt);
     border: 1px solid var(--border);
     padding: 3px 8px;
@@ -786,12 +782,10 @@ body {
   /* Restante highlight */
   .restante-value {
     font-family: var(--font-mono);
-    font-size: 14px;
     font-weight: 700;
   }
 
   .restante-pct {
-    font-size: 11px;
     font-weight: 600;
     margin-left: 4px;
   }
@@ -836,7 +830,6 @@ body {
   }
 
   .editable-block-label {
-    font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;

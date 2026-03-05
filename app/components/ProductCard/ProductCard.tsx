@@ -119,14 +119,14 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
         return <div className="skeleton skeleton-bin"></div>;
       } else {
         return bin_location.split(',').map((loc, idx) => (
-          <div key={idx} className="bin-tag">{loc.trim()}</div>
+          <div key={idx} className="bin-tag text-2xl">{loc.trim()}</div>
         ));
       }
     } else if (Array.isArray(product.bin_location)) {
       return product.bin_location
     } else {
       return [product.bin_location].map((location:string, index:number) => (
-        <div key={index} className="bin-tag">{ location }</div>
+        <div key={index} className="bin-tag text-2xl">{ location }</div>
       ));
     }
   }
@@ -167,8 +167,8 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           </div>
           {/* Row 2: Codes */}
           <div className="product-row-2">
-            <span className="code-tag"><span className="code-label">SKU</span> { product.variants[0]?.sku || "N/A" }</span>
-            <span className="code-tag"><span className="code-label">UPC</span>
+            <span className="code-tag text-2xl"><span className="code-label">SKU</span> { product.variants[0]?.sku || "N/A" }</span>
+            <span className="code-tag text-2xl"><span className="code-label">UPC</span>
               {
                 product.variants[0]?.barcode === "" ? <div className="skeleton"></div> : product.variants[0]?.barcode || "N/A"
               }
@@ -178,11 +178,11 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-start" }}>
             <div className="data-cell">
               <span className="data-cell-label">Qty Total</span>
-              <span className="data-cell-value">{ product.inventoryQuantity || product.inventory_quantity }</span>
+              <span className="data-cell-value text-2xl">{ product.inventoryQuantity || product.inventory_quantity }</span>
             </div>
             <div className="data-cell">
               <span className="data-cell-label">Max Bin</span>
-              <span className="data-cell-value">
+              <span className="data-cell-value text-2xl">
                 {
                   product.bin_max_quantity !== null ? product.bin_max_quantity : "N/A"
                 }
