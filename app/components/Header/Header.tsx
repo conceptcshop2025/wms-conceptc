@@ -4,9 +4,12 @@ interface HeaderProps {
   onSync: () => void;
   onGetAllProducts: () => void;
   onGetSelledProducts: () => Promise<void>;
+  mode: "list" | "warehouse";
 }
 
 export default function Header({ onSync, onGetAllProducts, onGetSelledProducts }: HeaderProps) {
+
+  const modeDev = process.env.NODE_ENV === "development";
 
   return (
     <header className="topbar">
@@ -18,15 +21,19 @@ export default function Header({ onSync, onGetAllProducts, onGetSelledProducts }
             <div className="logo-sub">WMS · Québec</div>
           </div>
         </div>
-        <span className="version-badge">v1.5.1</span>
+        <span className="version-badge">v1.6.1</span>
       </div>
       <div className="topbar-actions">
-        <button
-          className="btn btn-ghost btn-icon disabled:pointer-events-none disabled:opacity-50" title="Sincronizar datos"
-          onClick={onSync}
-          disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-        </button>
+        {
+          modeDev && (
+            <button
+              className="btn btn-ghost btn-icon disabled:pointer-events-none disabled:opacity-50" title="Sincronizar datos"
+              onClick={onSync}
+              >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            </button>
+          )
+        }
         <button className="btn btn-secondary" >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           Listes gardées

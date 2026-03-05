@@ -21,7 +21,7 @@ export default function Home() {
   const [filter, setFilter] = useState("");
   const [sort, setSort] = useState("");
   const [foundedProductId, setFoundedProductId] = useState<number | null>(null);
-  // const [mode, setMode] = useState<"list" | "warehouse">("warehouse");
+  const [mode] = useState<"list" | "warehouse">("warehouse");
 
   const ITEMS_PER_PAGE = 20;
 
@@ -323,10 +323,10 @@ export default function Home() {
     <div>
       <main>
         {/* <!-- ==================== TOP BAR ==================== --> */}
-        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} />
+        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
-        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} />
+        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} />
 
         {/* ==================== MAIN CONTENT ==================== */}
         {
