@@ -13,9 +13,10 @@ interface ProductCardProps {
   onDelete: (id: number) => void;
   foundedProductId?: number | null;
   onRefresh: (sku: string | undefined) => void;
+  mode: "list" | "warehouse";
 }
 
-export default function ProductCard({ product, onConfirm, onDelete, foundedProductId, onRefresh }: ProductCardProps) {
+export default function ProductCard({ product, onConfirm, onDelete, foundedProductId, onRefresh, mode }: ProductCardProps) {
   const [remaining, setRemaining] = useState<number>(Number(product.bin_current_quantity) || 0);
   const [restock, setRestock] = useState<number>(0);
   const [confirmed, setConfirmed] = useState(false);
@@ -211,7 +212,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
                   <button className="qty-btn qty-btn-fast" onClick={() => setRestock(v => v - 10)}>−10</button>
                   <button className="qty-btn" onClick={() => setRestock(v => v - 1)}>−</button>
                   <input type="number" className="qty-value" value={restock} readOnly tabIndex={-1} />
-                  <button className="qty-btn" onClick={() => setRestock(v => v + 1)}>+</button>
+                  <button className="qty-btn plus-one" onClick={() => setRestock(v => v + 1)}>+</button>
                   <button className="qty-btn qty-btn-fast" onClick={() => setRestock(v => v + 10)}>+10</button>
                 </div>
               </div>
@@ -232,10 +233,14 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
               Rafraichir
             </button>
-            <button className="action-btn action-btn-delete" onClick={() => setShowDeleteModal(true)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-              Enlever
-            </button>
+            {
+              mode === "warehouse" && (
+                <button className="action-btn action-btn-delete" onClick={() => setShowDeleteModal(true)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                  Enlever
+                </button>
+              )
+            }
             <button className="action-btn action-btn-fill" onClick={handleFillBinClick}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               Bin plein

@@ -21,7 +21,7 @@ export default function Home() {
   const [filter, setFilter] = useState("");
   const [sort, setSort] = useState("");
   const [foundedProductId, setFoundedProductId] = useState<number | null>(null);
-  const [mode] = useState<"list" | "warehouse">("warehouse");
+  const [mode, setMode] = useState<"list" | "warehouse">("warehouse");
 
   const ITEMS_PER_PAGE = 20;
 
@@ -209,6 +209,7 @@ export default function Home() {
   const handleGetAllProductsFromNeon = async () => {
     setLoading(true);
     setStatus("Connexion à la base de données...");
+    setMode("warehouse");
 
     try {
       const LIMIT = 200;
@@ -317,8 +318,9 @@ export default function Home() {
   };
 
   /* New list function */
-  const handleNewList = () => {
+  const handleNewList = async () => {
     setProducts([]);
+    setMode("list");
   }
 
   /* Get refresh product function */
@@ -334,6 +336,47 @@ export default function Home() {
     }
   }
 
+  /* Add product function */
+  const handleAddProduct = async (sku: string) => {
+    try {
+      const result = await fetch(`/api/list?sku=${encodeURIComponent(sku)}`);
+      
+      if (!result.ok) return;
+
+      const data = await result.json();
+      if (!data.data || data.data.length === 0) return;
+
+      const fetchedProduct: ProductProps = data.data[0];
+
+      const existingProduct = products.find(p => p.id === fetchedProduct.id);
+
+      if (existingProduct) {
+        setTimeout(() => {
+          const productDivItem = document.querySelector(`[data-product-id="${fetchedProduct.id}"]`);
+          const buttonPlusOne = productDivItem?.querySelector('.plus-one') as HTMLElement;
+          
+          if (buttonPlusOne) {
+            buttonPlusOne.click();
+          }
+        }, 100);
+        
+      } else {
+        setProducts(prev => [fetchedProduct, ...prev]);
+        setTimeout(() => {
+          const productDivItem = document.querySelector(`[data-product-id="${fetchedProduct.id}"]`);
+          const buttonPlusOne = productDivItem?.querySelector('.plus-one') as HTMLElement;
+          
+          if (buttonPlusOne) {
+            buttonPlusOne.click();
+          }
+        }, 100);
+      }
+      
+    } catch(error) {
+      console.error("Error en handleAddProduct:", error);
+    }
+  };
+
   return (
     <div>
       <main>
@@ -341,7 +384,7 @@ export default function Home() {
         <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
-        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} />
+        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} />
 
         {/* ==================== MAIN CONTENT ==================== */}
         {
@@ -360,7 +403,7 @@ export default function Home() {
 
               {
                 products.length > 0 && paginatedProducts.map(product => (
-                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedProductId={foundedProductId} onRefresh={handleRefreshProduct} />
+                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedProductId={foundedProductId} onRefresh={handleRefreshProduct} mode={mode}/>
                 ))
               }
 
