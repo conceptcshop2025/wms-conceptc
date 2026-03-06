@@ -645,6 +645,12 @@ body {
     border-color: transparent;
   }
 
+  .action-btn-delete-list {
+    background: var(--danger-light);
+    color: var(--danger);
+    border-color: transparent;
+  }
+
   /* ========== PAGINATION ========== */
   .pagination-bar {
     display: flex;

@@ -10,7 +10,8 @@ import ProductCounter from "./components/ProductCounter/ProductCounter";
 import PaginationBar from "./components/PaginationBar/PaginationBar";
 import ProductCard from "./components/ProductCard/ProductCard";
 import Loading from "./components/Loading/Loading";
-import { type ProductProps, type ProductListProps } from "./types/types";
+import { type ProductProps, type ProductListProps, type ProductListHistoricProps } from "./types/types";
+import Modal from "./components/Modal/Modal";
 
 export default function Home() {
 
@@ -22,6 +23,8 @@ export default function Home() {
   const [sort, setSort] = useState("");
   const [foundedProductId, setFoundedProductId] = useState<number | null>(null);
   const [mode, setMode] = useState<"list" | "warehouse">("warehouse");
+  const [showModal, setShowModal] = useState(false);
+  const [productListHistoric, setProductListHistoric] = useState<ProductListHistoricProps[]>([]);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -379,49 +382,91 @@ export default function Home() {
 
   /* Save List function */
   const handleSaveList = async (nameList: string) => {
-      const listToSave = [...products];
-      const productList:ProductListProps[] = [];
-      listToSave.forEach((product) => {
-        const sku = product.variants[0]?.sku;
-        const productDiv = document.querySelector(`[data-product-id="${product.id}"]`) as HTMLElement;
-        if (sku) {
-          const remainingInput = productDiv.querySelector(".remaining-input") as HTMLInputElement;
-          const restockInput = productDiv.querySelector(".restock-input") as HTMLInputElement;
-          const item:ProductListProps = {
-            sku: sku,
-            remaining: remainingInput ? Number(remainingInput.value) : 0,
-            restock: restockInput ? Number(restockInput.value) : 0,
-          }
-          productList.push(item);
+    const listToSave = [...products];
+    const productList:ProductListProps[] = [];
+    listToSave.forEach((product) => {
+      const sku = product.variants[0]?.sku;
+      const productDiv = document.querySelector(`[data-product-id="${product.id}"]`) as HTMLElement;
+      if (sku) {
+        const remainingInput = productDiv.querySelector(".remaining-input") as HTMLInputElement;
+        const restockInput = productDiv.querySelector(".restock-input") as HTMLInputElement;
+        const item:ProductListProps = {
+          sku: sku,
+          remaining: remainingInput ? Number(remainingInput.value) : 0,
+          restock: restockInput ? Number(restockInput.value) : 0,
+          id: product.id
+        }
+        productList.push(item);
+      }
+    });
+    console.log("Saving list:", productList);
+    try {
+      const result = await fetch('/api/list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: nameList.length > 0 ? nameList : `Restocking Bin - ${new Date().toISOString()}`,
+          products: productList,
+        }),
+      });
+
+      if (result.ok) {
+        alert("Liste enregistrée avec succès !");
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error("Error saving list:", error);
+    }
+  }
+
+  /* Show Modal */
+  const handleShowProductListModal = async () => {
+    try {
+      const result = await fetch('/api/historylist');
+      if (!result.ok) {
+        console.error(`Error ${result.status} fetching product list history from DB`);
+        return;
+      }
+      const data = await result.json();
+      setProductListHistoric(data.data);
+    } catch(error) {
+      console.error("Error fetching product list history from DB:", error);
+    }
+    setShowModal(true);
+  }
+
+  /* Load Product List History */
+  const setProductListFromHistory = async (list: ProductListHistoricProps) => {
+    setMode("list");
+    setLoading(true);
+    list.products.forEach(async (item) => {
+      handleAddProduct(item.sku);
+    });
+
+    setTimeout(() => {
+      list.products.forEach((item) => {
+        const findProduct = document.querySelector(`[data-product-id="${item.id}"]`) as HTMLElement;
+        console.log("Finding product div for SKU:", item.sku, findProduct);
+        if (findProduct) {
+          const remainingInput = findProduct.querySelector(".remaining-input") as HTMLInputElement;
+          const restockInput = findProduct.querySelector(".restock-input") as HTMLInputElement;
+          if (remainingInput) remainingInput.value = String(item.remaining);
+          if (restockInput) restockInput.value = String(item.restock);
         }
       });
-      console.log("Saving list:", productList);
-      try {
-        const result = await fetch('/api/list', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: nameList.length > 0 ? nameList : `Restocking Bin - ${new Date().toISOString()}`,
-            products: productList,
-          }),
-        });
+    }, 300);    
 
-        if (result.ok) {
-          alert("Liste enregistrée avec succès !");
-          setProducts([]);
-        }
-      } catch (error) {
-        console.error("Error saving list:", error);
-      }
-    }
+    setShowModal(false);
+    setLoading(false);
+  }
 
   return (
     <div>
       <main>
         {/* <!-- ==================== TOP BAR ==================== --> */}
-        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} />
+        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
         <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onSaveList={handleSaveList} />
@@ -453,6 +498,38 @@ export default function Home() {
             </div>
         }
       </main>
+      <Modal
+        isOpen={showModal}
+        title="Confirmer la mise à jour"
+        message={
+          <div>
+            <p>Listes d&apos;approvisionnement</p>
+            <div className="product-list-content flex flex-col gap-2">
+              {
+                productListHistoric.length > 0 ? (
+                  productListHistoric.map(list => (
+                    <div key={list.id} className="product-list-item flex justify-between items-center px-4 py-2 bg-gray-100 rounded" onClick={() => setProductListFromHistory(list)}>
+                      <h4 className=" px-4 block">
+                        <span className="pl-4!">{list.name}</span>
+                      </h4>
+                      <button className="action-btn-delete-list action-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p>Aucune liste enregistrée</p>
+                )
+              }
+            </div>
+          </div>
+        }
+        confirmText="Confirmer"
+        cancelText="Annuler"
+        onConfirm={() => console.log('confirm')}
+        onClose={() => setShowModal(false)}
+        inline
+      />
     </div>
   );
 }

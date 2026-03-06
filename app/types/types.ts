@@ -69,4 +69,12 @@ export type ProductListProps = {
   sku: string;
   remaining: number;
   restock: number;
+  id: number;
+}
+
+export type ProductListHistoricProps = {
+  id: number;
+  date: string;
+  name: string;
+  products: ProductListProps[];
 }
