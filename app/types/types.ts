@@ -64,3 +64,9 @@ export type SummarizedAccProps = {
     sku: string;
   }
 }
+
+export type ProductListProps = {
+  sku: string;
+  remaining: number;
+  restock: number;
+}

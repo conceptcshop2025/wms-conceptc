@@ -314,12 +314,8 @@ body {
   }
 
   .list-name-input {
-    display: none;
-    animation: slideIn 0.2s ease;
-  }
-
-  .list-name-input.visible {
     display: flex;
+    animation: slideIn 0.2s ease;
   }
 
   @keyframes slideIn {

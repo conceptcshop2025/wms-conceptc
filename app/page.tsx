@@ -10,7 +10,7 @@ import ProductCounter from "./components/ProductCounter/ProductCounter";
 import PaginationBar from "./components/PaginationBar/PaginationBar";
 import ProductCard from "./components/ProductCard/ProductCard";
 import Loading from "./components/Loading/Loading";
-import { type ProductProps } from "./types/types";
+import { type ProductProps, type ProductListProps } from "./types/types";
 
 export default function Home() {
 
@@ -377,6 +377,46 @@ export default function Home() {
     }
   };
 
+  /* Save List function */
+  const handleSaveList = async (nameList: string) => {
+      const listToSave = [...products];
+      const productList:ProductListProps[] = [];
+      listToSave.forEach((product) => {
+        const sku = product.variants[0]?.sku;
+        const productDiv = document.querySelector(`[data-product-id="${product.id}"]`) as HTMLElement;
+        if (sku) {
+          const remainingInput = productDiv.querySelector(".remaining-input") as HTMLInputElement;
+          const restockInput = productDiv.querySelector(".restock-input") as HTMLInputElement;
+          const item:ProductListProps = {
+            sku: sku,
+            remaining: remainingInput ? Number(remainingInput.value) : 0,
+            restock: restockInput ? Number(restockInput.value) : 0,
+          }
+          productList.push(item);
+        }
+      });
+      console.log("Saving list:", productList);
+      try {
+        const result = await fetch('/api/list', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: nameList.length > 0 ? nameList : `Restocking Bin - ${new Date().toISOString()}`,
+            products: productList,
+          }),
+        });
+
+        if (result.ok) {
+          alert("Liste enregistrée avec succès !");
+          setProducts([]);
+        }
+      } catch (error) {
+        console.error("Error saving list:", error);
+      }
+    }
+
   return (
     <div>
       <main>
@@ -384,7 +424,7 @@ export default function Home() {
         <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
-        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} />
+        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onSaveList={handleSaveList} />
 
         {/* ==================== MAIN CONTENT ==================== */}
         {

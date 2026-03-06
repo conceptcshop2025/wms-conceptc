@@ -201,7 +201,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
                 <div className="qty-control control-restant">
                   <button className="qty-btn qty-btn-fast" onClick={() => setRemaining(v => v - 10)}>−10</button>
                   <button className="qty-btn" onClick={() => setRemaining(v => v - 1)}>−</button>
-                  <input type="number" className="qty-value" value={remaining} readOnly tabIndex={-1} />
+                  <input type="number" className="qty-value remaining-input" value={remaining} readOnly tabIndex={-1} />
                   <button className="qty-btn" onClick={() => setRemaining(v => v + 1)}>+</button>
                   <button className="qty-btn qty-btn-fast" onClick={() => setRemaining(v => v + 10)}>+10</button>
                 </div>
@@ -211,7 +211,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
                 <div className="qty-control control-restock">
                   <button className="qty-btn qty-btn-fast" onClick={() => setRestock(v => v - 10)}>−10</button>
                   <button className="qty-btn" onClick={() => setRestock(v => v - 1)}>−</button>
-                  <input type="number" className="qty-value" value={restock} readOnly tabIndex={-1} />
+                  <input type="number" className="qty-value restock-input" value={restock} readOnly tabIndex={-1} />
                   <button className="qty-btn plus-one" onClick={() => setRestock(v => v + 1)}>+</button>
                   <button className="qty-btn qty-btn-fast" onClick={() => setRestock(v => v + 10)}>+10</button>
                 </div>

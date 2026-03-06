@@ -9,13 +9,16 @@ interface ControlPanelProps {
   onNewList: () => void;
   mode: "list" | "warehouse";
   onAddProduct: (sku: string) => void;
+  onSaveList: (nameList: string) => void;
 }
 
-export default function ControlPanel({ onFilterChange, onSortChange, onProductSearch, onNewList, mode, onAddProduct }: ControlPanelProps) {
+export default function ControlPanel({ onFilterChange, onSortChange, onProductSearch, onNewList, mode, onAddProduct, onSaveList }: ControlPanelProps) {
   const [searchValue, setSearchValue] = useState("");
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [addProductValue, setAddProductValue] = useState<string>("");
   const addProductTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [checkedCustomName, setCheckedCustomName] = useState(false);
+  const [customListName, setCustomListName] = useState("");
 
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -108,24 +111,28 @@ export default function ControlPanel({ onFilterChange, onSortChange, onProductSe
         {
           mode === "list" && (
             <>
-              <button className="btn btn-secondary">
+              <button className="btn btn-secondary" onClick={() => onSaveList(customListName)}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 Enregistrer la liste
               </button>
 
               <label className="checkbox-group">
-                <input type="checkbox" id="listNameToggle"/>
+                <input type="checkbox" id="listNameToggle" checked={checkedCustomName} onChange={() => setCheckedCustomName(!checkedCustomName)} />
                 <span>Nom personnalisé</span>
               </label>
 
-              <div className="list-name-input" id="listNameInput">
-                <div className="input-group" style={{ width: "220px" }}>
-                  <span className="input-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
-                    </span>
-                    <input type="text" className="form-input" placeholder="Nom de la liste..." style={{ width: "100%" }}/>
-                </div>
-              </div>
+              {
+                checkedCustomName && (
+                  <div className="list-name-input" id="listNameInput">
+                    <div className="input-group" style={{ width: "220px" }}>
+                      <span className="input-icon">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                        </span>
+                        <input type="text" className="form-input" placeholder="Nom de la liste..." style={{ width: "100%" }} value={customListName} onChange={(e) => setCustomListName(e.target.value)} />
+                    </div>
+                  </div>
+                )
+              }
             </>
           )
         }
