@@ -159,6 +159,7 @@ export default function Home() {
                 image_url: result.data[0].imageURL || '',
                 inventory_quantity: result.data[0].quantityOnHand,
                 bin_current_quantity: 0,
+                b_alias: result.data[0].barcodeAliases
               }
             }
           } catch(error) {
@@ -169,9 +170,26 @@ export default function Home() {
         })
       )
     )
-    console.log("syncProducts:", syncProducts);
-    setProducts([...syncProducts]);
-    saveProductsInDB(syncProducts);
+
+    if (products.length > 0) {
+      const updatedProducts = [...products];
+      syncProducts.forEach((item: ProductProps) => {
+        const findProductToModify = updatedProducts.find(key => key.variants[0]?.sku === item.variants[0]?.sku);
+        if (findProductToModify) {
+          findProductToModify.updated_at = new Date().toISOString();
+          findProductToModify.bin_max_quantity = item.bin_max_quantity;
+          findProductToModify.bin_location = Array.isArray(item.bin_location) ? item.bin_location.join(",") : item.bin_location;
+          findProductToModify.inventory_quantity = item.inventory_quantity;
+          findProductToModify.b_alias = Array.isArray(item.b_alias) ? item.b_alias.join(",") : item.b_alias;
+        }
+      });
+      setProducts([...updatedProducts]);
+      saveProductsInDB(updatedProducts);
+      alert("Produit mis à jour avec succès");
+    } else {
+      setProducts([...syncProducts]);
+      saveProductsInDB(syncProducts);
+    }
   }
 
   const saveProductsInDB = async (products: ProductProps[]) => {
@@ -328,13 +346,11 @@ export default function Home() {
 
   /* Get refresh product function */
   async function handleRefreshProduct(sku:string | undefined) {
-    console.log(`Refreshing product with SKU: ${sku}`);
     const findedProduct = products.find(p => p.variants[0]?.sku === sku);
     if (!findedProduct) {
       console.error(`Product with SKU ${sku} not found in current products list.`);
       return;
     } else {
-      console.log(`Product found:`, findedProduct);
       getDataFromIpacky([findedProduct]);
     }
   }
@@ -399,7 +415,6 @@ export default function Home() {
         productList.push(item);
       }
     });
-    console.log("Saving list:", productList);
     try {
       const result = await fetch('/api/list', {
         method: 'POST',
@@ -448,7 +463,6 @@ export default function Home() {
     setTimeout(() => {
       list.products.forEach((item) => {
         const findProduct = document.querySelector(`[data-product-id="${item.id}"]`) as HTMLElement;
-        console.log("Finding product div for SKU:", item.sku, findProduct);
         if (findProduct) {
           const remainingInput = findProduct.querySelector(".remaining-input") as HTMLInputElement;
           const restockInput = findProduct.querySelector(".restock-input") as HTMLInputElement;
@@ -488,7 +502,7 @@ export default function Home() {
 
               {
                 products.length > 0 && paginatedProducts.map(product => (
-                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedProductId={foundedProductId} onRefresh={handleRefreshProduct} mode={mode}/>
+                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedProductId={foundedProductId} onRefresh={handleRefreshProduct} />
                 ))
               }
 

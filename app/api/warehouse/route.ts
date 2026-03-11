@@ -12,12 +12,15 @@ function upsertProduct(product: ProductProps) {
   const binLocation = Array.isArray(product.bin_location)
     ? product.bin_location.join(', ')
     : (product.bin_location || '');
+  const b_alias = Array.isArray(product.b_alias)
+    ? product.b_alias.join(', ')
+    : (product.b_alias || '');
 
   return sql`
     INSERT INTO products (
       id, shopify_id, title, sku, image_url, vendor, product_type,
       update_at, inventory_quantity, bin_max_quantity,
-      bin_current_quantity, bin_location, variants
+      bin_current_quantity, bin_location, variants, b_alias
     )
     VALUES (
       ${product.id},
@@ -32,7 +35,8 @@ function upsertProduct(product: ProductProps) {
       ${product.bin_max_quantity},
       ${product.bin_current_quantity},
       ${binLocation},
-      ${JSON.stringify(product.variants)}
+      ${JSON.stringify(product.variants)},
+      ${b_alias}
     )
     ON CONFLICT (sku) DO UPDATE SET
       shopify_id = EXCLUDED.shopify_id,
@@ -45,7 +49,8 @@ function upsertProduct(product: ProductProps) {
       bin_max_quantity = EXCLUDED.bin_max_quantity,
       bin_current_quantity = EXCLUDED.bin_current_quantity,
       bin_location = EXCLUDED.bin_location,
-      variants = EXCLUDED.variants
+      variants = EXCLUDED.variants,
+      b_alias = EXCLUDED.b_alias
   `;
 }
 
