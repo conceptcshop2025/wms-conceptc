@@ -67,7 +67,7 @@ export async function GET(req: Request) {
         SELECT
           id, shopify_id, title, image_url, vendor, product_type,
           update_at AS updated_at, inventory_quantity, bin_max_quantity,
-          bin_current_quantity, bin_location, variants
+          bin_current_quantity, bin_location, variants, b_alias
         FROM products
         ORDER BY id
         LIMIT ${limit} OFFSET ${offset}

@@ -133,6 +133,10 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
     }
   }
 
+  if (product.variants[0]?.sku === "670000002047") {
+    console.log(product);
+  }
+
   return (
     <div
       ref={cardRef}
@@ -169,13 +173,33 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           </div>
           {/* Row 2: Codes */}
           <div className="product-row-2">
-            <span className="code-tag text-2xl"><span className="code-label">SKU</span> { product.variants[0]?.sku || "N/A" }</span>
+            <span className="code-tag text-2xl">
+              <span className="code-label">SKU</span> { product.variants[0]?.sku || "N/A" }
+            </span>
             <span className="code-tag text-2xl"><span className="code-label">UPC</span>
               {
                 product.variants[0]?.barcode === "" ? <div className="skeleton"></div> : product.variants[0]?.barcode || "N/A"
               }
             </span>
           </div>
+          {
+            product.b_alias && (
+              <div className="product-row-2-1">
+                <span className="code-label">
+                  B-Alias
+                  {
+                    typeof product.b_alias === "string"
+                      ? product.b_alias.split(",").map((alias, idx) => (
+                          <span key={idx} className="alias-tag bin-tag text-md">{alias.trim()}</span>
+                        ))
+                      : product.b_alias.map((alias, idx) => (
+                          <span key={idx} className="alias-tag bin-tag text-md">{alias}</span>
+                        ))
+                  }
+                </span>
+              </div>
+            )
+          }
           {/* Row 3: Data */}
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-start" }}>
             <div className="data-cell">
