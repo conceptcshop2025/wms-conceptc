@@ -133,10 +133,6 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
     }
   }
 
-  if (product.variants[0]?.sku === "670000002047") {
-    console.log(product);
-  }
-
   return (
     <div
       ref={cardRef}
