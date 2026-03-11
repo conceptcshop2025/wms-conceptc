@@ -13,10 +13,10 @@ interface ProductCardProps {
   onDelete: (id: number) => void;
   foundedProductId?: number | null;
   onRefresh: (sku: string | undefined) => void;
-  mode: "list" | "warehouse";
 }
 
-export default function ProductCard({ product, onConfirm, onDelete, foundedProductId, onRefresh, mode }: ProductCardProps) {
+export default function ProductCard({ product, onConfirm, onDelete, foundedProductId, onRefresh }: ProductCardProps) {
+  const modeDev = process.env.NODE_ENV === "development";
   const [remaining, setRemaining] = useState<number>(Number(product.bin_current_quantity) || 0);
   const [restock, setRestock] = useState<number>(0);
   const [confirmed, setConfirmed] = useState(false);
@@ -169,13 +169,33 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           </div>
           {/* Row 2: Codes */}
           <div className="product-row-2">
-            <span className="code-tag text-2xl"><span className="code-label">SKU</span> { product.variants[0]?.sku || "N/A" }</span>
+            <span className="code-tag text-2xl">
+              <span className="code-label">SKU</span> { product.variants[0]?.sku || "N/A" }
+            </span>
             <span className="code-tag text-2xl"><span className="code-label">UPC</span>
               {
                 product.variants[0]?.barcode === "" ? <div className="skeleton"></div> : product.variants[0]?.barcode || "N/A"
               }
             </span>
           </div>
+          {
+            product.b_alias && (
+              <div className="product-row-2-1">
+                <span className="code-label">
+                  B-Alias
+                  {
+                    typeof product.b_alias === "string"
+                      ? product.b_alias.split(",").map((alias, idx) => (
+                          <span key={idx} className="alias-tag bin-tag text-md">{alias.trim()}</span>
+                        ))
+                      : product.b_alias.map((alias, idx) => (
+                          <span key={idx} className="alias-tag bin-tag text-md">{alias}</span>
+                        ))
+                  }
+                </span>
+              </div>
+            )
+          }
           {/* Row 3: Data */}
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-start" }}>
             <div className="data-cell">
@@ -229,12 +249,12 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           </div>
           {/* Actions */}
           <div className="product-row-4">
-            <button className="action-btn action-btn-refresh bg-orange-200! text-orange-500! hidden!" onClick={() => onRefresh(product.variants[0]?.sku)}>
+            <button className="action-btn action-btn-refresh bg-orange-200! text-orange-500!" onClick={() => onRefresh(product.variants[0]?.sku)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
               Rafraichir
             </button>
             {
-              mode === "warehouse" && (
+              modeDev && (
                 <button className="action-btn action-btn-delete" onClick={() => setShowDeleteModal(true)}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                   Enlever

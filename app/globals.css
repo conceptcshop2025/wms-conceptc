@@ -457,11 +457,19 @@ body {
   .status-high .status-dot { background: var(--status-high); }
 
   /* Row 2: Codes */
-  .product-row-2 {
+  .product-row-2,
+  .product-row-2-1 {
     display: flex;
     align-items: center;
     gap: 16px;
+  }
+
+  .product-row-2-1 {
     margin-bottom: 10px;
+  }
+
+  .product-row-2-1 .bin-tag {
+    margin-right: 10px;
   }
 
   .code-tag {
