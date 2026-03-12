@@ -12,6 +12,7 @@ import ProductCard from "./components/ProductCard/ProductCard";
 import Loading from "./components/Loading/Loading";
 import { type ProductProps, type ProductListProps, type ProductListHistoricProps } from "./types/types";
 import Modal from "./components/Modal/Modal";
+import Toast from "./components/Toast/Toast";
 
 export default function Home() {
 
@@ -89,10 +90,16 @@ export default function Home() {
     const q = query.trim().toLowerCase();
     if (!q) return;
 
-    const idx = filteredAndSortedProducts.findIndex(p =>
-      p.variants[0]?.sku?.toLowerCase() === q ||
-      p.variants[0]?.barcode?.toLowerCase() === q
-    );
+    const idx = filteredAndSortedProducts.findIndex(p =>{
+      const matchInVariants = 
+        p.variants[0]?.sku?.toLowerCase() === q ||
+        p.variants[0]?.barcode?.toLowerCase() === q;
+      
+      const matchInAlias = (Array.isArray(p.b_alias) ? p.b_alias : p.b_alias?.split(',') || [])
+        .some(alias => alias.trim().toLowerCase() === q);
+
+      return matchInVariants || matchInAlias;
+    });
 
     if (idx === -1) {
       console.error(`Product not found: "${query}"`);
@@ -479,6 +486,8 @@ export default function Home() {
   return (
     <div>
       <main>
+        {/* TOAST */}
+        <Toast type={"success"} title={"Lorem ipsum!"} text={"Lorem ipsum dolor sit amet!"} />
         {/* <!-- ==================== TOP BAR ==================== --> */}
         <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} />
 
