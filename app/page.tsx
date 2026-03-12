@@ -12,6 +12,7 @@ import ProductCard from "./components/ProductCard/ProductCard";
 import Loading from "./components/Loading/Loading";
 import { type ProductProps, type ProductListProps, type ProductListHistoricProps } from "./types/types";
 import Modal from "./components/Modal/Modal";
+import Toast from "./components/Toast/Toast";
 
 export default function Home() {
 
@@ -485,6 +486,8 @@ export default function Home() {
   return (
     <div>
       <main>
+        {/* TOAST */}
+        <Toast type={"success"} title={"Lorem ipsum!"} text={"Lorem ipsum dolor sit amet!"} />
         {/* <!-- ==================== TOP BAR ==================== --> */}
         <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} />
 

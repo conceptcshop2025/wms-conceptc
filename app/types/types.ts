@@ -79,3 +79,9 @@ export type ProductListHistoricProps = {
   name: string;
   products: ProductListProps[];
 }
+
+export type ToastProps = {
+  type: "info" | "success" | "error" | "warning";
+  title: string;
+  text: string;
+}
