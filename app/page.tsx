@@ -89,10 +89,16 @@ export default function Home() {
     const q = query.trim().toLowerCase();
     if (!q) return;
 
-    const idx = filteredAndSortedProducts.findIndex(p =>
-      p.variants[0]?.sku?.toLowerCase() === q ||
-      p.variants[0]?.barcode?.toLowerCase() === q
-    );
+    const idx = filteredAndSortedProducts.findIndex(p =>{
+      const matchInVariants = 
+        p.variants[0]?.sku?.toLowerCase() === q ||
+        p.variants[0]?.barcode?.toLowerCase() === q;
+      
+      const matchInAlias = (Array.isArray(p.b_alias) ? p.b_alias : p.b_alias?.split(',') || [])
+        .some(alias => alias.trim().toLowerCase() === q);
+
+      return matchInVariants || matchInAlias;
+    });
 
     if (idx === -1) {
       console.error(`Product not found: "${query}"`);
