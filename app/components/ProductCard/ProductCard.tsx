@@ -10,12 +10,17 @@ import Modal from "../Modal/Modal";
 interface ProductCardProps {
   product: ProductProps;
   onConfirm: (sku: string, bin_current_quantity: number, update_at: string) => void;
-  onDelete: (id: number) => void;
-  foundedProductId?: number | null;
+  onDelete: (id: number, variantSku?: string) => void;
+  foundedCardKey?: string | null;
   onRefresh: (sku: string | undefined) => void;
+  matchedVariantSku?: string;
 }
 
-export default function ProductCard({ product, onConfirm, onDelete, foundedProductId, onRefresh }: ProductCardProps) {
+export default function ProductCard({ product, onConfirm, onDelete, foundedCardKey, onRefresh, matchedVariantSku }: ProductCardProps) {
+  const activeVariant = (matchedVariantSku && product.variants.length > 1)
+    ? (product.variants.find(v => v.sku === matchedVariantSku) ?? product.variants[0])
+    : product.variants[0];
+  const cardKey = `${product.id}_${product._variantSku ?? ''}`;
   const modeDev = process.env.NODE_ENV === "development";
   const [remaining, setRemaining] = useState<number>(Number(product.bin_current_quantity) || 0);
   const [restock, setRestock] = useState<number>(0);
@@ -41,7 +46,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
   }, [isAnyModalOpen]);
 
   async function handleConfirm() {
-    const sku = product.variants[0]?.sku;
+    const sku = activeVariant?.sku;
     if (!sku) return;
 
     const bin_current_quantity = remaining + restock;
@@ -72,8 +77,8 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
       });
 
       if (res.ok) {
-        console.log(`Product deleted successfully: ${product.title} (SKU: ${product.variants[0]?.sku || "N/A"})`);
-        onDelete(product.id);
+        console.log(`Product deleted successfully: ${product.title} (SKU: ${activeVariant?.sku || "N/A"})`);
+        onDelete(product.id, activeVariant?.sku);
       }
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -90,7 +95,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
   }
 
   async function handleFillBinConfirm() {
-    const sku = product.variants[0]?.sku;
+    const sku = activeVariant?.sku;
     if (!sku) return;
 
     const bin_current_quantity = Number(product.bin_max_quantity);
@@ -136,8 +141,9 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
   return (
     <div
       ref={cardRef}
-      className={`product-card${confirmed ? " confirmed" : ""} ${foundedProductId === product.id ? " founded" : ""}`}
+      className={`product-card${confirmed ? " confirmed" : ""} ${foundedCardKey === cardKey ? " founded" : ""}`}
       data-product-id={product.id}
+      data-card-key={`${product.id}_${product._variantSku ?? ''}`}
       style={{ position: "relative", overflow: "hidden", transition: "min-height 0.25s ease" }}
     >
       <div className="product-card-inner">
@@ -158,9 +164,9 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
             <div>
               <div className="product-name">{ product.title }</div>
               {
-                product.variants[0] && product.variants[0].title !== "Default Title" ? (
+                activeVariant && activeVariant.title !== "Default Title" ? (
                   <div className="product-variant">
-                    { product.variants[0].title }
+                    { activeVariant.title }
                   </div>
                 ) : null
               }
@@ -170,11 +176,11 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           {/* Row 2: Codes */}
           <div className="product-row-2">
             <span className="code-tag text-2xl">
-              <span className="code-label">SKU</span> { product.variants[0]?.sku || "N/A" }
+              <span className="code-label">SKU</span> { activeVariant?.sku || "N/A" }
             </span>
             <span className="code-tag text-2xl"><span className="code-label">UPC</span>
               {
-                product.variants[0]?.barcode === "" ? <div className="skeleton"></div> : product.variants[0]?.barcode || "N/A"
+                activeVariant?.barcode === "" ? <div className="skeleton"></div> : activeVariant?.barcode || "N/A"
               }
             </span>
           </div>
@@ -249,7 +255,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           </div>
           {/* Actions */}
           <div className="product-row-4">
-            <button className="action-btn action-btn-refresh bg-orange-200! text-orange-500!" onClick={() => onRefresh(product.variants[0]?.sku)}>
+            <button className="action-btn action-btn-refresh bg-orange-200! text-orange-500!" onClick={() => onRefresh(activeVariant?.sku)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
               Rafraichir
             </button>
@@ -280,7 +286,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           <div>
             <p>Voulez-vous confirmer la mise à jour du produit&nbsp;?</p>
             <p style={{ marginTop: "8px" }}><strong>{product.title}</strong></p>
-            <span className="modal-sku">SKU: {product.variants[0]?.sku || "N/A"}</span>
+            <span className="modal-sku">SKU: {activeVariant?.sku || "N/A"}</span>
           </div>
         }
         confirmText="Confirmer"
@@ -297,7 +303,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           <div>
             <p>Voulez-vous marquer la bin comme pleine&nbsp;?</p>
             <p style={{ marginTop: "8px" }}><strong>{product.title}</strong></p>
-            <span className="modal-sku">SKU: {product.variants[0]?.sku || "N/A"}</span>
+            <span className="modal-sku">SKU: {activeVariant?.sku || "N/A"}</span>
             <p style={{ marginTop: "10px" }}>
               La quantité sera mise à <strong>{product.bin_max_quantity}</strong> (max bin).
             </p>
@@ -317,7 +323,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           <div>
             <p>Voulez-vous supprimer ce produit de la liste&nbsp;?</p>
             <p style={{ marginTop: "8px" }}><strong>{product.title}</strong></p>
-            <span className="modal-sku">SKU: {product.variants[0]?.sku || "N/A"}</span>
+            <span className="modal-sku">SKU: {activeVariant?.sku || "N/A"}</span>
           </div>
         }
         confirmText="Supprimer"
@@ -334,7 +340,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedProdu
           <div>
             <p>Impossible de remplir la bin — la quantité maximale de ce produit n&apos;est pas définie.</p>
             <p style={{ marginTop: "8px" }}><strong>{product.title}</strong></p>
-            <span className="modal-sku">SKU: {product.variants[0]?.sku || "N/A"}</span>
+            <span className="modal-sku">SKU: {activeVariant?.sku || "N/A"}</span>
           </div>
         }
         confirmText="OK"

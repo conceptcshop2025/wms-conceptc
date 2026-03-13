@@ -22,7 +22,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState("");
   const [sort, setSort] = useState("");
-  const [foundedProductId, setFoundedProductId] = useState<number | null>(null);
+  const [foundedCardKey, setFoundedCardKey] = useState<string | null>(null);
   const [mode, setMode] = useState<"list" | "warehouse">("warehouse");
   const [showModal, setShowModal] = useState(false);
   const [productListHistoric, setProductListHistoric] = useState<ProductListHistoricProps[]>([]);
@@ -90,11 +90,13 @@ export default function Home() {
     const q = query.trim().toLowerCase();
     if (!q) return;
 
-    const idx = filteredAndSortedProducts.findIndex(p =>{
-      const matchInVariants = 
-        p.variants[0]?.sku?.toLowerCase() === q ||
-        p.variants[0]?.barcode?.toLowerCase() === q;
-      
+    const idx = filteredAndSortedProducts.findIndex(p => {
+      const activeVariant = p.variants.find(v => v.sku === p._variantSku) ?? p.variants[0];
+      const matchInVariants =
+        activeVariant?.sku?.toLowerCase() === q ||
+        activeVariant?.barcode?.toLowerCase() === q ||
+        p.variants.some(v => v.sku?.toLowerCase() === q || v.barcode?.toLowerCase() === q);
+
       const matchInAlias = (Array.isArray(p.b_alias) ? p.b_alias : p.b_alias?.split(',') || [])
         .some(alias => alias.trim().toLowerCase() === q);
 
@@ -103,24 +105,25 @@ export default function Home() {
 
     if (idx === -1) {
       console.error(`Product not found: "${query}"`);
-      setFoundedProductId(null);
+      setFoundedCardKey(null);
       return;
     }
 
     const found = filteredAndSortedProducts[idx];
     if (!found) return;
+    const cardKey = `${found.id}_${found._variantSku ?? ''}`;
     const targetPage = Math.floor(idx / ITEMS_PER_PAGE) + 1;
     setCurrentPage(targetPage);
-    setFoundedProductId(found.id);
+    setFoundedCardKey(cardKey);
   }, [filteredAndSortedProducts]);
 
   useEffect(() => {
-    if (!foundedProductId) return;
-    const el = document.querySelector(`[data-product-id="${foundedProductId}"]`);
+    if (!foundedCardKey) return;
+    const el = document.querySelector(`[data-card-key="${foundedCardKey}"]`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [foundedProductId, currentPage]);
+  }, [foundedCardKey, currentPage]);
 
   /* Get data from shopify and iPacky only for get all data (first time) */
 
@@ -219,19 +222,25 @@ export default function Home() {
 
   /* END Get data from shopify and iPacky only for get all data (first time) */
 
-  const handleProductDelete = useCallback((id: number) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
+  const handleProductDelete = useCallback((id: number, variantSku?: string) => {
+    setProducts(prev => prev.filter(p => !(p.id === id && (p._variantSku ?? p.variants[0]?.sku) === variantSku)));
   }, []);
 
   const handleProductConfirm = (sku: string, bin_current_quantity: number, update_at: string) => {
     setProducts(prev =>
       prev.map(p =>
-        p.variants[0]?.sku === sku
+        (p._variantSku ?? p.variants[0]?.sku) === sku
           ? { ...p, bin_current_quantity, updated_at: update_at }
           : p
       )
     );
   };
+
+  /* Expand each product into one entry per variant */
+  const expandProductsByVariants = (prods: ProductProps[]): ProductProps[] =>
+    prods.flatMap(product =>
+      product.variants.map(variant => ({ ...product, _variantSku: variant.sku }))
+    );
 
   /* Get all products from Neon DB */
   const handleGetAllProductsFromNeon = async () => {
@@ -259,7 +268,7 @@ export default function Home() {
         setStatus(`Chargement des produits... (${allProducts.length} / ${total})`);
       }
 
-      setProducts(allProducts);
+      setProducts(expandProductsByVariants(allProducts));
       setCurrentPage(1);
       setStatus(`${allProducts.length} produits chargés depuis la base de données.`);
     } catch (error: unknown) {
@@ -305,9 +314,9 @@ export default function Home() {
       }
       
       const productsCopy = [...products];
-      
+
       data.data.forEach((sale: { sku: string; quantity: number }) => {
-        const findProduct = productsCopy.find(p => p.variants[0]?.sku === sale.sku);
+        const findProduct = productsCopy.find(p => (p._variantSku ?? p.variants[0]?.sku) === sale.sku);
         if (findProduct) {
           findProduct.bin_current_quantity = Number(findProduct.bin_current_quantity) - sale.quantity;
           findProduct.inventory_quantity = Number(findProduct.inventory_quantity) - sale.quantity;
@@ -353,7 +362,7 @@ export default function Home() {
 
   /* Get refresh product function */
   async function handleRefreshProduct(sku:string | undefined) {
-    const findedProduct = products.find(p => p.variants[0]?.sku === sku);
+    const findedProduct = products.find(p => (p._variantSku ?? p.variants[0]?.sku) === sku);
     if (!findedProduct) {
       console.error(`Product with SKU ${sku} not found in current products list.`);
       return;
@@ -363,10 +372,10 @@ export default function Home() {
   }
 
   /* Add product function */
-  const handleAddProduct = async (sku: string) => {
+  const handleAddProduct = async (code: string) => {
     try {
-      const result = await fetch(`/api/list?sku=${encodeURIComponent(sku)}`);
-      
+      const result = await fetch(`/api/list?sku=${encodeURIComponent(code)}`);
+
       if (!result.ok) return;
 
       const data = await result.json();
@@ -374,30 +383,35 @@ export default function Home() {
 
       const fetchedProduct: ProductProps = data.data[0];
 
-      const existingProduct = products.find(p => p.id === fetchedProduct.id);
+      // Find the variant that matches the scanned code (sku or barcode)
+      const matchedVariant = fetchedProduct.variants.length > 1
+        ? (fetchedProduct.variants.find(v => v.sku === code || v.barcode === code) ?? fetchedProduct.variants[0])
+        : fetchedProduct.variants[0];
 
-      if (existingProduct) {
+      const matchedVariantSku = matchedVariant?.sku;
+
+      // Check if a card for this exact variant already exists
+      const cardKey = `${fetchedProduct.id}_${matchedVariantSku ?? ''}`;
+      const existingCard = products.find(p =>
+        `${p.id}_${p._variantSku ?? ''}` === cardKey
+      );
+
+      if (existingCard) {
         setTimeout(() => {
-          const productDivItem = document.querySelector(`[data-product-id="${fetchedProduct.id}"]`);
-          const buttonPlusOne = productDivItem?.querySelector('.plus-one') as HTMLElement;
-          
-          if (buttonPlusOne) {
-            buttonPlusOne.click();
-          }
+          const cardDiv = document.querySelector(`[data-card-key="${cardKey}"]`);
+          const buttonPlusOne = cardDiv?.querySelector('.plus-one') as HTMLElement;
+          if (buttonPlusOne) buttonPlusOne.click();
         }, 100);
-        
       } else {
-        setProducts(prev => [fetchedProduct, ...prev]);
+        const productToAdd: ProductProps = { ...fetchedProduct, _variantSku: matchedVariantSku };
+        setProducts(prev => [productToAdd, ...prev]);
         setTimeout(() => {
-          const productDivItem = document.querySelector(`[data-product-id="${fetchedProduct.id}"]`);
-          const buttonPlusOne = productDivItem?.querySelector('.plus-one') as HTMLElement;
-          
-          if (buttonPlusOne) {
-            buttonPlusOne.click();
-          }
+          const cardDiv = document.querySelector(`[data-card-key="${cardKey}"]`);
+          const buttonPlusOne = cardDiv?.querySelector('.plus-one') as HTMLElement;
+          if (buttonPlusOne) buttonPlusOne.click();
         }, 100);
       }
-      
+
     } catch(error) {
       console.error("Error en handleAddProduct:", error);
     }
@@ -408,11 +422,12 @@ export default function Home() {
     const listToSave = [...products];
     const productList:ProductListProps[] = [];
     listToSave.forEach((product) => {
-      const sku = product.variants[0]?.sku;
-      const productDiv = document.querySelector(`[data-product-id="${product.id}"]`) as HTMLElement;
+      const sku = product._variantSku ?? product.variants[0]?.sku;
+      const cardKey = `${product.id}_${product._variantSku ?? ''}`;
+      const productDiv = document.querySelector(`[data-card-key="${cardKey}"]`) as HTMLElement;
       if (sku) {
-        const remainingInput = productDiv.querySelector(".remaining-input") as HTMLInputElement;
-        const restockInput = productDiv.querySelector(".restock-input") as HTMLInputElement;
+        const remainingInput = productDiv?.querySelector(".remaining-input") as HTMLInputElement;
+        const restockInput = productDiv?.querySelector(".restock-input") as HTMLInputElement;
         const item:ProductListProps = {
           sku: sku,
           remaining: remainingInput ? Number(remainingInput.value) : 0,
@@ -463,13 +478,18 @@ export default function Home() {
   const setProductListFromHistory = async (list: ProductListHistoricProps) => {
     setMode("list");
     setLoading(true);
-    list.products.forEach(async (item) => {
-      handleAddProduct(item.sku);
-    });
+    setShowModal(false);
 
+    // Sequential loading ensures each variant card is in state before checking for duplicates
+    for (const item of list.products) {
+      await handleAddProduct(item.sku);
+    }
+
+    // After all products are rendered, restore remaining/restock values
     setTimeout(() => {
       list.products.forEach((item) => {
-        const findProduct = document.querySelector(`[data-product-id="${item.id}"]`) as HTMLElement;
+        const cardKey = `${item.id}_${item.sku}`;
+        const findProduct = document.querySelector(`[data-card-key="${cardKey}"]`) as HTMLElement;
         if (findProduct) {
           const remainingInput = findProduct.querySelector(".remaining-input") as HTMLInputElement;
           const restockInput = findProduct.querySelector(".restock-input") as HTMLInputElement;
@@ -477,9 +497,8 @@ export default function Home() {
           if (restockInput) restockInput.value = String(item.restock);
         }
       });
-    }, 300);    
+    }, 150);
 
-    setShowModal(false);
     setLoading(false);
   }
 
@@ -511,7 +530,7 @@ export default function Home() {
 
               {
                 products.length > 0 && paginatedProducts.map(product => (
-                  <ProductCard key={product.id} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedProductId={foundedProductId} onRefresh={handleRefreshProduct} />
+                  <ProductCard key={`${product.id}_${product._variantSku ?? ''}`} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedCardKey={foundedCardKey} onRefresh={handleRefreshProduct} matchedVariantSku={product._variantSku} />
                 ))
               }
 
