@@ -13,6 +13,7 @@ export async function GET(req: Request) {
       WHERE 
         sku = ${sku} 
         OR variants @> ${JSON.stringify([{ barcode: sku }])}::jsonb
+        OR variants @> ${JSON.stringify([{ sku: sku }])}::jsonb
         OR ${sku} = ANY(string_to_array(b_alias, ','));
     `;
 
