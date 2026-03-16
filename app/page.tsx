@@ -502,6 +502,34 @@ export default function Home() {
     setLoading(false);
   }
 
+  /* Delete product List Element */
+  const deleteProductList = async (id: number) => {
+    try {
+      const result = await fetch("/api/list", {
+        method: "DELETE",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: id
+        }),
+      });
+
+      if (!result.ok) {
+        console.error('Error in delete product list');
+      }
+
+      const response = await result.json();
+      if (response) {
+        console.log("Product list deleted successfully");
+        const productListFiltered = productListHistoric.filter(key => key.id !== id);
+        setProductListHistoric(productListFiltered)
+      }
+    } catch (error) {
+      console.error('Error in delete product list: ', error);
+    }
+  }
+
   return (
     <div>
       <main>
@@ -550,11 +578,11 @@ export default function Home() {
               {
                 productListHistoric.length > 0 ? (
                   productListHistoric.map(list => (
-                    <div key={list.id} className="product-list-item flex justify-between items-center px-4 py-2 bg-gray-100 rounded" onClick={() => setProductListFromHistory(list)}>
-                      <h4 className=" px-4 block">
+                    <div key={list.id} className="product-list-item flex justify-between items-center px-4 py-2 bg-gray-100 rounded">
+                      <h4 className=" px-4 block cursor-pointer" onClick={() => setProductListFromHistory(list)}>
                         <span className="pl-4!">{list.name}</span>
                       </h4>
-                      <button className="action-btn-delete-list action-btn">
+                      <button className="action-btn-delete-list action-btn" onClick={() => deleteProductList(list.id)}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                       </button>
                     </div>

@@ -54,3 +54,28 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const body = await req.json();
+    const id = body.id;
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: "No ID founded in this request"},
+        { status: 400 }
+      );
+    }
+
+    const result = await sql`
+      DELETE FROM product_list_to_restock WHERE id = ${id};
+    `;
+
+    return NextResponse.json({ message: "Historic item success deleted", info: result}, { status: 200 });
+  } catch(error) {
+    return NextResponse.json(
+      { error: "Internal server error", details: String(error) },
+      { status: 500 }
+    );
+  }
+}
