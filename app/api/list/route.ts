@@ -13,6 +13,7 @@ export async function GET(req: Request) {
       WHERE 
         sku = ${sku} 
         OR variants @> ${JSON.stringify([{ barcode: sku }])}::jsonb
+        OR variants @> ${JSON.stringify([{ sku: sku }])}::jsonb
         OR ${sku} = ANY(string_to_array(b_alias, ','));
     `;
 
@@ -46,6 +47,31 @@ export async function POST(req: Request) {
     `;
 
     return NextResponse.json({ message: "Restocking bin saved successfully", id: result?.[0]?.id }, { status: 201 });
+  } catch(error) {
+    return NextResponse.json(
+      { error: "Internal server error", details: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const body = await req.json();
+    const id = body.id;
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: "No ID founded in this request"},
+        { status: 400 }
+      );
+    }
+
+    const result = await sql`
+      DELETE FROM product_list_to_restock WHERE id = ${id};
+    `;
+
+    return NextResponse.json({ message: "Historic item success deleted", info: result}, { status: 200 });
   } catch(error) {
     return NextResponse.json(
       { error: "Internal server error", details: String(error) },

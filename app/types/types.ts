@@ -13,6 +13,7 @@ export type ProductProps = {
   inventoryQuantity: number;
   inventory_quantity?:number;
   b_alias?: string | string[];
+  _variantSku?: string;
 }
 
 export type VariantProps = {
