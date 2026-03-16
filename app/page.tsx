@@ -530,6 +530,12 @@ export default function Home() {
     }
   }
 
+  /* Remove product from product List */
+  const handleRemoveProductFromProductList = async (variantSku: string | undefined) => {
+    const filteredList = [...products].filter(key => key._variantSku !== variantSku);
+    setProducts(filteredList);
+  }
+
   return (
     <div>
       <main>
@@ -558,7 +564,7 @@ export default function Home() {
 
               {
                 products.length > 0 && paginatedProducts.map(product => (
-                  <ProductCard key={`${product.id}_${product._variantSku ?? ''}`} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedCardKey={foundedCardKey} onRefresh={handleRefreshProduct} matchedVariantSku={product._variantSku} />
+                  <ProductCard key={`${product.id}_${product._variantSku ?? ''}`} product={product} onConfirm={handleProductConfirm} onDelete={handleProductDelete} foundedCardKey={foundedCardKey} onRefresh={handleRefreshProduct} matchedVariantSku={product._variantSku} onDeleteFromProductList={handleRemoveProductFromProductList} />
                 ))
               }
 

@@ -14,9 +14,10 @@ interface ProductCardProps {
   foundedCardKey?: string | null;
   onRefresh: (sku: string | undefined) => void;
   matchedVariantSku?: string;
+  onDeleteFromProductList: (variantSku: string | undefined) => void;
 }
 
-export default function ProductCard({ product, onConfirm, onDelete, foundedCardKey, onRefresh, matchedVariantSku }: ProductCardProps) {
+export default function ProductCard({ product, onConfirm, onDelete, foundedCardKey, onRefresh, matchedVariantSku, onDeleteFromProductList }: ProductCardProps) {
   const activeVariant = (matchedVariantSku && product.variants.length > 1)
     ? (product.variants.find(v => v.sku === matchedVariantSku) ?? product.variants[0])
     : product.variants[0];
@@ -255,6 +256,10 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
           </div>
           {/* Actions */}
           <div className="product-row-4">
+            <button className="action-btn action-btn-delete-from-list" onClick={() => onDeleteFromProductList(activeVariant?.sku)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              Enlever produit de la liste
+            </button>
             <button className="action-btn action-btn-refresh bg-orange-200! text-orange-500!" onClick={() => onRefresh(activeVariant?.sku)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
               Rafraichir
