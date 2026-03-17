@@ -148,4 +148,43 @@ export async function PUT(req: Request) {
   }
 }
 
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const binLocation = Array.isArray(body.bin_location)
+      ? body.bin_location.join(', ')
+      : (body.bin_location || '');
+    const b_alias = Array.isArray(body.b_alias)
+      ? body.b_alias.join(', ')
+      : (body.b_alias || '');
 
+    const result = await sql`
+      INSERT INTO products (
+        shopify_id, title, sku, image_url, vendor, product_type,
+        update_at, inventory_quantity, bin_max_quantity,
+        bin_current_quantity, bin_location, variants, b_alias
+      ) VALUES (
+        ${body.shopify_id},
+        ${body.title},
+        ${body.variants[0].sku},
+        ${body.image_url},
+        ${body.vendor},
+        ${body.product_type},
+        ${body.updated_at},
+        ${body.inventory_quantity},
+        ${body.bin_max_quantity},
+        ${body.bin_current_quantity},
+        ${binLocation},
+        ${JSON.stringify(body.variants)},
+        ${b_alias}
+      ) RETURNING *;
+    `;
+
+    return NextResponse.json({ data: result[0] }, { status: 200 });
+  } catch(error) {
+    return NextResponse.json(
+      { error: "Internal server error", details: String(error) },
+      { status: 500 }
+    );
+  }
+}

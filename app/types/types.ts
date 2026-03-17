@@ -86,3 +86,44 @@ export type ToastProps = {
   title: string;
   text: string;
 }
+
+export type ShopifyProductVariantsProps = {
+  node: {
+    id: string;
+    title: string;
+    sku: string;
+    barcode: string;
+    inventoryItem: {
+      inventoryLevel: {
+        quantities: {
+          quantity: number
+        }[]
+      }
+    }
+  }
+}
+
+export type ShopifyProductProps = {
+  node: {
+    product: {
+      id: string;
+      title: string;
+      media: {
+        edges: {
+          node: {
+            preview: {
+              image: {
+                url: string
+              }
+            }
+          }
+        }[]
+      };
+      vendor: string;
+      productType: string;
+      variants: {
+        edges: ShopifyProductVariantsProps[];
+      };
+    }
+  }
+}

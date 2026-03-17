@@ -378,12 +378,23 @@ export default function Home() {
 
       if (!result.ok) return;
 
-      const data = await result.json();
-      if (!data.data || data.data.length === 0) return;
+      let data = await result.json();
+      if (!data.data || data.data.length === 0) {
+        try {
+          const shopifyResult = await fetch(`/api/shopify?code=${code}`);
+          if (!result.ok) {
+            console.error('Error trying data from iPacky');
+          }
+          const shopifyResponse = await shopifyResult.json();
+          data = shopifyResponse;
+          await addNewProductInNeonDB(data.data[0]);
+        } catch (error) {
+          console.error("Error trying data from iPacky: ", error);
+        }
+      }
 
       const fetchedProduct: ProductProps = data.data[0];
 
-      // Find the variant that matches the scanned code (sku or barcode)
       const matchedVariant = fetchedProduct.variants.length > 1
         ? (fetchedProduct.variants.find(v => v.sku === code || v.barcode === code) ?? fetchedProduct.variants[0])
         : fetchedProduct.variants[0];
@@ -411,7 +422,6 @@ export default function Home() {
           if (buttonPlusOne) buttonPlusOne.click();
         }, 100);
       }
-
     } catch(error) {
       console.error("Error en handleAddProduct:", error);
     }
@@ -534,6 +544,48 @@ export default function Home() {
   const handleRemoveProductFromProductList = async (variantSku: string | undefined) => {
     const filteredList = [...products].filter(key => key._variantSku !== variantSku);
     setProducts(filteredList);
+  }
+
+  /* save new products to neon DB */
+  const addNewProductInNeonDB = async (newProduct: ProductProps) => {
+    const sku = newProduct.variants[0]?.sku; 
+    try {
+      const response = await fetch(`/api/ipacky?code=${sku}&type=sku`);
+      const result = await response.json();
+
+      if (response.ok && result.data[0]) {
+        newProduct.bin_location = result.data[0].binLocations || "",
+        newProduct.bin_max_quantity = result.data[0].htsUS || null,
+        newProduct.image_url = result.data[0].imageURL || '',
+        newProduct.inventory_quantity = result.data[0].quantityOnHand,
+        newProduct.bin_current_quantity = 0,
+        newProduct.b_alias = result.data[0].barcodeAliases
+      }
+
+      try {
+        const response = await fetch('/api/warehouse', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newProduct)
+        });
+
+        const data = await response.json();
+
+        if (data.data.length === 0) {
+          console.error('Error trying save product in DB');
+          return;
+        } else {
+          console.log('Product saved successfully');
+        }
+      } catch(error) {
+        console.error(`Error in api service for save product ${newProduct}:`, error);
+      }
+    } catch(error) {
+      console.error(`Error fetching data for SKU ${sku}:`, error);
+    }
+    console.log('NEW Product with iPacky data: ', newProduct);
   }
 
   return (
