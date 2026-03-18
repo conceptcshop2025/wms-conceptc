@@ -2,15 +2,14 @@ import { type ProductProps } from "@/app/types/types"
 
 export default function RemainingStock({ product }: { product: ProductProps }) {
 
-  /* const remainingPercentage =  */
-
   const maxBin = product.bin_max_quantity;
-  // const productTotal = product.variants[0]?.inventoryQuantity;
   const remaining = product.bin_current_quantity;
 
   const remainingPercentage = () => {
     if (maxBin === null || maxBin === 0) return 0;
-    return Math.round((remaining / maxBin) * 100);
+    const invQty = Number(product.inventory_quantity) ?? 0;
+    const effectiveMax = (invQty > 0 && invQty < maxBin) ? invQty : maxBin;
+    return Math.round((remaining / effectiveMax) * 100);
   }
 
   const statusColorByPercentage = () => {

@@ -6,15 +6,17 @@ interface ControlPanelProps {
   onFilterChange: (value: string) => void;
   onSortChange: (value: string) => void;
   onProductSearch: (query: string) => void;
+  onTitleSearch: (value: string) => void;
   onNewList: () => void;
   mode: "list" | "warehouse";
   onAddProduct: (sku: string) => void;
   onSaveList: (nameList: string) => void;
 }
 
-export default function ControlPanel({ onFilterChange, onSortChange, onProductSearch, onNewList, mode, onAddProduct, onSaveList }: ControlPanelProps) {
+export default function ControlPanel({ onFilterChange, onSortChange, onProductSearch, onTitleSearch, onNewList, mode, onAddProduct, onSaveList }: ControlPanelProps) {
   const [searchValue, setSearchValue] = useState("");
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [titleSearchValue, setTitleSearchValue] = useState("");
   const [addProductValue, setAddProductValue] = useState<string>("");
   const addProductTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [checkedCustomName, setCheckedCustomName] = useState(false);
@@ -73,6 +75,22 @@ export default function ControlPanel({ onFilterChange, onSortChange, onProductSe
             style={{ width: "100%" }}
             value={searchValue}
             onChange={handleSearchInput}
+          />
+        </div>
+
+        <div className="separator"></div>
+
+        <div className="input-group search-product-by-title" style={{ width: "220px" }}>
+          <span className="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Rechercher par titre..."
+            style={{ width: "100%" }}
+            value={titleSearchValue}
+            onChange={(e) => { setTitleSearchValue(e.target.value); onTitleSearch(e.target.value); }}
           />
         </div>
 

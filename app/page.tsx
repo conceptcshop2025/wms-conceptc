@@ -22,6 +22,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState("");
   const [sort, setSort] = useState("");
+  const [titleSearch, setTitleSearch] = useState("");
   const [foundedCardKey, setFoundedCardKey] = useState<string | null>(null);
   const [mode, setMode] = useState<"list" | "warehouse">("warehouse");
   const [showModal, setShowModal] = useState(false);
@@ -32,7 +33,9 @@ export default function Home() {
   const getRemainingPct = (p: ProductProps) => {
     const maxBin = Number(p.bin_max_quantity);
     if (!maxBin) return 0;
-    return Math.round((Number(p.bin_current_quantity) / maxBin) * 100);
+    const invQty = Number(p.inventory_quantity) ?? 0;
+    const effectiveMax = (invQty > 0 && invQty < maxBin) ? invQty : maxBin;
+    return Math.round((Number(p.bin_current_quantity) / effectiveMax) * 100);
   };
 
   const getFirstBinNumber = (p: ProductProps): number => {
@@ -46,6 +49,11 @@ export default function Home() {
 
   const filteredAndSortedProducts = useMemo(() => {
     let list = [...products];
+
+    if (titleSearch.trim()) {
+      const query = titleSearch.trim().toLowerCase();
+      list = list.filter(p => p.title.toLowerCase().includes(query));
+    }
 
     if (filter === "empty") {
       list = list.filter(p => getRemainingPct(p) === 0);
@@ -64,7 +72,7 @@ export default function Home() {
     }
 
     return list;
-  }, [products, filter, sort]);
+  }, [products, filter, sort, titleSearch]);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(filteredAndSortedProducts.length / ITEMS_PER_PAGE)),
@@ -597,7 +605,7 @@ export default function Home() {
         <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
-        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onSaveList={handleSaveList} />
+        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onSaveList={handleSaveList} onTitleSearch={setTitleSearch} />
 
         {/* ==================== MAIN CONTENT ==================== */}
         {

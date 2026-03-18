@@ -18,12 +18,11 @@ function upsertProduct(product: ProductProps) {
 
   return sql`
     INSERT INTO products (
-      id, shopify_id, title, sku, image_url, vendor, product_type,
+      shopify_id, title, sku, image_url, vendor, product_type,
       update_at, inventory_quantity, bin_max_quantity,
       bin_current_quantity, bin_location, variants, b_alias
     )
     VALUES (
-      ${product.id},
       ${product.shopify_id},
       ${product.title},
       ${sku},
