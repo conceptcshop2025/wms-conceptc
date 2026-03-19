@@ -202,7 +202,7 @@ export default function Home() {
         }
       });
       setProducts([...updatedProducts]);
-      saveProductsInDB(updatedProducts);
+      saveProductsInDB(syncProducts);
       alert("Produit mis à jour avec succès");
     } else {
       setProducts([...syncProducts]);
