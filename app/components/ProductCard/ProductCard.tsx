@@ -31,6 +31,9 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
   const [showNoMaxModal, setShowNoMaxModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [binLocationValue, setBinLocationValue] = useState<string>("");
+  const binLocationValueRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [binValidated, setBinValidated] = useState<boolean>(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const isAnyModalOpen = showModal || showFillModal || showNoMaxModal || showDeleteModal || showImageModal;
@@ -43,6 +46,10 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
       card.style.minHeight = `${h * 2}px`;
     } else {
       card.style.minHeight = "";
+      setTimeout(() => {
+        setBinValidated(false);
+        setBinLocationValue("");
+      }, 0);
     }
   }, [isAnyModalOpen]);
 
@@ -138,6 +145,32 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
       ));
     }
   }
+
+  const handleBinValidation = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setBinLocationValue(value);
+
+    if (binLocationValueRef.current) {
+      
+      const binLocations = typeof product.bin_location === "string"
+        ? product.bin_location.split(",")
+        : product.bin_location;
+
+      const binLocationsClean = binLocations.map(str => str.replace(/\s+/g, ''));
+
+      if (binLocationsClean.find(key => key === value)) {
+        setBinValidated(true);
+        return;
+      }
+      
+      clearTimeout(binLocationValueRef.current);
+    }
+
+    binLocationValueRef.current = setTimeout(() => {
+      setBinLocationValue("");
+      setBinValidated(false);
+    }, 500);
+  };
 
   return (
     <div
@@ -292,6 +325,26 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
             <p>Voulez-vous confirmer la mise à jour du produit&nbsp;?</p>
             <p style={{ marginTop: "8px" }}><strong>{product.title}</strong></p>
             <span className="modal-sku">SKU: {activeVariant?.sku || "N/A"}</span>
+            <div className="input-group bin-validation-group mt-4!" style={{ width: "220px" }}>
+              <span className="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="valider la location de la bin"
+                style={{ width: "100%" }}
+                value={binLocationValue}
+                onChange={handleBinValidation}
+              />
+            </div>
+            {
+              (Array.isArray(product.bin_location) ? product.bin_location : product.bin_location?.split(',') || []).map((location:string, index: number) => (
+                <span key={index} className={`modal-sku mr-2! ${binLocationValue === location.trim() && 'bg-green-100! border-green-700!'} `}>{location.trim()}</span>
+              ))
+            }
           </div>
         }
         confirmText="Confirmer"
@@ -299,6 +352,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
         onConfirm={handleConfirm}
         onClose={() => setShowModal(false)}
         inline
+        disabledConfirmButton={!binValidated}
       />
 
       <Modal
@@ -312,6 +366,26 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
             <p style={{ marginTop: "10px" }}>
               La quantité sera mise à <strong>{product.bin_max_quantity}</strong> (max bin).
             </p>
+            <div className="input-group bin-validation-group mt-4!" style={{ width: "220px" }}>
+              <span className="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="valider la location de la bin"
+                style={{ width: "100%" }}
+                value={binLocationValue}
+                onChange={handleBinValidation}
+              />
+            </div>
+            {
+              (Array.isArray(product.bin_location) ? product.bin_location : product.bin_location?.split(',') || []).map((location:string, index: number) => (
+                <span key={index} className={`modal-sku mr-2! ${binLocationValue === location.trim() && 'bg-green-100! border-green-700!'} `}>{location.trim()}</span>
+              ))
+            }
           </div>
         }
         confirmText="Remplir"
@@ -319,6 +393,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
         onConfirm={handleFillBinConfirm}
         onClose={() => setShowFillModal(false)}
         inline
+        disabledConfirmButton={!binValidated}
       />
 
       <Modal

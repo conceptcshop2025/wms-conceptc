@@ -12,6 +12,7 @@ interface ModalProps {
   onConfirm: () => void;
   onClose: () => void;
   inline?: boolean;
+  disabledConfirmButton?: boolean;
 }
 
 export default function Modal({
@@ -23,6 +24,7 @@ export default function Modal({
   onConfirm,
   onClose,
   inline = false,
+  disabledConfirmButton
 }: ModalProps) {
   const [isClosing, setIsClosing] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -75,7 +77,7 @@ export default function Modal({
           <button className="btn btn-secondary" onClick={close}>
             {cancelText}
           </button>
-          <button className="btn btn-primary" onClick={() => { onConfirm(); close(); }}>
+          <button disabled={disabledConfirmButton} className={`btn btn-primary ${ disabledConfirmButton && 'disabled:opacity-25 disabled:bg-gray-300! text-neutral-700! pointer-events-none' }`} onClick={() => { onConfirm(); close(); }}>
             {confirmText}
           </button>
         </div>
