@@ -479,6 +479,7 @@ export default function Home() {
   /* Show Modal */
   const handleShowProductListModal = async () => {
     try {
+      setProducts([]);
       const result = await fetch('/api/historylist');
       if (!result.ok) {
         console.error(`Error ${result.status} fetching product list history from DB`);
@@ -498,26 +499,30 @@ export default function Home() {
     setLoading(true);
     setShowModal(false);
 
-    // Sequential loading ensures each variant card is in state before checking for duplicates
-    for (const item of list.products) {
-      await handleAddProduct(item.sku);
+    try {
+      // Sequential loading ensures each variant card is in state before checking for duplicates
+      for (const item of list.products) {
+        await handleAddProduct(item.sku);
+      }
+
+      // After all products are rendered, restore remaining/restock values
+      setTimeout(() => {
+        list.products.forEach((item) => {
+          const cardKey = `${item.id}_${item.sku}`;
+          const findProduct = document.querySelector(`[data-card-key="${cardKey}"]`) as HTMLElement;
+          if (findProduct) {
+            const remainingInput = findProduct.querySelector(".remaining-input") as HTMLInputElement;
+            const restockInput = findProduct.querySelector(".restock-input") as HTMLInputElement;
+            if (remainingInput) remainingInput.value = String(item.remaining);
+            if (restockInput) restockInput.value = String(item.restock);
+          }
+        });
+      }, 150);
+    } catch (error) {
+      console.error('Error trying show list of products from history list: ', error);
+    } finally {
+      setLoading(false);
     }
-
-    // After all products are rendered, restore remaining/restock values
-    setTimeout(() => {
-      list.products.forEach((item) => {
-        const cardKey = `${item.id}_${item.sku}`;
-        const findProduct = document.querySelector(`[data-card-key="${cardKey}"]`) as HTMLElement;
-        if (findProduct) {
-          const remainingInput = findProduct.querySelector(".remaining-input") as HTMLInputElement;
-          const restockInput = findProduct.querySelector(".restock-input") as HTMLInputElement;
-          if (remainingInput) remainingInput.value = String(item.remaining);
-          if (restockInput) restockInput.value = String(item.restock);
-        }
-      });
-    }, 150);
-
-    setLoading(false);
   }
 
   /* Delete product List Element */
