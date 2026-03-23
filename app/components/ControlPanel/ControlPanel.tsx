@@ -118,6 +118,13 @@ export default function ControlPanel({ onFilterChange, onSortChange, onProductSe
           <option value="pct-asc">% restant</option>
           <option value="bin-desc">Emplacement de Bin</option>
         </select>
+
+        <div className="option-group option-group--hide-products-without-stock hidden!">
+          <div className="container-input">
+            <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" />
+            <label htmlFor="hide-products-without-stock">Cacher des produits sans stock</label>
+          </div>
+        </div>
       </div>
 
       {/* <!-- Row 2: List management --> */}
