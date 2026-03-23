@@ -103,9 +103,10 @@ export default function ControlPanel({ onFilterChange, onSortChange, onProductSe
         >
           <option value="">Filtrer par % de stock</option>
           <option value="empty">Sans stock (0%)</option>
-          <option value="low">Stock faible (&lt; 25%)</option>
-          <option value="medium">Stock moyen (25%-79%)</option>
-          <option value="high">Stock élevé (&gt; 80%)</option>
+          <option value="very-low">Très faible (&lt; 25%)</option>
+          <option value="low">Stock faible (26%-40%)</option>
+          <option value="medium">Stock moyen (41%-60%)</option>
+          <option value="high">Stock élevé (&gt; 61%)</option>
         </select>
 
         <select

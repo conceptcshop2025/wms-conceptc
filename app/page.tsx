@@ -57,12 +57,14 @@ export default function Home() {
 
     if (filter === "empty") {
       list = list.filter(p => getRemainingPct(p) === 0);
-    } else if (filter === "low") {
+    } else if (filter === "very-low") {
       list = list.filter(p => { const pct = getRemainingPct(p); return pct > 0 && pct < 25; });
+    } else if (filter === "low") {
+      list = list.filter(p => { const pct = getRemainingPct(p); return pct > 25 && pct < 41; });
     } else if (filter === "medium") {
-      list = list.filter(p => { const pct = getRemainingPct(p); return pct >= 25 && pct < 80; });
+      list = list.filter(p => { const pct = getRemainingPct(p); return pct >= 41 && pct < 61; });
     } else if (filter === "high") {
-      list = list.filter(p => getRemainingPct(p) >= 80);
+      list = list.filter(p => getRemainingPct(p) >= 61);
     }
 
     if (sort === "pct-asc") {

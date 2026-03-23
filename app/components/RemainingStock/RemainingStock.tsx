@@ -14,9 +14,10 @@ export default function RemainingStock({ product }: { product: ProductProps }) {
 
   const statusColorByPercentage = () => {
     const percentage = remainingPercentage();
-    if (percentage >= 80) return "var(--status-high)";
-    if (percentage >= 25 && percentage < 80) return "var(--status-medium)";
-    if (percentage >= 1 && percentage < 25) return "var(--status-low)";
+    if (percentage >= 61) return "var(--status-high)";
+    if (percentage >= 41 && percentage < 61) return "var(--status-medium)";
+    if (percentage >= 26 && percentage < 41) return "var(--status-low)";
+    if (percentage >= 1 && percentage < 26) return "var(--status-low)";
     if (percentage == 0) return "var(--status-empty)";
     return "var(--status-empty)";
   }
