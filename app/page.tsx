@@ -176,7 +176,7 @@ export default function Home() {
                 bin_max_quantity: result.data[0].htsUS || null,
                 image_url: result.data[0].imageURL || '',
                 inventory_quantity: result.data[0].quantityOnHand,
-                bin_current_quantity: 0,
+                bin_current_quantity: Number(product.bin_current_quantity) > 0 ? product.bin_current_quantity : 0,
                 b_alias: result.data[0].barcodeAliases
               }
             }
