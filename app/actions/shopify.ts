@@ -70,6 +70,7 @@ export async function startProductsBulkOperation(): Promise<string> {
                 title
                 vendor
                 productType
+                status
                 updatedAt
                 featuredImage {
                   url
@@ -154,6 +155,7 @@ type RawProduct = {
   featuredImage?: { url: string };
   inventoryQuantity: number;
   inventory_quantity?: number;
+  status?: string;
 };
 
 type RawVariant = {
@@ -223,6 +225,7 @@ function parseProductsJSONL(jsonlText: string): ProductProps[] {
       bin_location: "",
       inventoryQuantity: product.inventory_quantity ?? product.inventoryQuantity,
       inventory_quantity: product.inventory_quantity,
+      status: product.status,
       variants: variants.map((variant): VariantProps => ({
         variant_id: variant.id,
         title: variant.title,

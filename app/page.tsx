@@ -13,6 +13,8 @@ import Loading from "./components/Loading/Loading";
 import { type ProductProps, type ProductListProps, type ProductListHistoricProps } from "./types/types";
 import Modal from "./components/Modal/Modal";
 import Toast from "./components/Toast/Toast";
+import { getAllProductsFromNeon } from "./lib/data/getAllProductsFromNeon";
+import { syncProductsFromIpacky } from "./lib/data/syncProductsFromIpacky";
 
 export default function Home() {
 
@@ -146,7 +148,10 @@ export default function Home() {
       const bulkProducts = await fetchBulkProducts();
       setCurrentPage(1);
       setStatus(`¡Sincronización completa! ${bulkProducts.length} productos cargados.`);
-      await getDataFromIpacky(bulkProducts);
+      // await getDataFromIpacky(bulkProducts);
+      const dataFromShopify =  bulkProducts;
+      console.log(dataFromShopify);
+
       setLoading(false);
 
     } catch (error: unknown) {
@@ -222,8 +227,11 @@ export default function Home() {
         },
         body: JSON.stringify(products)
       });
-      if (res.ok) {
-        console.log("Products saved in DB successfully");
+
+      const data = await res.json();
+
+      if (data.failedCount > 0) {
+        console.warn("Productos que fallaron:", data.failed);
       }
     } catch(error) {
       console.error("Error saving products in DB:", error);
@@ -603,13 +611,27 @@ export default function Home() {
     console.log('NEW Product with iPacky data: ', newProduct);
   }
 
+  const handleSyncGetAllProductsFromNeon = async () => {
+    setProducts([]);
+    setLoading(true);
+    setMode("warehouse");
+
+    const allProductFromNeon = await getAllProductsFromNeon() as ProductProps[];
+    const syncedProductsFromIpacky = await syncProductsFromIpacky(allProductFromNeon);
+  
+    setProducts(syncedProductsFromIpacky);
+    saveProductsInDB(syncedProductsFromIpacky);
+
+    setLoading(false);
+  }
+
   return (
     <div>
       <main>
         {/* TOAST */}
         <Toast type={"success"} title={"Lorem ipsum!"} text={"Lorem ipsum dolor sit amet!"} />
         {/* <!-- ==================== TOP BAR ==================== --> */}
-        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} />
+        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} onGetAllProductsFromNeon={handleSyncGetAllProductsFromNeon} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
         <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onSaveList={handleSaveList} onTitleSearch={setTitleSearch} />

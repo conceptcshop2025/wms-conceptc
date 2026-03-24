@@ -1,0 +1,38 @@
+import { type ProductProps } from "@/app/types/types";
+import pLimit from "p-limit";
+
+export async function syncProductsFromIpacky(products:ProductProps[]): Promise<ProductProps[]> {
+  const limit = pLimit(5);
+  const syncProducts = await Promise.all(
+    products.map((product) => 
+      limit(async () => {
+        const sku = product.variants[0]?.sku;
+
+        if (!sku) return product;
+
+        try {
+          const response = await fetch(`../../api/ipacky?code=${sku}&type=sku`);
+          const result = await response.json();
+
+          if (response.ok && result.data[0]) {
+            return {
+              ...product,
+              bin_location: result.data[0].binLocations || "",
+              bin_max_quantity: result.data[0].htsUS || null,
+              image_url: result.data[0].imageURL || '',
+              inventory_quantity: result.data[0].quantityOnHand,
+              bin_current_quantity: Number(product.bin_current_quantity) > 0 ? product.bin_current_quantity : 0,
+              b_alias: result.data[0].barcodeAliases
+            }
+          }
+        } catch(error) {
+          console.error(`Error fetching data for SKU ${sku}:`, error);
+        }
+
+        return product;
+      })
+    )
+  )
+
+  return syncProducts;
+}

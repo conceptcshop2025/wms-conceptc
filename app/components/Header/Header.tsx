@@ -6,9 +6,10 @@ interface HeaderProps {
   onGetSelledProducts: () => Promise<void>;
   mode: "list" | "warehouse";
   onShowProductListModal: () => void;
+  onGetAllProductsFromNeon: () => void;
 }
 
-export default function Header({ onSync, onGetAllProducts, onGetSelledProducts, onShowProductListModal }: HeaderProps) {
+export default function Header({ onSync, onGetAllProducts, onGetSelledProducts, onShowProductListModal, onGetAllProductsFromNeon }: HeaderProps) {
 
   const modeDev = process.env.NODE_ENV === "development";
 
@@ -22,16 +23,22 @@ export default function Header({ onSync, onGetAllProducts, onGetSelledProducts, 
             <div className="logo-sub">WMS · Québec</div>
           </div>
         </div>
-        <span className="version-badge">v2.7.1</span>
+        <span className="version-badge">v2.8.1</span>
       </div>
       <div className="topbar-actions">
+        <button
+          className="btn btn-ghost disabled:pointer-events-none disabled:opacity-50 border! border-gray-200!" title="Sincronizar datos"
+          onClick={onGetAllProductsFromNeon}
+          >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> <span>Sync from iPacky</span>
+        </button>
         {
           modeDev && (
             <button
-              className="btn btn-ghost btn-icon disabled:pointer-events-none disabled:opacity-50" title="Sincronizar datos"
+              className="btn btn-ghost disabled:pointer-events-none disabled:opacity-50 border! border-gray-200!" title="Sincronizar datos"
               onClick={onSync}
               >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> <span>Sync from Shopify</span>
             </button>
           )
         }

@@ -14,6 +14,7 @@ export type ProductProps = {
   inventory_quantity?:number;
   b_alias?: string | string[];
   _variantSku?: string;
+  status?: string;
 }
 
 export type VariantProps = {
