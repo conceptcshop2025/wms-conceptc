@@ -21,7 +21,7 @@ async function upsertProduct(product: ProductProps) {
       INSERT INTO products (
         shopify_id, title, sku, image_url, vendor, product_type,
         update_at, inventory_quantity, bin_max_quantity,
-        bin_current_quantity, bin_location, variants, b_alias
+        bin_current_quantity, bin_location, variants, b_alias, status
       )
       VALUES (
         ${product.shopify_id},
@@ -36,7 +36,8 @@ async function upsertProduct(product: ProductProps) {
         ${product.bin_current_quantity},
         ${binLocation},
         ${JSON.stringify(product.variants)},
-        ${b_alias}
+        ${b_alias},
+        ${product.status}
       )
       ON CONFLICT (sku) DO UPDATE SET
         shopify_id = EXCLUDED.shopify_id,
@@ -50,7 +51,8 @@ async function upsertProduct(product: ProductProps) {
         bin_current_quantity = EXCLUDED.bin_current_quantity,
         bin_location = EXCLUDED.bin_location,
         variants = EXCLUDED.variants,
-        b_alias = EXCLUDED.b_alias
+        b_alias = EXCLUDED.b_alias,
+        status = EXCLUDED.status
     `;
     return { success: true, product };
   } catch (error) {
@@ -71,7 +73,7 @@ export async function GET(req: Request) {
         SELECT
           id, shopify_id, title, image_url, vendor, product_type,
           update_at AS updated_at, inventory_quantity, bin_max_quantity,
-          bin_current_quantity, bin_location, variants, b_alias
+          bin_current_quantity, bin_location, variants, b_alias, status
         FROM products
         ORDER BY id
         LIMIT ${limit} OFFSET ${offset}

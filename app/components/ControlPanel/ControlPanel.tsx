@@ -11,9 +11,10 @@ interface ControlPanelProps {
   mode: "list" | "warehouse";
   onAddProduct: (sku: string) => void;
   onSaveList: (nameList: string) => void;
+  onChecked: (value: boolean) => void;
 }
 
-export default function ControlPanel({ onFilterChange, onSortChange, onProductSearch, onTitleSearch, onNewList, mode, onAddProduct, onSaveList }: ControlPanelProps) {
+export default function ControlPanel({ onFilterChange, onSortChange, onProductSearch, onTitleSearch, onNewList, mode, onAddProduct, onSaveList, onChecked }: ControlPanelProps) {
   const [searchValue, setSearchValue] = useState("");
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [titleSearchValue, setTitleSearchValue] = useState("");
@@ -119,10 +120,10 @@ export default function ControlPanel({ onFilterChange, onSortChange, onProductSe
           <option value="bin-desc">Emplacement de Bin</option>
         </select>
 
-        <div className="option-group option-group--hide-products-without-stock hidden!">
+        <div className="option-group option-group--hide-products-without-stock">
           <div className="container-input">
-            <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" />
-            <label htmlFor="hide-products-without-stock">Cacher des produits sans stock</label>
+            <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => onChecked(e.target.checked)} />
+            <label htmlFor="hide-products-without-stock">Cacher les produits non actives</label>
           </div>
         </div>
       </div>

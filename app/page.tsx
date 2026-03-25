@@ -29,6 +29,7 @@ export default function Home() {
   const [mode, setMode] = useState<"list" | "warehouse">("warehouse");
   const [showModal, setShowModal] = useState(false);
   const [productListHistoric, setProductListHistoric] = useState<ProductListHistoricProps[]>([]);
+  const [hideNotActiveProducts, setHideNotActiveProducts] = useState<boolean>(false);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -75,8 +76,12 @@ export default function Home() {
       list.sort((a, b) => getFirstBinNumber(a) - getFirstBinNumber(b));
     }
 
+    if(hideNotActiveProducts) {
+      list = list.filter(p => p.status === 'ACTIVE');
+    }
+
     return list;
-  }, [products, filter, sort, titleSearch]);
+  }, [products, filter, sort, titleSearch, hideNotActiveProducts]);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(filteredAndSortedProducts.length / ITEMS_PER_PAGE)),
@@ -150,8 +155,18 @@ export default function Home() {
       setStatus(`¡Sincronización completa! ${bulkProducts.length} productos cargados.`);
       // await getDataFromIpacky(bulkProducts);
       const dataFromShopify =  bulkProducts;
-      console.log(dataFromShopify);
+      console.log('data from Shopify: ', dataFromShopify);
 
+      const allProducts = [...products];
+      allProducts.forEach((product) => {
+        const matchProduct = dataFromShopify.find(key => key.variants[0]?.sku === product._variantSku);
+        if (matchProduct) {
+          product.status = matchProduct.status;
+        }
+      });
+
+      console.log('data from neon + status: ', allProducts);
+      saveProductsInDB(allProducts);
       setLoading(false);
 
     } catch (error: unknown) {
@@ -625,6 +640,10 @@ export default function Home() {
     setLoading(false);
   }
 
+  const handleHideNotActiveProducts = async (value:boolean) => {
+    setHideNotActiveProducts(value);
+  }
+
   return (
     <div>
       <main>
@@ -634,7 +653,7 @@ export default function Home() {
         <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} onGetAllProductsFromNeon={handleSyncGetAllProductsFromNeon} />
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
-        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onSaveList={handleSaveList} onTitleSearch={setTitleSearch} />
+        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onSaveList={handleSaveList} onTitleSearch={setTitleSearch} onChecked={handleHideNotActiveProducts} />
 
         {/* ==================== MAIN CONTENT ==================== */}
         {

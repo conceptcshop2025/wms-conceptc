@@ -49,7 +49,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
       setTimeout(() => {
         setBinValidated(false);
         setBinLocationValue("");
-        console.log(binValidated);
+        console.log('Bin validated status: ', binValidated);
       }, 0);
     }
   }, [isAnyModalOpen]);
