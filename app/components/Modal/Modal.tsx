@@ -64,7 +64,6 @@ export default function Modal({
     <div
       className={`modal-overlay${isClosing ? " closing" : ""}${inline ? " inline" : ""}`}
       ref={overlayRef}
-      onClick={(e) => { if (e.target === overlayRef.current) close(); }}
     >
       <div className="modal-popup">
         <div className="modal-header">
