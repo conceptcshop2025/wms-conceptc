@@ -15,6 +15,7 @@ import Modal from "./components/Modal/Modal";
 import Toast from "./components/Toast/Toast";
 import { getAllProductsFromNeon } from "./lib/data/getAllProductsFromNeon";
 import { syncProductsFromIpacky } from "./lib/data/syncProductsFromIpacky";
+import { updateProducts } from "./lib/data/updateProducts";
 
 export default function Home() {
 
@@ -224,11 +225,13 @@ export default function Home() {
         }
       });
       setProducts([...updatedProducts]);
-      saveProductsInDB(syncProducts);
+      updateProducts(syncProducts);
+      //saveProductsInDB(syncProducts);
       alert("Produit mis à jour avec succès");
     } else {
       setProducts([...syncProducts]);
-      saveProductsInDB(syncProducts);
+      updateProducts(syncProducts);
+      //saveProductsInDB(syncProducts);
     }
   }
 
