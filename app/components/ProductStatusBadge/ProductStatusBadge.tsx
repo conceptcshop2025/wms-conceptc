@@ -1,6 +1,6 @@
-import { type ProductProps } from "@/app/types/types";
+import { type ProductItemProps } from "@/app/types/types";
 
-export default function ProductStatusBadge({ product }: { product: ProductProps }) {
+export default function ProductStatusBadge({ product }: { product: ProductItemProps }) {
 
   const maxBin = product.bin_max_quantity;
   const remaining = product.bin_current_quantity;

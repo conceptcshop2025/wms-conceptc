@@ -1,8 +1,8 @@
-import { type ProductProps } from "@/app/types/types";
+import { type ProductItemProps } from "@/app/types/types";
 
-export async function updateProducts(products:ProductProps[]) {
+export async function updateProducts(products:ProductItemProps[]) {
   
-  const baseUrl = '/api/products';
+  const baseUrl = '/api/store-products';
 
   try {
     const res = await fetch(baseUrl,{

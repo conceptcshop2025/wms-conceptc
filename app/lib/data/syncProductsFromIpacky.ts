@@ -1,12 +1,12 @@
-import { type ProductProps } from "@/app/types/types";
+import { type ProductItemProps } from "@/app/types/types";
 import pLimit from "p-limit";
 
-export async function syncProductsFromIpacky(products:ProductProps[]): Promise<ProductProps[]> {
+export async function syncProductsFromIpacky(products:ProductItemProps[]): Promise<ProductItemProps[]> {
   const limit = pLimit(5);
   const syncProducts = await Promise.all(
     products.map((product) => 
       limit(async () => {
-        const sku = product.variants[0]?.sku;
+        const sku = product.sku;
 
         if (!sku) return product;
 
