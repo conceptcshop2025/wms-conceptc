@@ -384,7 +384,16 @@ export default function Home() {
       return;
     } else {
       const productReady = await syncProductsFromIpacky([findedProduct]);
+      const productToUpdate = productReady[0];
+      if (!productToUpdate) {
+        console.error(`Failed to refresh product with SKU ${sku}`);
+        return;
+      }
       updateProducts(productReady);
+      setProducts(prev =>
+        prev.map(p => (p.sku === productToUpdate.sku ? productToUpdate : p))
+      );
+      alert(`Produit avec sku ${productToUpdate.sku} est à jour correctement!`);
     }
   }
 
