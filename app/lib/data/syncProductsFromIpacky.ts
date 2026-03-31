@@ -24,7 +24,8 @@ export async function syncProductsFromIpacky(products:ProductItemProps[]): Promi
               ...product,
               bin_location: fieldFormat(result.data[0].binLocations),
               bin_max_quantity: result.data[0].htsUS || null,
-              b_alias: fieldFormat(result.data[0].barcodeAliases)
+              b_alias: fieldFormat(result.data[0].barcodeAliases),
+              updated_at: new Date().toISOString()
             }
           }
         } catch(error) {

@@ -56,18 +56,18 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
     if (!sku) return;
 
     const bin_current_quantity = remaining + restock;
-    const update_at = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+    const updated_at = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 
     try {
-      const res = await fetch("/api/warehouse", {
+      const res = await fetch("/api/store-products", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sku, bin_current_quantity, update_at }),
+        body: JSON.stringify({ sku, bin_current_quantity, updated_at }),
       });
 
       if (res.ok) {
         setConfirmed(true);
-        onConfirm(sku, bin_current_quantity, update_at);
+        onConfirm(sku, bin_current_quantity, updated_at);
       }
     } catch (error) {
       console.error("Error confirming product:", error);
@@ -76,7 +76,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
 
   async function handleDeleteConfirm() {
     try {
-      const res = await fetch("/api/warehouse", {
+      const res = await fetch("/api/store-products", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: product.id }),
@@ -105,20 +105,20 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
     if (!sku) return;
 
     const bin_current_quantity = Number(product.bin_max_quantity);
-    const update_at = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+    const updated_at = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 
     try {
-      const res = await fetch("/api/warehouse", {
+      const res = await fetch("/api/store-products", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sku, bin_current_quantity, update_at }),
+        body: JSON.stringify({ sku, bin_current_quantity, updated_at }),
       });
 
       if (res.ok) {
         setRemaining(bin_current_quantity);
         setRestock(0);
         setConfirmed(true);
-        onConfirm(sku, bin_current_quantity, update_at);
+        onConfirm(sku, bin_current_quantity, updated_at);
         console.log(`Bin filled successfully for SKU: ${sku}. New quantity: ${bin_current_quantity}`);
       }
     } catch (error) {

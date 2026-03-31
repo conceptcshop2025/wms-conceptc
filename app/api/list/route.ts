@@ -9,11 +9,10 @@ export async function GET(req: Request) {
 
   try {
     const result = await sql`
-      SELECT * FROM products 
+      SELECT * FROM store_products 
       WHERE 
         sku = ${sku} 
-        OR variants @> ${JSON.stringify([{ barcode: sku }])}::jsonb
-        OR variants @> ${JSON.stringify([{ sku: sku }])}::jsonb
+        OR barcode = ${sku}
         OR ${sku} = ANY(string_to_array(b_alias, ','));
     `;
 

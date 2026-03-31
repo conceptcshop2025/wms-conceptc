@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import pLimit from "p-limit";
 import { fetchBulkProducts } from "./actions/shopify";
 // import { getSalesBetweenDates } from "./actions/sales-shopify";
 import Header from "./components/Header/Header";
@@ -165,7 +164,7 @@ export default function Home() {
     }
   };
 
-  const getDataFromIpacky = async (bulkProducts: ProductItemProps[]) => {
+  /* const getDataFromIpacky = async (bulkProducts: ProductItemProps[]) => {
     setStatus("Obteniendo datos de stock desde Ipacky...");
     // const productList = [...bulkProducts];
     const limit = pLimit(5);
@@ -185,9 +184,7 @@ export default function Home() {
                 ...product,
                 bin_location: result.data[0].binLocations || "",
                 bin_max_quantity: result.data[0].htsUS || null,
-                image_url: result.data[0].imageURL || '',
                 inventory_quantity: result.data[0].quantityOnHand,
-                bin_current_quantity: Number(product.bin_current_quantity) > 0 ? product.bin_current_quantity : 0,
                 b_alias: result.data[0].barcodeAliases
               }
             }
@@ -221,9 +218,9 @@ export default function Home() {
       updateProducts(syncProducts);
       //saveProductsInDB(syncProducts);
     }
-  }
+  } */
 
-  const saveProductsInDB = async (products: ProductItemProps[]) => {
+  /* const saveProductsInDB = async (products: ProductItemProps[]) => {
     const baseUrl = `/api/warehouse`;
     try {
       const res = await fetch(baseUrl,{
@@ -242,7 +239,7 @@ export default function Home() {
     } catch(error) {
       console.error("Error saving products in DB:", error);
     }
-  }
+  } */
 
   /* END Get data from shopify and iPacky only for get all data (first time) */
 
@@ -300,6 +297,7 @@ export default function Home() {
   /* END Get all products from Neon DB */
 
   const handleGetSelledProducts = async () => {
+    setLoading(true);
     const clickTime = new Date().toISOString();
 
     const res = await fetch("/api/sync");
@@ -334,7 +332,7 @@ export default function Home() {
       const productsCopy = [...products];
 
       data.data.forEach((sale: { sku: string; quantity: number }) => {
-        const findProduct = productsCopy.find(p => (p.sku ?? p.sku) === sale.sku);
+        const findProduct = productsCopy.find(p => p.sku === sale.sku);
         if (findProduct) {
           findProduct.bin_current_quantity = Number(findProduct.bin_current_quantity) - sale.quantity;
           findProduct.inventory_quantity = Number(findProduct.inventory_quantity) - sale.quantity;
@@ -342,7 +340,7 @@ export default function Home() {
       });
 
       setProducts(productsCopy);
-      saveProductsInDB(productsCopy);
+      updateProducts(productsCopy);
 
       try {
         const postDate = fetch(`/api/sync`,{
@@ -368,8 +366,8 @@ export default function Home() {
       console.error("error:", error);
     } finally {
       alert("Stock mis à jour avec les ventes récentes !");
+      setLoading(false);
     }
-
   };
 
   /* New list function */
@@ -380,12 +378,13 @@ export default function Home() {
 
   /* Get refresh product function */
   async function handleRefreshProduct(sku:string | undefined) {
-    const findedProduct = products.find(p => (p.sku ?? p.sku) === sku);
+    const findedProduct = products.find(p => p.sku === sku);
     if (!findedProduct) {
       console.error(`Product with SKU ${sku} not found in current products list.`);
       return;
     } else {
-      getDataFromIpacky([findedProduct]);
+      const productReady = await syncProductsFromIpacky([findedProduct]);
+      updateProducts(productReady);
     }
   }
 
@@ -396,16 +395,18 @@ export default function Home() {
 
       if (!result.ok) return;
 
-      let data = await result.json();
+      const data = await result.json();
       if (!data.data || data.data.length === 0) {
         try {
-          const shopifyResult = await fetch(`/api/shopify?code=${code}`);
+          /* const shopifyResult = await fetch(`/api/shopify?code=${code}`);
           if (!result.ok) {
             console.error('Error trying data from iPacky');
           }
           const shopifyResponse = await shopifyResult.json();
           data = shopifyResponse;
-          await addNewProductInNeonDB(data.data[0]);
+          console.log('get product from shopify: ', data);
+          await addNewProductInNeonDB(data.data[0]); */
+          alert(`Produit avec code "${code}" non trouvé dans la base de données locale. Veuillez vérifier le code ou synchroniser les produits pour mettre à jour la base de données.`);
         } catch (error) {
           console.error("Error trying data from iPacky: ", error);
         }
@@ -436,7 +437,7 @@ export default function Home() {
         }, 100);
       }
     } catch(error) {
-      console.error("Error en handleAddProduct:", error);
+      console.error("Error en handle Add Product:", error);
     }
   };
 
@@ -565,7 +566,7 @@ export default function Home() {
   }
 
   /* save new products to neon DB */
-  const addNewProductInNeonDB = async (newProduct: ProductItemProps) => {
+  /* const addNewProductInNeonDB = async (newProduct: ProductItemProps) => {
     const sku = newProduct.sku; 
     try {
       const response = await fetch(`/api/ipacky?code=${sku}&type=sku`);
@@ -604,7 +605,7 @@ export default function Home() {
       console.error(`Error fetching data for SKU ${sku}:`, error);
     }
     console.log('NEW Product with iPacky data: ', newProduct);
-  }
+  } */
 
   const handleSyncGetAllProductsFromNeon = async () => {
     setProducts([]);
