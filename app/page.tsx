@@ -148,30 +148,15 @@ export default function Home() {
     setStatus("Solicitando datos a Shopify...");
     setProducts([]);
     try {
+
       setStatus("Shopify está preparando el archivo... (Bulk Operation)");
       const bulkProducts = await fetchBulkProducts();
       setCurrentPage(1);
       setStatus(`¡Sincronización completa! ${bulkProducts.length} productos cargados.`);
-      // await getDataFromIpacky(bulkProducts);
       const dataFromShopify =  bulkProducts;
-      // console.log('data from Shopify: ', dataFromShopify);
-
-      /* const allProducts = [...products];
-      allProducts.forEach((product) => {
-        const matchProduct = dataFromShopify.find(key => key.variants[0]?.sku === product._variantSku);
-        if (matchProduct) {
-          product.status = matchProduct.status;
-        }
-      });
-
-      console.log('data from neon + status: ', allProducts); */
-      // saveProductsInDB(allProducts);
-
-
-      // updateProducts(dataFromShopify);
+      updateProducts(dataFromShopify);
       setProducts(dataFromShopify);
       setLoading(false);
-      console.log('data from Shopify: ', dataFromShopify);
 
     } catch (error: unknown) {
       console.error("Error:", error);
@@ -284,7 +269,7 @@ export default function Home() {
     try {
       const LIMIT = 200;
 
-      const firstRes = await fetch(`/api/warehouse?page=1&limit=${LIMIT}`);
+      const firstRes = await fetch(`/api/store-products?page=1&limit=${LIMIT}`);
       if (!firstRes.ok) throw new Error(`Error ${firstRes.status}`);
       const firstData = await firstRes.json();
 
@@ -294,7 +279,7 @@ export default function Home() {
       setStatus(`Chargement des produits... (${allProducts.length} / ${total})`);
 
       for (let page = 2; page <= totalPages; page++) {
-        const res = await fetch(`/api/warehouse?page=${page}&limit=${LIMIT}`);
+        const res = await fetch(`/api/store-products?page=${page}&limit=${LIMIT}`);
         if (!res.ok) throw new Error(`Error ${res.status} en página ${page}`);
         const data = await res.json();
         allProducts = [...allProducts, ...data.products];
@@ -630,7 +615,7 @@ export default function Home() {
     const syncedProductsFromIpacky = await syncProductsFromIpacky(allProductFromNeon);
   
     setProducts(syncedProductsFromIpacky);
-    saveProductsInDB(syncedProductsFromIpacky);
+    updateProducts(syncedProductsFromIpacky);
 
     setLoading(false);
   }

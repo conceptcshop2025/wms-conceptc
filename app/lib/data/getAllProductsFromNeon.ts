@@ -4,7 +4,7 @@ export async function getAllProductsFromNeon() {
   try {
     const LIMIT = 200;
 
-    const firstRes = await fetch(`../../api/warehouse?page=1&limit=${LIMIT}`);
+    const firstRes = await fetch(`../../api/store-products?page=1&limit=${LIMIT}`);
     if (!firstRes.ok) throw new Error(`Error ${firstRes.status}`);
     const firstData = await firstRes.json();
 
@@ -13,7 +13,7 @@ export async function getAllProductsFromNeon() {
 
 
     for (let page = 2; page <= totalPages; page++) {
-      const res = await fetch(`/api/warehouse?page=${page}&limit=${LIMIT}`);
+      const res = await fetch(`/api/store-products?page=${page}&limit=${LIMIT}`);
       if (!res.ok) throw new Error(`Error ${res.status} en página ${page}`);
       const data = await res.json();
       allProducts = [...allProducts, ...data.products];

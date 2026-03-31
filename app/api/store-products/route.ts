@@ -98,3 +98,49 @@ export async function PUT(req: Request) {
     );
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.min(500, Math.max(1, parseInt(searchParams.get("limit") || "200", 10)));
+    const offset = (page - 1) * limit;
+
+    const [countResult, rows] = await Promise.all([
+      sql`SELECT COUNT(*)::int AS total FROM store_products`,
+      sql`
+        SELECT
+          id,
+          title,
+          variant_title,
+          image_url,
+          vendor,
+          product_type,
+          updated_at,
+          bin_max_quantity,
+          bin_current_quantity,
+          bin_location,
+          inventory_quantity,
+          b_alias,
+          status,
+          sku,
+          barcode,
+          parent_id
+        FROM store_products
+        ORDER BY id
+        LIMIT ${limit} OFFSET ${offset}
+      `,
+    ]);
+
+    const total = (countResult[0]?.total ?? 0) as number;
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json({ products: rows, total, page, totalPages });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error", details: String(error) },
+      { status: 500 }
+    );
+  }
+}
