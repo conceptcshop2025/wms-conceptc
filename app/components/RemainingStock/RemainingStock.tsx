@@ -1,6 +1,6 @@
-import { type ProductProps } from "@/app/types/types"
+import { type ProductItemProps } from "@/app/types/types"
 
-export default function RemainingStock({ product }: { product: ProductProps }) {
+export default function RemainingStock({ product }: { product: ProductItemProps }) {
 
   const maxBin = product.bin_max_quantity;
   const remaining = product.bin_current_quantity;
@@ -28,9 +28,6 @@ export default function RemainingStock({ product }: { product: ProductProps }) {
         className="restante-value relative text-2xl"
         style={{ color: statusColorByPercentage() }}>
         { product.bin_current_quantity }
-        {
-          product.variants[0] && product.variants[0].commitedInventory > 0 && <small className="absolute top-0 left-3">-{ product.variants[0]?.commitedInventory }</small>
-        }
       </span>
       <span className="restante-pct text-lg" style={{ color: statusColorByPercentage() }}>{remainingPercentage()}%</span>
       <div

@@ -1,12 +1,17 @@
-import { type ProductProps } from "@/app/types/types";
+import { type ProductItemProps } from "@/app/types/types";
 import pLimit from "p-limit";
 
-export async function syncProductsFromIpacky(products:ProductProps[]): Promise<ProductProps[]> {
+export async function syncProductsFromIpacky(products:ProductItemProps[]): Promise<ProductItemProps[]> {
   const limit = pLimit(5);
+
+  function fieldFormat(fields:string[]) {
+    return fields.join(",");
+  }
+
   const syncProducts = await Promise.all(
     products.map((product) => 
       limit(async () => {
-        const sku = product.variants[0]?.sku;
+        const sku = product.sku;
 
         if (!sku) return product;
 
@@ -17,12 +22,10 @@ export async function syncProductsFromIpacky(products:ProductProps[]): Promise<P
           if (response.ok && result.data[0]) {
             return {
               ...product,
-              bin_location: result.data[0].binLocations || "",
+              bin_location: fieldFormat(result.data[0].binLocations),
               bin_max_quantity: result.data[0].htsUS || null,
-              image_url: result.data[0].imageURL || '',
-              inventory_quantity: result.data[0].quantityOnHand,
-              bin_current_quantity: Number(product.bin_current_quantity) > 0 ? product.bin_current_quantity : 0,
-              b_alias: result.data[0].barcodeAliases
+              b_alias: fieldFormat(result.data[0].barcodeAliases),
+              updated_at: new Date().toISOString()
             }
           }
         } catch(error) {

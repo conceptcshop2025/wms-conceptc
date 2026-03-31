@@ -17,6 +17,25 @@ export type ProductProps = {
   status?: string;
 }
 
+export type ProductItemProps = {
+  id: string;
+  title: string;
+  variant_title: string;
+  image_url: string;
+  vendor: string;
+  product_type: string;
+  updated_at: string | undefined;
+  bin_max_quantity: number;
+  bin_current_quantity: number;
+  bin_location: string | string[];
+  inventory_quantity:number;
+  b_alias: string | string[];
+  status: string | undefined;
+  sku: string;
+  barcode: string;
+  parent_id: string;
+}
+
 export type VariantProps = {
   variant_id: string;
   title: string;
@@ -72,7 +91,7 @@ export type ProductListProps = {
   sku: string;
   remaining: number;
   restock: number;
-  id: number;
+  id: string;
 }
 
 export type ProductListHistoricProps = {
