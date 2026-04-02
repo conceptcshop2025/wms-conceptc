@@ -171,7 +171,7 @@ export default function Home() {
 
       const completeProductFromIpackyForNewProducts = await syncProductsFromIpacky(newProducts);
 
-      if (completeProductFromIpackyForNewProducts.length > 0) {
+      if (newProducts.length > 0) {
         updateProducts(completeProductFromIpackyForNewProducts);
       }
       if (productsInDraftOrArchived.length > 0) {
