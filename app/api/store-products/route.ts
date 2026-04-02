@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
-import { type ProductItemProps } from "@/app/types/types";
+import { type ProductItemProps, type DraftProductPayload } from "@/app/types/types";
 
 const sql = neon(process.env.DATABASE_URL || "");
 const CHUNK_SIZE = 25;
@@ -147,21 +147,28 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const { sku, bin_current_quantity, updated_at } = await req.json() as {
-      sku: string;
-      bin_current_quantity: number;
-      updated_at: string;
-    };
+    const products:DraftProductPayload[] = await req.json();
+    const failed: { product: DraftProductPayload; error: string }[] = [];
 
-    await sql`
-      UPDATE store_products
-      SET
-        bin_current_quantity = ${bin_current_quantity},
-        updated_at = ${updated_at}
-      WHERE sku = ${sku}
-    `;
+    for (const product of products) {
+      try {
+        await sql`
+          UPDATE store_products
+          SET status = ${product.newStatus},
+          updated_at = ${product.updated_at}
+          WHERE sku = ${product.sku}
+        `;
+      } catch (error) {
+        failed.push({ product, error: String(error) });
+      }
+    }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: failed.length === 0,
+      count: products.length,
+      failedCount: failed.length,
+      failed,
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json(

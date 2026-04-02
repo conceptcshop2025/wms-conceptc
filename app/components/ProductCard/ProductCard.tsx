@@ -59,7 +59,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
     const updated_at = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 
     try {
-      const res = await fetch("/api/store-products", {
+      const res = await fetch("/api/store-product", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sku, bin_current_quantity, updated_at }),
@@ -108,7 +108,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
     const updated_at = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 
     try {
-      const res = await fetch("/api/store-products", {
+      const res = await fetch("/api/store-product", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sku, bin_current_quantity, updated_at }),
