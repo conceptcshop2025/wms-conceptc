@@ -147,3 +147,9 @@ export type ShopifyProductProps = {
     }
   }
 }
+
+export type DraftProductPayload = {
+  sku: string;
+  newStatus: string;
+  updated_at: string;
+}

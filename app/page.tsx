@@ -15,6 +15,8 @@ import Toast from "./components/Toast/Toast";
 import { getAllProductsFromNeon } from "./lib/data/getAllProductsFromNeon";
 import { syncProductsFromIpacky } from "./lib/data/syncProductsFromIpacky";
 import { updateProducts } from "./lib/data/updateProducts";
+import { setProductsInDraftStatus } from "./lib/data/setProductsInDraftStatus";
+import { setProductsInActiveStatus } from "./lib/data/setProductsInActiveStatus";
 
 export default function Home() {
 
@@ -140,8 +142,6 @@ export default function Home() {
     }
   }, [foundedCardKey, currentPage]);
 
-  /* Get data from shopify and iPacky only for get all data (first time) */
-
   const handleSync = async () => {
     setLoading(true);
     setStatus("Solicitando datos a Shopify...");
@@ -153,8 +153,37 @@ export default function Home() {
       setCurrentPage(1);
       setStatus(`¡Sincronización completa! ${bulkProducts.length} productos cargados.`);
       const dataFromShopify =  bulkProducts;
-      updateProducts(dataFromShopify);
-      setProducts(dataFromShopify);
+
+      const neonResult = await getAllProductsFromNeon();
+
+      if (!Array.isArray(neonResult)) {
+        throw new Error("Expected getAllProductsFromNeon to return an array");
+      }
+
+      const dataFromNeon = neonResult as ProductItemProps[];
+
+      const skusFromNeon = new Set(dataFromNeon.map(p => p.sku));
+      const skusFromShopify = new Set(dataFromShopify.map(p => p.sku));
+
+      const newProducts = dataFromShopify.filter(p => !skusFromNeon.has(p.sku));
+      const productsInDraftOrArchived = dataFromNeon.filter(p => !skusFromShopify.has(p.sku));
+      const productsInActiveAgain = dataFromNeon.filter(p => skusFromShopify.has(p.sku) && p.status === "DRAFT");
+
+      const completeProductFromIpackyForNewProducts = await syncProductsFromIpacky(newProducts);
+
+      if (completeProductFromIpackyForNewProducts.length > 0) {
+        updateProducts(completeProductFromIpackyForNewProducts);
+      }
+      if (productsInDraftOrArchived.length > 0) {
+        setProductsInDraftStatus(productsInDraftOrArchived);
+      }
+      if (productsInActiveAgain.length > 0) {
+        setProductsInActiveStatus(productsInActiveAgain);
+      }
+
+      const refreshProductsFromNeon = await getAllProductsFromNeon();
+      setProducts(refreshProductsFromNeon as ProductItemProps[]);
+
       setLoading(false);
 
     } catch (error: unknown) {
@@ -163,85 +192,6 @@ export default function Home() {
       setLoading(false);
     }
   };
-
-  /* const getDataFromIpacky = async (bulkProducts: ProductItemProps[]) => {
-    setStatus("Obteniendo datos de stock desde Ipacky...");
-    // const productList = [...bulkProducts];
-    const limit = pLimit(5);
-    const syncProducts = await Promise.all(
-      bulkProducts.map((product) => 
-        limit(async () => {
-          const sku = product.sku;
-
-          if (!sku) return product;
-
-          try {
-            const response = await fetch(`/api/ipacky?code=${sku}&type=sku`);
-            const result = await response.json();
-
-            if (response.ok && result.data[0]) {
-              return {
-                ...product,
-                bin_location: result.data[0].binLocations || "",
-                bin_max_quantity: result.data[0].htsUS || null,
-                inventory_quantity: result.data[0].quantityOnHand,
-                b_alias: result.data[0].barcodeAliases
-              }
-            }
-          } catch(error) {
-            console.error(`Error fetching data for SKU ${sku}:`, error);
-          }
-
-          return product;
-        })
-      )
-    )
-
-    if (products.length > 0) {
-      const updatedProducts = [...products];
-      syncProducts.forEach((item: ProductItemProps) => {
-        const findProductToModify = updatedProducts.find(key => key.sku === item.sku);
-        if (findProductToModify) {
-          findProductToModify.updated_at = new Date().toISOString();
-          findProductToModify.bin_max_quantity = item.bin_max_quantity;
-          findProductToModify.bin_location = Array.isArray(item.bin_location) ? item.bin_location.join(",") : item.bin_location;
-          findProductToModify.inventory_quantity = item.inventory_quantity;
-          findProductToModify.b_alias = Array.isArray(item.b_alias) ? item.b_alias.join(",") : item.b_alias;
-        }
-      });
-      setProducts([...updatedProducts]);
-      updateProducts(syncProducts);
-      //saveProductsInDB(syncProducts);
-      alert("Produit mis à jour avec succès");
-    } else {
-      setProducts([...syncProducts]);
-      updateProducts(syncProducts);
-      //saveProductsInDB(syncProducts);
-    }
-  } */
-
-  /* const saveProductsInDB = async (products: ProductItemProps[]) => {
-    const baseUrl = `/api/warehouse`;
-    try {
-      const res = await fetch(baseUrl,{
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(products)
-      });
-
-      const data = await res.json();
-
-      if (data.failedCount > 0) {
-        console.warn("Productos que fallaron:", data.failed);
-      }
-    } catch(error) {
-      console.error("Error saving products in DB:", error);
-    }
-  } */
-
-  /* END Get data from shopify and iPacky only for get all data (first time) */
 
   const handleProductDelete = useCallback((id: string, variantSku?: string) => {
     setProducts(prev => prev.filter(p => !(p.id === id && (p.sku ?? p.sku) === variantSku)));

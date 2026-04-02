@@ -1,4 +1,4 @@
-import { type ProductProps } from "@/app/types/types";
+import { type ProductItemProps } from "@/app/types/types";
 
 export async function getAllProductsFromNeon() {
   try {
@@ -8,7 +8,7 @@ export async function getAllProductsFromNeon() {
     if (!firstRes.ok) throw new Error(`Error ${firstRes.status}`);
     const firstData = await firstRes.json();
 
-    let allProducts: ProductProps[] = [...firstData.products];
+    let allProducts: ProductItemProps[] = [...firstData.products];
     const { totalPages } = firstData as { total: number; totalPages: number };
 
 
