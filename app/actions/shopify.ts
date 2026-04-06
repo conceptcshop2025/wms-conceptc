@@ -71,6 +71,7 @@ export async function startProductsBulkOperation(): Promise<string> {
                 productType
                 status
                 updatedAt
+                tags
                 featuredImage {
                   url
                 }
@@ -152,6 +153,8 @@ type RawProduct = {
   inventoryQuantity: number;
   inventory_quantity?: number;
   status?: string;
+  expiration: boolean;
+  tags: string[];
 };
 
 type RawVariant = {
@@ -276,6 +279,7 @@ function parseProductsJSONL(jsonlText: string): ProductItemProps[] {
           sku: variant.sku,
           barcode: variant.barcode,
           parent_id: product.id,
+          expiration: product.tags.includes("Expiration"),
         }
 
         resultOfProducts.push(productItem);
@@ -311,6 +315,7 @@ function parseProductsJSONL(jsonlText: string): ProductItemProps[] {
         sku: variants[0] ? variants[0]?.sku : "",
         barcode: variants[0] ? variants[0]?.barcode : "",
         parent_id: product.id,
+        expiration: product.tags.includes("Expiration"),
       }
       
       resultOfProducts.push(productItem);

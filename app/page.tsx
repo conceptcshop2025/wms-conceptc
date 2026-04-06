@@ -17,6 +17,7 @@ import { syncProductsFromIpacky } from "./lib/data/syncProductsFromIpacky";
 import { updateProducts } from "./lib/data/updateProducts";
 import { setProductsInDraftStatus } from "./lib/data/setProductsInDraftStatus";
 import { setProductsInActiveStatus } from "./lib/data/setProductsInActiveStatus";
+import { setProductsExpirationStatus } from "./lib/data/setProductsExpirationStatus";
 
 export default function Home() {
 
@@ -170,7 +171,9 @@ export default function Home() {
       const productsInActiveAgain = dataFromNeon.filter(p => skusFromShopify.has(p.sku) && p.status === "DRAFT");
 
       const completeProductFromIpackyForNewProducts = await syncProductsFromIpacky(newProducts);
-
+      
+      const productsWithExpirationTag = dataFromShopify.filter(p => p.expiration === true);
+      
       if (newProducts.length > 0) {
         updateProducts(completeProductFromIpackyForNewProducts);
       }
@@ -179,6 +182,9 @@ export default function Home() {
       }
       if (productsInActiveAgain.length > 0) {
         setProductsInActiveStatus(productsInActiveAgain);
+      }
+      if (productsWithExpirationTag.length > 0) {
+        setProductsExpirationStatus(productsWithExpirationTag);
       }
 
       const refreshProductsFromNeon = await getAllProductsFromNeon();

@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
-import { type ProductItemProps, type DraftProductPayload } from "@/app/types/types";
+import { type ProductItemProps, type ProductPayloadProps } from "@/app/types/types";
 
 const sql = neon(process.env.DATABASE_URL || "");
 const CHUNK_SIZE = 25;
@@ -24,7 +24,8 @@ async function upsertProduct(product: ProductItemProps) {
         status,
         sku,
         barcode,
-        parent_id
+        parent_id,
+        expiration
       )
       VALUES (
         ${ product.id },
@@ -42,7 +43,8 @@ async function upsertProduct(product: ProductItemProps) {
         ${ product.status },
         ${ product.sku },
         ${ product.barcode },
-        ${ product.parent_id }
+        ${ product.parent_id },
+        ${ product.expiration}
       )
       ON CONFLICT (id) DO UPDATE SET
         title = EXCLUDED.title,
@@ -59,7 +61,8 @@ async function upsertProduct(product: ProductItemProps) {
         status = EXCLUDED.status,
         sku = EXCLUDED.sku,
         barcode = EXCLUDED.barcode,
-        parent_id = EXCLUDED.parent_id
+        parent_id = EXCLUDED.parent_id,
+        expiration = EXCLUDED.expiration
     `;
     return { success: true, product };
   } catch (error) {
@@ -125,7 +128,8 @@ export async function GET(req: Request) {
           status,
           sku,
           barcode,
-          parent_id
+          parent_id,
+          expiration
         FROM store_products
         ORDER BY id
         LIMIT ${limit} OFFSET ${offset}
@@ -147,17 +151,39 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const products:DraftProductPayload[] = await req.json();
-    const failed: { product: DraftProductPayload; error: string }[] = [];
+    const products: ProductPayloadProps[] = await req.json();
+    const failed: { product: ProductPayloadProps; error: string }[] = [];
+
+    const ALLOWED_COLUMNS = new Set([
+      "title", "variant_title", "image_url", "vendor", "product_type",
+      "updated_at", "bin_max_quantity", "bin_current_quantity", "bin_location",
+      "inventory_quantity", "b_alias", "status", "barcode", "parent_id", "expiration",
+    ]);
 
     for (const product of products) {
       try {
-        await sql`
-          UPDATE store_products
-          SET status = ${product.newStatus},
-          updated_at = ${product.updated_at}
-          WHERE sku = ${product.sku}
-        `;
+        const { sku, ...fieldsToUpdate } = product;
+
+        if (!sku) throw new Error("SKU is required");
+
+        const entries = Object.entries(fieldsToUpdate).filter(
+          ([col]) => ALLOWED_COLUMNS.has(col)
+        );
+
+        if (entries.length === 0) continue;
+
+        const setClause = entries
+          .map(([col], i) => `${col} = $${i + 1}`)
+          .join(", ");
+
+        const values = entries.map(([, val]) => val);
+
+        values.push(sku);
+        const skuIndex = values.length;
+
+        const query = `UPDATE store_products SET ${setClause} WHERE sku = $${skuIndex}`;
+
+        await sql.query(query, values);
       } catch (error) {
         failed.push({ product, error: String(error) });
       }
