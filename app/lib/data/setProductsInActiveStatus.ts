@@ -1,14 +1,14 @@
-import { type ProductItemProps, type DraftProductPayload } from "@/app/types/types";
+import { type ProductItemProps, type ProductPayloadProps } from "@/app/types/types";
 
 export async function setProductsInActiveStatus(products: ProductItemProps[]) {
 
   try {
     const baseUrl = '/api/store-products';
     try {
-      const payload:DraftProductPayload[] = products.map((product) => {
+      const payload:ProductPayloadProps[] = products.map((product) => {
         return {
           sku: product.sku,
-          newStatus: "ACTIVE",
+          status: "ACTIVE",
           updated_at: new Date().toISOString()
         };
       });

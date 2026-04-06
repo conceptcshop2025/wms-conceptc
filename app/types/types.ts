@@ -34,6 +34,7 @@ export type ProductItemProps = {
   sku: string;
   barcode: string;
   parent_id: string;
+  expiration: boolean;
 }
 
 export type VariantProps = {
@@ -153,3 +154,15 @@ export type DraftProductPayload = {
   newStatus: string;
   updated_at: string;
 }
+
+export type ProductPayloadProps = {
+  sku: string;
+  updated_at: string;
+  expiration?: boolean;
+  status?: string;
+}
+
+export type DynamicQuery = (
+  query: string,
+  params: Array<string | number | boolean | null | Date>
+) => Promise<unknown[]>;
