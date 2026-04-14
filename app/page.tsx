@@ -471,15 +471,13 @@ export default function Home() {
     setShowModal(false);
 
     try {
-      // Sequential loading ensures each variant card is in state before checking for duplicates
       for (const item of list.products) {
         await handleAddProduct(item.sku);
       }
 
-      // After all products are rendered, restore remaining/restock values
       setTimeout(() => {
         list.products.forEach((item) => {
-          const cardKey = `${item.id}_${item.sku}`;
+          const cardKey = `${item.id}`;
           const findProduct = document.querySelector(`[data-card-key="${cardKey}"]`) as HTMLElement;
           if (findProduct) {
             const remainingInput = findProduct.querySelector(".remaining-input") as HTMLInputElement;
