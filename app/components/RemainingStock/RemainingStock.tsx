@@ -9,7 +9,8 @@ export default function RemainingStock({ product }: { product: ProductItemProps 
     if (maxBin === null || maxBin === 0) return 0;
     const invQty = Number(product.inventory_quantity) ?? 0;
     const effectiveMax = (invQty > 0 && invQty < maxBin) ? invQty : maxBin;
-    return Math.round((remaining / effectiveMax) * 100);
+    const finalPercentage = Math.round((remaining / effectiveMax) * 100);
+    return finalPercentage < 0 ? 0 : finalPercentage;
   }
 
   const statusColorByPercentage = () => {
@@ -18,7 +19,7 @@ export default function RemainingStock({ product }: { product: ProductItemProps 
     if (percentage >= 41 && percentage < 61) return "var(--status-medium)";
     if (percentage >= 26 && percentage < 41) return "var(--status-low)";
     if (percentage >= 1 && percentage < 26) return "var(--status-low)";
-    if (percentage == 0) return "var(--status-empty)";
+    if (percentage <= 0) return "var(--status-empty)";
     return "var(--status-empty)";
   }
 
@@ -27,9 +28,11 @@ export default function RemainingStock({ product }: { product: ProductItemProps 
       <span
         className="restante-value relative text-2xl"
         style={{ color: statusColorByPercentage() }}>
-        { product.bin_current_quantity }
+        { product.bin_current_quantity < 0 ? 0 : product.bin_current_quantity }
       </span>
-      <span className="restante-pct text-lg" style={{ color: statusColorByPercentage() }}>{remainingPercentage()}%</span>
+      <span className="restante-pct text-lg" style={{ color: statusColorByPercentage() }}>
+        {remainingPercentage()}%
+      </span>
       <div
         className="progress-mini">
         <div

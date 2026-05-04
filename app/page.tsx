@@ -62,7 +62,7 @@ export default function Home() {
     }
 
     if (filter === "empty") {
-      list = list.filter(p => getRemainingPct(p) === 0);
+      list = list.filter(p => getRemainingPct(p) <= 0);
     } else if (filter === "very-low") {
       list = list.filter(p => { const pct = getRemainingPct(p); return pct > 0 && pct < 25; });
     } else if (filter === "low") {

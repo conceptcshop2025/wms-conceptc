@@ -20,7 +20,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
   const activeVariant = product.sku;
   const cardKey = product.id;
   const modeDev = process.env.NODE_ENV === "development";
-  const [remaining, setRemaining] = useState<number>(Number(product.bin_current_quantity) || 0);
+  const [remaining, setRemaining] = useState<number>(Number(product.bin_current_quantity) <= 0 ? 0 : Number(product.bin_current_quantity));
   const [restock, setRestock] = useState<number>(0);
   const [confirmed, setConfirmed] = useState(false);
   const [showModal, setShowModal] = useState(false);

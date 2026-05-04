@@ -9,7 +9,8 @@ export default function ProductStatusBadge({ product }: { product: ProductItemPr
     if (maxBin === null || maxBin === 0) return 0;
     const invQty = Number(product.inventory_quantity) ?? 0;
     const effectiveMax = (invQty > 0 && invQty < maxBin) ? invQty : maxBin;
-    return Math.round((remaining / effectiveMax) * 100);
+    const finalPercentage = Math.round((remaining / effectiveMax) * 100);
+    return finalPercentage < 0 ? 0 : finalPercentage;
   }
 
   const statusBadge = () => {
@@ -18,7 +19,7 @@ export default function ProductStatusBadge({ product }: { product: ProductItemPr
     if (percentage >= 41 && percentage < 61) return "Stock moyen";
     if (percentage >= 26 && percentage < 41) return "Stock faible";
     if (percentage >= 1 && percentage < 26) return "Stock très faible";
-    if (percentage == 0) return "Sans stock";
+    if (percentage <= 0) return "Sans stock";
     return "Pas disponible";
   }
 
@@ -28,7 +29,7 @@ export default function ProductStatusBadge({ product }: { product: ProductItemPr
     if (percentage >= 41 && percentage < 61) return "var(--status-medium)";
     if (percentage >= 26 && percentage < 41) return "var(--status-low)";
     if (percentage >= 1 && percentage < 26) return "var(--status-low)";
-    if (percentage == 0) return "var(--status-empty)";
+    if (percentage <= 0) return "var(--status-empty)";
     return "var(--status-empty)";
   }
 
