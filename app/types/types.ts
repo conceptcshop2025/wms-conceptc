@@ -166,3 +166,18 @@ export type DynamicQuery = (
   query: string,
   params: Array<string | number | boolean | null | Date>
 ) => Promise<unknown[]>;
+
+export type MenuProps = {
+  isOpen: boolean;
+  onCloseMenu: () => void;
+}
+
+export type BinLocationsProps = {
+  bins: BinProps[];
+  setBin: (bin:BinProps) => void;
+}
+
+export type BinProps = {
+  id: string;
+  empty: boolean;
+}
