@@ -175,6 +175,7 @@ export type MenuProps = {
 export type BinLocationsProps = {
   bins: BinProps[];
   setBin: (bin:BinProps) => void;
+  updateBin: (binId:string) => void;
 }
 
 export type BinProps = {
