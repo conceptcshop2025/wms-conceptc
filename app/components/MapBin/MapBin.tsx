@@ -48,13 +48,12 @@ export default function MapBin() {
       const response = await fetch("/api/bin-locations");
       const data = await response.json();
       formatBinLocationsList(data);
-      console.log(data);
     } catch (error) {
       console.error("Error fetching bin locations:", error);
     }
   }
 
-  const formatBinLocationsList = (data: { bin_location: string }[]) => {
+  const formatBinLocationsList = (data: { bin_location: string; bin_current_quantity: string }[]) => {
     const uniqueBins = new Set<string>()
 
     data.forEach((item) => {
@@ -97,10 +96,10 @@ export default function MapBin() {
         return letterA.localeCompare(letterB)
       }
     )
-
-    const formattedBins = sortedBins.map((location) => ({
+    console.log(sortedBins);
+    const formattedBins = sortedBins.map((location, index) => ({
       id: location,
-      empty: false
+      empty: Number(data[index]?.bin_current_quantity) > 0 ? false : true
     }))
 
     useBinLocations.setState({

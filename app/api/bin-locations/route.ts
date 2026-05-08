@@ -5,7 +5,7 @@ const sql = neon(process.env.DATABASE_URL || "");
 
 export async function GET() {
   try {
-    const response = await sql`SELECT bin_location FROM products`;
+    const response = await sql`SELECT bin_location, bin_current_quantity FROM products`;
 
     const data = response;
     return NextResponse.json(data);
