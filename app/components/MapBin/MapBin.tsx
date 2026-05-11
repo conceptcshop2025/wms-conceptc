@@ -16,11 +16,12 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
         bin.id === binId ? { ...bin, empty: !bin.empty } : bin)
     }))
   }
-})) 
+}));
 
 export default function MapBin() {
   const [bin, setBin] = useState<string>("");
-  const addBinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);  
+  const addBinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [filteredBinList, setFilteredBinList] = useState<BinProps[]>([]);
 
   const handleAddBin = (e: React.ChangeEvent<HTMLInputElement>) => {
     const binId = e.target.value;
@@ -72,7 +73,19 @@ export default function MapBin() {
       })
     })
 
-    const sortedBins = Array.from(uniqueBins).sort(
+    const filterLocations = Array.from(uniqueBins).filter((location) => {
+      const parts = location.split(".");
+      if (parts.length > 1) {
+        const stage = parts[1]?.trim();
+        const zone = parts[0]?.trim();
+        if (Number(stage) <= 4 && Number(zone) <= 500) {
+          return location;
+        }
+      }
+      return;
+    });
+
+    const sortedBins = filterLocations.sort(
       (a, b) => {
         const regex = /^(\d+)([A-Za-z]*)$/
 
@@ -95,8 +108,7 @@ export default function MapBin() {
 
         return letterA.localeCompare(letterB)
       }
-    )
-    console.log(sortedBins);
+    );
     const formattedBins = sortedBins.map((location, index) => ({
       id: location,
       empty: Number(data[index]?.bin_current_quantity) > 0 ? false : true
@@ -106,7 +118,19 @@ export default function MapBin() {
       bins: formattedBins
     })
 
+    setFilteredBinList(formattedBins);
+
     return formattedBins
+  }
+
+  const handleToggleFilterBins = (value: boolean) => {
+    if(value === true) {
+      const filteredBins = useBinLocations.getState().bins.filter(bin => bin.empty === true);
+      setFilteredBinList(filteredBins);
+    } else {
+      const allBins = useBinLocations.getState().bins;
+      setFilteredBinList(allBins);
+    }
   }
 
   return (
@@ -129,14 +153,20 @@ export default function MapBin() {
             onChange={handleAddBin}
           />
         </div>
-        <div className="group flex justify-start gap-4">
+        <div className="group flex justify-start gap-4 items-center">
           <span className="w-[100px] !p-1 bg-red-300 border border-red-900 rounded-lg text-red-900 text-center">Bin Occupé</span>
           <span className="w-[100px] !p-1 bg-green-300 border border-green-900 rounded-lg text-green-900 text-center">Bin Vide</span>
+          <div className="option-group option-group--hide-products-without-stock">
+            <div className="container-input">
+              <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => handleToggleFilterBins(e.target.checked)} />
+              <label htmlFor="hide-products-without-stock">Cacher les produits non actives</label>
+            </div>
+          </div>
         </div>
       </div>
       <div className="bin-list !mt-8">
         <ul className="flex justify-start gap-4 flex-wrap">
-          {useBinLocations((state) => state.bins).map((bin:BinProps) => (
+          {filteredBinList.map((bin:BinProps) => (
             <li key={bin.id} className={`border rounded-lg !py-2 !px-4 relative !pr-[40px] overflow-hidden ${!bin.empty ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>
               <span>{bin.id}</span>
               <button className="bg-sky-500 absolute right-0 top-0 h-full !px-2 border-l border-l-sky-900 cursor-pointer" onClick={() => handleUpdateBin(bin.id)}>
