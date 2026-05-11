@@ -183,4 +183,5 @@ export type BinLocationsProps = {
 export type BinProps = {
   id: string;
   empty: boolean;
+  sku?: string;
 }

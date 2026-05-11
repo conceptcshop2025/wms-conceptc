@@ -67,7 +67,7 @@ export default function MapBin() {
     }
   }
 
-  const formatBinLocationsList = (data: { bin_location: string; bin_current_quantity: string }[]) => {
+  const formatBinLocationsList = (data: { bin_location: string; bin_current_quantity: string; sku: string }[]) => {
     const uniqueBins = new Set<string>()
 
     data.forEach((item) => {
@@ -124,8 +124,11 @@ export default function MapBin() {
     );
     const formattedBins = sortedBins.map((location, index) => ({
       id: location,
-      empty: Number(data[index]?.bin_current_quantity) > 0 ? false : true
+      empty: Number(data[index]?.bin_current_quantity) > 0 ? false : true,
+      sku: data[index]?.sku || ""
     }))
+
+    console.log("Formatted Bins:", formattedBins);
 
     useBinLocations.setState({
       bins: formattedBins,
