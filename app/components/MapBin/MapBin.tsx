@@ -23,7 +23,7 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
   filterBins: (value: boolean | null) => {
     set((state) => ({
       filteredBins:
-        value === null
+        value === null || value === false
           ? state.bins
           : state.bins.filter((bin) => bin.empty === value),
     }));
