@@ -6,22 +6,33 @@ import { ArchiveBoxArrowDownIcon, ArrowPathRoundedSquareIcon } from "@heroicons/
 
 const useBinLocations = create<BinLocationsProps>((set) => ({
   bins: [],
+  filteredBins: [],
   setBin: (bin) =>
     set((state) => ({
-      bins: [...state.bins, bin]
+      bins: [...state.bins, bin],
+      filteredBins: [...state.bins, bin]
     })),
   updateBin: (binId:string) => {
     set((state) => ({
       bins: state.bins.map((bin) => 
+        bin.id === binId ? { ...bin, empty: !bin.empty } : bin),
+      filteredBins: state.filteredBins.map((bin) => 
         bin.id === binId ? { ...bin, empty: !bin.empty } : bin)
     }))
-  }
+  },
+  filterBins: (value: boolean | null) => {
+    set((state) => ({
+      filteredBins:
+        value === null
+          ? state.bins
+          : state.bins.filter((bin) => bin.empty === value),
+    }));
+  },
 }));
 
 export default function MapBin() {
   const [bin, setBin] = useState<string>("");
   const addBinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [filteredBinList, setFilteredBinList] = useState<BinProps[]>([]);
 
   const handleAddBin = (e: React.ChangeEvent<HTMLInputElement>) => {
     const binId = e.target.value;
@@ -43,6 +54,8 @@ export default function MapBin() {
   }
 
   const handleUpdateBin = useBinLocations((state) => state.updateBin);
+  const filteredBins = useBinLocations((state) => state.filteredBins);
+  const filterBins = useBinLocations((state) => state.filterBins);
 
   const getLocations = async () => {
     try {
@@ -115,22 +128,11 @@ export default function MapBin() {
     }))
 
     useBinLocations.setState({
-      bins: formattedBins
+      bins: formattedBins,
+      filteredBins: formattedBins
     })
 
-    setFilteredBinList(formattedBins);
-
     return formattedBins
-  }
-
-  const handleToggleFilterBins = (value: boolean) => {
-    if(value === true) {
-      const filteredBins = useBinLocations.getState().bins.filter(bin => bin.empty === true);
-      setFilteredBinList(filteredBins);
-    } else {
-      const allBins = useBinLocations.getState().bins;
-      setFilteredBinList(allBins);
-    }
   }
 
   return (
@@ -158,7 +160,7 @@ export default function MapBin() {
           <span className="w-[100px] !p-1 bg-green-300 border border-green-900 rounded-lg text-green-900 text-center">Bin Vide</span>
           <div className="option-group option-group--hide-products-without-stock">
             <div className="container-input">
-              <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => handleToggleFilterBins(e.target.checked)} />
+              <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => filterBins(e.target.checked)} />
               <label htmlFor="hide-products-without-stock">Cacher les produits non actives</label>
             </div>
           </div>
@@ -166,7 +168,7 @@ export default function MapBin() {
       </div>
       <div className="bin-list !mt-8">
         <ul className="flex justify-start gap-4 flex-wrap">
-          {filteredBinList.map((bin:BinProps) => (
+          {filteredBins.map((bin:BinProps) => (
             <li key={bin.id} className={`border rounded-lg !py-2 !px-4 relative !pr-[40px] overflow-hidden ${!bin.empty ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>
               <span>{bin.id}</span>
               <button className="bg-sky-500 absolute right-0 top-0 h-full !px-2 border-l border-l-sky-900 cursor-pointer" onClick={() => handleUpdateBin(bin.id)}>

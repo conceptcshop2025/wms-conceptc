@@ -174,8 +174,10 @@ export type MenuProps = {
 
 export type BinLocationsProps = {
   bins: BinProps[];
+  filteredBins: BinProps[];
   setBin: (bin:BinProps) => void;
   updateBin: (binId:string) => void;
+  filterBins: (value: boolean | null) => void;
 }
 
 export type BinProps = {
