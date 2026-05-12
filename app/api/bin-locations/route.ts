@@ -14,7 +14,7 @@ async function upsertProduct(location: BinProps) {
       )
       VALUES (
         ${ location.id },
-        false
+        ${ location.empty }
       )
     `;
     return { success: true, location };
