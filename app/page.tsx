@@ -18,6 +18,7 @@ import { updateProducts } from "./lib/data/updateProducts";
 import { setProductsInDraftStatus } from "./lib/data/setProductsInDraftStatus";
 import { setProductsInActiveStatus } from "./lib/data/setProductsInActiveStatus";
 import { setProductsExpirationStatus } from "./lib/data/setProductsExpirationStatus";
+import Menu from "./components/Menu/Menu";
 
 export default function Home() {
 
@@ -33,6 +34,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [productListHistoric, setProductListHistoric] = useState<ProductListHistoricProps[]>([]);
   const [hideNotActiveProducts, setHideNotActiveProducts] = useState<boolean>(false);
+  const [openMenu, setOpenMenu] = useState<boolean>(false);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -588,13 +590,20 @@ export default function Home() {
     setHideNotActiveProducts(value);
   }
 
+  const toggleMenu = () => {
+    setOpenMenu(prev => !prev);
+  }
+
   return (
     <div>
       <main>
         {/* TOAST */}
         <Toast type={"success"} title={"Lorem ipsum!"} text={"Lorem ipsum dolor sit amet!"} />
+        
+        {/* TOAST */}
+        <Menu isOpen={openMenu} onCloseMenu={toggleMenu} />
         {/* <!-- ==================== TOP BAR ==================== --> */}
-        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} onGetAllProductsFromNeon={handleSyncGetAllProductsFromNeon} />
+        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} onGetAllProductsFromNeon={handleSyncGetAllProductsFromNeon} onShowMenu={toggleMenu}/>
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
         <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onSaveList={handleSaveList} onTitleSearch={setTitleSearch} onChecked={handleHideNotActiveProducts} />

@@ -166,3 +166,27 @@ export type DynamicQuery = (
   query: string,
   params: Array<string | number | boolean | null | Date>
 ) => Promise<unknown[]>;
+
+export type MenuProps = {
+  isOpen: boolean;
+  onCloseMenu: () => void;
+}
+
+export type BinLocationsProps = {
+  bins: BinProps[];
+  filteredBins: BinProps[];
+  setBin: (bin:BinProps) => void;
+  updateBin: (binId:string) => void;
+  filterBins: (value: boolean | null) => void;
+}
+
+export type BinProps = {
+  id: string;
+  empty: boolean;
+  sku?: string;
+  products?: {
+    sku: string;
+    qty: number;
+  }[]
+  total_products?: number;
+}
