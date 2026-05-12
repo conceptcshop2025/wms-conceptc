@@ -183,10 +183,4 @@ export type BinLocationsProps = {
 export type BinProps = {
   id: string;
   empty: boolean;
-  sku?: string;
-  products?: {
-    sku: string;
-    qty: number;
-  }[]
-  total_products?: number;
 }
