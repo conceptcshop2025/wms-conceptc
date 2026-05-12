@@ -189,7 +189,7 @@ export default function MapBin() {
 
   return (
     <div className="map-bin block">
-      <button className="action-btn action-btn-confirm !mb-8" onClick={getLocations}>
+      <button className="action-btn action-btn-confirm !mb-8 !hidden" onClick={getLocations}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         Get Locations
       </button>
