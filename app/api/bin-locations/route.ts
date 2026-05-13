@@ -14,7 +14,7 @@ async function upsertProduct(location: BinProps) {
       )
       VALUES (
         ${ location.id },
-        ${ location.empty }
+        ${ location.available }
       )
     `;
     return { success: true, location };
@@ -25,7 +25,7 @@ async function upsertProduct(location: BinProps) {
 
 export async function GET() {
   try {
-    const response = await sql`SELECT bin_location, bin_current_quantity, sku FROM store_products WHERE status = 'ACTIVE' AND bin_location != ''`;
+    const response = await sql`SELECT id, available FROM bin_locations`;
 
     const data = response;
     return NextResponse.json(data);

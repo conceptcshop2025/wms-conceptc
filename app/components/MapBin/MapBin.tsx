@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
+// import { useState, useRef } from "react";
 import "./MapBin.css";
 import { create } from "zustand";
-import { type BinLocationsProps, type BinProps } from "@/app/types/types";
-import { ArchiveBoxArrowDownIcon, ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
+import { type BinContainerProps, type BinLocationsProps, type BinProps } from "@/app/types/types";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 const useBinLocations = create<BinLocationsProps>((set) => ({
   bins: [],
@@ -15,9 +15,9 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
   updateBin: (binId:string) => {
     set((state) => ({
       bins: state.bins.map((bin) => 
-        bin.id === binId ? { ...bin, empty: !bin.empty } : bin),
+        bin.id === binId ? { ...bin, available: !bin.available } : bin),
       filteredBins: state.filteredBins.map((bin) => 
-        bin.id === binId ? { ...bin, empty: !bin.empty } : bin)
+        bin.id === binId ? { ...bin, available: !bin.available } : bin)
     }))
   },
   filterBins: (value: boolean | null) => {
@@ -25,16 +25,16 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
       filteredBins:
         value === null || value === false
           ? state.bins
-          : state.bins.filter((bin) => bin.empty === value),
+          : state.bins.filter((bin) => bin.available === value),
     }));
   },
 }));
 
 export default function MapBin() {
-  const [bin, setBin] = useState<string>("");
-  const addBinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* const [bin, setBin] = useState<string>("");
+  const addBinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); */
 
-  const handleAddBin = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /* const handleAddBin = (e: React.ChangeEvent<HTMLInputElement>) => {
     const binId = e.target.value;
 
     setBin(binId);
@@ -45,15 +45,15 @@ export default function MapBin() {
       const arrayOfBins = useBinLocations.getState().bins;
       const existingBin = arrayOfBins.find(key => binId === key.id);
       if (!existingBin) {
-        useBinLocations.getState().setBin({ id: binId, empty: false });
+        useBinLocations.getState().setBin({ id: binId, available: false });
       } else {
         console.log('Existing Bin in list!');
       }
       setBin("");
     }, 500);
-  }
+  } */
 
-  const handleUpdateBin = useBinLocations((state) => state.updateBin);
+  // const handleUpdateBin = useBinLocations((state) => state.updateBin);
   const filteredBins = useBinLocations((state) => state.filteredBins);
   const filterBins = useBinLocations((state) => state.filterBins);
 
@@ -67,13 +67,13 @@ export default function MapBin() {
     }
   }
 
-  const formatBinLocationsList = (data: { bin_location: string; bin_current_quantity: string; sku: string }[]) => {
+  const formatBinLocationsList = (data: BinProps[]) => {
     const uniqueBins = new Set<string>()
 
     data.forEach((item) => {
-      if (!item.bin_location?.trim()) return
+      if (!item.id?.trim()) return
 
-      const locations = item.bin_location
+      const locations = item.id
         .split(',')
         .map((location) => location.trim())
 
@@ -98,51 +98,61 @@ export default function MapBin() {
       return;
     });
 
-    const sortedBins = filterLocations.sort(
-      (a, b) => {
-        const regex = /^(\d+)([A-Za-z]*)$/
+    const assignFormatBinList = (locations: string[]) => {
+      const baseIds = new Set<string>();
+      const withLetter: string[] = [];
 
-        const matchA = a.match(regex)
-        const matchB = b.match(regex)
-
-        if (!matchA || !matchB) {
-          return a.localeCompare(b)
+      locations.forEach((loc) => {
+        if (/[A-Za-z]$/.test(loc)) {
+          withLetter.push(loc);
+        } else {
+          baseIds.add(loc);
         }
+      });
 
-        const numberA = parseInt(matchA[1] ?? "0", 10)
-        const numberB = parseInt(matchB[1] ?? "0", 10)
+      const groups = Array.from(baseIds).map((baseId) => {
+        const bins = withLetter
+          .filter((loc) => loc.startsWith(baseId))
+          .sort((a, b) => {
+            const letterA = a.replace(baseId, "").replace(".", "");
+            const letterB = b.replace(baseId, "").replace(".", "");
+            return letterA.localeCompare(letterB);
+          })
+          .map((loc) => ({ id: loc, available: false }));
 
-        if (numberA !== numberB) {
-          return numberA - numberB
+        return { id: baseId, available: false, bins };
+      });
+
+      return groups.sort((a, b) => {
+        const partsA = a.id.split(".").map(Number);
+        const partsB = b.id.split(".").map(Number);
+        for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+          const diff = (partsA[i] ?? 0) - (partsB[i] ?? 0);
+          if (diff !== 0) return diff;
         }
+        return 0;
+      });
+    };
 
-        const letterA = matchA[2] ?? ""
-        const letterB = matchB[2] ?? ""
-
-        return letterA.localeCompare(letterB)
-      }
-    );
-    const formattedBins = sortedBins.map((location) => ({
-      id: location,
-      empty: !data.some((item) => item.bin_location.split(',').map(loc => loc.trim()).includes(location) && Number(item.bin_current_quantity) > 0)
-    }))
+    const orderedData = assignFormatBinList(filterLocations);
+    console.log(orderedData);
 
     useBinLocations.setState({
-      bins: formattedBins,
-      filteredBins: formattedBins
+      bins: orderedData,
+      filteredBins: orderedData
     })
 
-    return formattedBins
+    return orderedData
   }
 
   return (
     <div className="map-bin block">
-      <button className="action-btn action-btn-confirm !mb-8" onClick={getLocations}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <button className="action-btn action-btn-confirm mb-8!" onClick={getLocations}>
+        <ArrowDownTrayIcon className="size-6 text-neutral-50" />
         Get Locations
       </button>
       <div className="group-heading flex justify-start items-center gap-8">
-        <div className="input-group search-product" style={{ width: "220px" }}>
+        {/* <div className="input-group search-product" style={{ width: "220px" }}>
           <span className="input-icon">
             <ArchiveBoxArrowDownIcon className="size-5" />
           </span>
@@ -154,10 +164,10 @@ export default function MapBin() {
             value={bin}
             onChange={handleAddBin}
           />
-        </div>
+        </div> */}
         <div className="group flex justify-start gap-4 items-center">
-          <span className="w-[100px] !p-1 bg-red-300 border border-red-900 rounded-lg text-red-900 text-center">Bin Occupé</span>
-          <span className="w-[100px] !p-1 bg-green-300 border border-green-900 rounded-lg text-green-900 text-center">Bin Vide</span>
+          <span className="w-25 p-1! bg-red-300 border border-red-900 rounded-lg text-red-900 text-center">Bin Occupé</span>
+          <span className="w-25 p-1! bg-green-300 border border-green-900 rounded-lg text-green-900 text-center">Bin Vide</span>
           <div className="option-group option-group--hide-products-without-stock">
             <div className="container-input">
               <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => filterBins(e.target.checked)} />
@@ -166,14 +176,26 @@ export default function MapBin() {
           </div>
         </div>
       </div>
-      <div className="bin-list !mt-8">
+      <div className="bin-list mt-8!">
         <ul className="flex justify-start gap-4 flex-wrap">
-          {filteredBins.map((bin:BinProps) => (
-            <li key={bin.id} className={`border rounded-lg !py-2 !px-4 relative !pr-[40px] overflow-hidden ${!bin.empty ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>
-              <span>{bin.id}</span>
-              <button className="bg-sky-500 absolute right-0 top-0 h-full !px-2 border-l border-l-sky-900 cursor-pointer" onClick={() => handleUpdateBin(bin.id)}>
-                <ArrowPathRoundedSquareIcon className="size-5 text-neutral-50" />
-              </button>
+          {filteredBins.map((bin:BinContainerProps) => (
+            <li key={bin.id} className={`border rounded-lg py-2! px-4! relative pr-10! overflow-hidden ${!bin.available ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>
+              <div className="bin-card">
+                {
+                  bin.bins.length === 0 ?
+                    <span>{bin.id}</span> :
+                    <details className="sub-bins">
+                      <summary className="sub-bin--header">{bin.id}</summary>
+                      <div className="sub-bin--body">
+                        {
+                          bin.bins.map((subBin: BinProps) =>(
+                            <p key={subBin.id}>{subBin.id}</p>
+                          ))
+                        }
+                      </div>
+                    </details>
+                }
+              </div>
             </li>
           ))}
         </ul>
