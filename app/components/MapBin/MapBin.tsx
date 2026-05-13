@@ -1,8 +1,8 @@
-// import { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import "./MapBin.css";
 import { create } from "zustand";
 import { type BinContainerProps, type BinLocationsProps, type BinProps } from "@/app/types/types";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArchiveBoxArrowDownIcon } from "@heroicons/react/24/outline";
 
 const useBinLocations = create<BinLocationsProps>((set) => ({
   bins: [],
@@ -31,10 +31,10 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
 }));
 
 export default function MapBin() {
-  /* const [bin, setBin] = useState<string>("");
-  const addBinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); */
+  const [bin, setBin] = useState<string>("");
+  const addBinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /* const handleAddBin = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddBin = (e: React.ChangeEvent<HTMLInputElement>) => {
     const binId = e.target.value;
 
     setBin(binId);
@@ -45,17 +45,18 @@ export default function MapBin() {
       const arrayOfBins = useBinLocations.getState().bins;
       const existingBin = arrayOfBins.find(key => binId === key.id);
       if (!existingBin) {
-        useBinLocations.getState().setBin({ id: binId, available: false });
+        useBinLocations.getState().setBin({ id: binId, available: false, bins:[]  });
       } else {
         console.log('Existing Bin in list!');
       }
       setBin("");
     }, 500);
-  } */
+  }
 
   // const handleUpdateBin = useBinLocations((state) => state.updateBin);
   const filteredBins = useBinLocations((state) => state.filteredBins);
   const filterBins = useBinLocations((state) => state.filterBins);
+  const storeBins = useBinLocations((state) => state.bins);
 
   const getLocations = async () => {
     try {
@@ -142,7 +143,54 @@ export default function MapBin() {
       filteredBins: orderedData
     })
 
+    getAvailableBins();
+
     return orderedData
+  }
+
+  const saveLocations = async () => {
+    const baseUrl = '/api/bin-locations';
+
+    try {
+      const res = await fetch(baseUrl,{
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(storeBins)
+      });
+
+      const data = await res.json();
+
+      if (data.failedCount > 0) {
+        console.warn("Productos que fallaron:", data.failed);
+      }
+    } catch(error) {
+      console.error("Error saving products in DB:", error);
+    }
+  }
+
+  const getAvailableBins = async () => {
+    const baseUrl = '/api/available-bins';
+
+    try {
+      const res = await fetch(baseUrl,{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(storeBins)
+      });
+
+      const data = await res.json();
+      console.log('Products finded: ', data);
+
+      if (data.failedCount > 0) {
+        console.warn("Productos que fallaron:", data.failed);
+      }
+    } catch(error) {
+      console.error("Error saving products in DB:", error);
+    }
   }
 
   return (
@@ -152,7 +200,7 @@ export default function MapBin() {
         Get Locations
       </button>
       <div className="group-heading flex justify-start items-center gap-8">
-        {/* <div className="input-group search-product" style={{ width: "220px" }}>
+        <div className="input-group search-product" style={{ width: "220px" }}>
           <span className="input-icon">
             <ArchiveBoxArrowDownIcon className="size-5" />
           </span>
@@ -164,7 +212,12 @@ export default function MapBin() {
             value={bin}
             onChange={handleAddBin}
           />
-        </div> */}
+        </div>
+        <div className="group flex justify-start gap-4 items-center">
+          <button className="action-btn action-btn-confirm" onClick={saveLocations}>
+            Save Locations
+          </button>
+        </div>
         <div className="group flex justify-start gap-4 items-center">
           <span className="w-25 p-1! bg-red-300 border border-red-900 rounded-lg text-red-900 text-center">Bin Occupé</span>
           <span className="w-25 p-1! bg-green-300 border border-green-900 rounded-lg text-green-900 text-center">Bin Vide</span>
@@ -177,15 +230,21 @@ export default function MapBin() {
         </div>
       </div>
       <div className="bin-list mt-8!">
-        <ul className="flex justify-start gap-4 flex-wrap">
+        <ul className="flex justify-start items-start gap-4 flex-wrap">
           {filteredBins.map((bin:BinContainerProps) => (
-            <li key={bin.id} className={`border rounded-lg py-2! px-4! relative pr-10! overflow-hidden ${!bin.available ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>
+            <li key={bin.id} className={`border rounded-lg py-2! px-4! relative overflow-hidden ${!bin.available ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>
               <div className="bin-card">
                 {
                   bin.bins.length === 0 ?
-                    <span>{bin.id}</span> :
+                    <p className="flex items-center jsutify-around gap-4 w-full">
+                      <span>{bin.id}</span>
+                      <span>(100%)</span>
+                    </p> :
                     <details className="sub-bins">
-                      <summary className="sub-bin--header">{bin.id}</summary>
+                      <summary className="sub-bin--header">
+                        <span>{bin.id}</span>
+                        <span>(100%)</span>
+                      </summary>
                       <div className="sub-bin--body">
                         {
                           bin.bins.map((subBin: BinProps) =>(
