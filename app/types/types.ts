@@ -176,7 +176,8 @@ export type BinLocationsProps = {
   bins: BinContainerProps[];
   filteredBins: BinContainerProps[];
   setBin: (bin:BinContainerProps) => void;
-  updateBin: (binId:string) => void;
+  updateBin: (binId:string, available: boolean) => void;
+  updateSubBin: (binId:string, subBinId:string, available: boolean) => void;
   filterBins: (value: boolean | null) => void;
 }
 

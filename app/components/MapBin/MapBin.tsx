@@ -12,12 +12,38 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
       bins: [...state.bins, bin],
       filteredBins: [...state.bins, bin]
     })),
-  updateBin: (binId:string) => {
+  updateBin: (binId:string, available: boolean) => {
     set((state) => ({
       bins: state.bins.map((bin) => 
-        bin.id === binId ? { ...bin, available: !bin.available } : bin),
+        bin.id === binId ? { ...bin, available } : bin),
       filteredBins: state.filteredBins.map((bin) => 
-        bin.id === binId ? { ...bin, available: !bin.available } : bin)
+        bin.id === binId ? { ...bin, available } : bin)
+    }))
+  },
+  updateSubBin: (parentBinId:string, subBinId:string, available: boolean) => {
+    set((state) => ({
+      bins: state.bins.map((bin) => {
+        if (bin.id === parentBinId) {
+          return {
+            ...bin,
+            bins: bin.bins.map((subBin) =>
+              subBin.id === subBinId ? { ...subBin, available } : subBin
+            ),
+          };
+        }
+        return bin;
+      }),
+      filteredBins: state.filteredBins.map((bin) => {
+        if (bin.id === parentBinId) {
+          return {
+            ...bin,
+            bins: bin.bins.map((subBin) =>
+              subBin.id === subBinId ? { ...subBin, available } : subBin
+            ),
+          };
+        }
+        return bin;
+      }),
     }))
   },
   filterBins: (value: boolean | null) => {
@@ -47,16 +73,11 @@ export default function MapBin() {
       if (!existingBin) {
         useBinLocations.getState().setBin({ id: binId, available: false, bins:[]  });
       } else {
-        console.log('Existing Bin in list!');
+        console.info('Existing Bin in list!');
       }
       setBin("");
     }, 500);
   }
-
-  // const handleUpdateBin = useBinLocations((state) => state.updateBin);
-  const filteredBins = useBinLocations((state) => state.filteredBins);
-  const filterBins = useBinLocations((state) => state.filterBins);
-  const storeBins = useBinLocations((state) => state.bins);
 
   const getLocations = async () => {
     try {
@@ -68,7 +89,7 @@ export default function MapBin() {
     }
   }
 
-  const formatBinLocationsList = (data: BinProps[]) => {
+  const formatBinLocationsList = async (data: BinProps[]) => {
     const uniqueBins = new Set<string>()
 
     data.forEach((item) => {
@@ -136,17 +157,20 @@ export default function MapBin() {
     };
 
     const orderedData = assignFormatBinList(filterLocations);
-    console.log(orderedData);
 
     useBinLocations.setState({
       bins: orderedData,
       filteredBins: orderedData
     })
 
-    getAvailableBins();
+    await getAvailableBins(filterLocations);
 
     return orderedData
   }
+
+  const filteredBins = useBinLocations((state) => state.filteredBins);
+  const filterBins = useBinLocations((state) => state.filterBins);
+  const storeBins = useBinLocations((state) => state.bins);
 
   const saveLocations = async () => {
     const baseUrl = '/api/bin-locations';
@@ -170,20 +194,40 @@ export default function MapBin() {
     }
   }
 
-  const getAvailableBins = async () => {
+  const getAvailableBins = async (binList: string[]) => {
     const baseUrl = '/api/available-bins';
-
     try {
       const res = await fetch(baseUrl,{
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(storeBins)
+        body: JSON.stringify(binList)
       });
 
       const data = await res.json();
-      console.log('Products finded: ', data);
+
+      const binInStore = useBinLocations.getState().bins;
+
+      binInStore.forEach((bin) => {
+        
+       if (bin.bins.length > 0) {
+          bin.bins.forEach((subBin) => {
+            const found = data.data.find((item: { bin_location: string }) => item.bin_location === subBin.id);
+            if (found) {
+              const hasStock = Number(found.bin_current_quantity) > 0;
+              useBinLocations.getState().updateSubBin(bin.id, subBin.id, !hasStock);
+            }
+          })
+       } else {
+          const found = data.data.find((item: { bin_location: string }) => item.bin_location === bin.id); 
+          if (found) {
+            const hasStock = Number(found.bin_current_quantity) > 0;
+            useBinLocations.getState().updateBin(bin.id, !hasStock);
+          }
+        }
+
+      });
 
       if (data.failedCount > 0) {
         console.warn("Productos que fallaron:", data.failed);
@@ -232,23 +276,22 @@ export default function MapBin() {
       <div className="bin-list mt-8!">
         <ul className="flex justify-start items-start gap-4 flex-wrap">
           {filteredBins.map((bin:BinContainerProps) => (
-            <li key={bin.id} className={`border rounded-lg py-2! px-4! relative overflow-hidden ${!bin.available ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>
+            <li key={bin.id} className={`border rounded-lg relative overflow-hidden ${!bin.available ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>
               <div className="bin-card">
                 {
                   bin.bins.length === 0 ?
-                    <p className="flex items-center jsutify-around gap-4 w-full">
+                    <p className="flex items-center jsutify-around gap-4 w-full px-4! py-2!">
                       <span>{bin.id}</span>
-                      <span>(100%)</span>
                     </p> :
                     <details className="sub-bins">
-                      <summary className="sub-bin--header">
+                      <summary className={`sub-bin--header px-4! py-2! ${ bin.bins.length > 0 && bin.bins.find((b) => b.available === true) ? "bg-green-300 text-green-900 border-green-900" : "bg-red-300 text-red-900 border-red-900"}`}>
                         <span>{bin.id}</span>
-                        <span>(100%)</span>
+                        <span>({100 - Math.floor((bin.bins.filter((b) => b.available).length / bin.bins.length) * 100)}%)</span>
                       </summary>
                       <div className="sub-bin--body">
                         {
                           bin.bins.map((subBin: BinProps) =>(
-                            <p key={subBin.id}>{subBin.id}</p>
+                            <p key={subBin.id} className={`px-4! py-2! ${!subBin.available ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>{subBin.id}</p>
                           ))
                         }
                       </div>
