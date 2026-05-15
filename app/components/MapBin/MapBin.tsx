@@ -211,9 +211,11 @@ export default function MapBin() {
 
       binInStore.forEach((bin) => {
        if (bin.bins.length > 0) {
+          //console.log("bins:", bin.bins);
+          
           bin.bins.forEach((subBin) => {
-            const found = data.data.find((item: { bin_location: string }) => item.bin_location === subBin.id);
-            // console.log("Found subBin:", found, "for subBin ID:", subBin.id);
+            const found = data.data.find((item: { bin_location: string }) => item.bin_location.includes(subBin.id));
+            //console.log("Found subBin:", found, "for subBin ID:", subBin.id);
             if (found === undefined) {
               useBinLocations.getState().updateSubBin(bin.id, subBin.id, true, 0);
             } else if (found) {
@@ -221,7 +223,7 @@ export default function MapBin() {
             }
           })
        } else {
-          const found = data.data.find((item: { bin_location: string }) => item.bin_location === bin.id); 
+          const found = data.data.find((item: { bin_location: string }) => item.bin_location.includes(bin.id)); 
           if (found === undefined) {
             useBinLocations.getState().updateBin(bin.id, true, 0);
           } else if (found) {

@@ -13,8 +13,7 @@ export async function POST(req: Request) {
 
     const query = await sql`
       SELECT sku, bin_current_quantity, bin_location 
-      FROM store_products 
-      WHERE bin_location = ANY(${locations})
+      FROM store_products
     `;
     
     return NextResponse.json({
