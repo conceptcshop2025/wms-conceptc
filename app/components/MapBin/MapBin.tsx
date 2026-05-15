@@ -244,7 +244,7 @@ export default function MapBin() {
         Get Locations
       </button>
       <div className="group-heading flex justify-start items-center gap-8">
-        <div className="input-group search-product" style={{ width: "220px" }}>
+        <div className="input-group search-product hidden!" style={{ width: "220px" }}>
           <span className="input-icon">
             <ArchiveBoxArrowDownIcon className="size-5" />
           </span>
@@ -257,7 +257,7 @@ export default function MapBin() {
             onChange={handleAddBin}
           />
         </div>
-        <div className="group flex justify-start gap-4 items-center">
+        <div className="group flex justify-start gap-4 items-center hidden!">
           <button className="action-btn action-btn-confirm" onClick={saveLocations}>
             Save Locations
           </button>
