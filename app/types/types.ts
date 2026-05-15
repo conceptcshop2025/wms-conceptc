@@ -176,18 +176,20 @@ export type BinLocationsProps = {
   bins: BinContainerProps[];
   filteredBins: BinContainerProps[];
   setBin: (bin:BinContainerProps) => void;
-  updateBin: (binId:string, available: boolean) => void;
-  updateSubBin: (binId:string, subBinId:string, available: boolean) => void;
+  updateBin: (binId:string, available: boolean, stock_quantity: number) => void;
+  updateSubBin: (binId:string, subBinId:string, available: boolean, stock_quantity: number) => void;
   filterBins: (value: boolean | null) => void;
 }
 
 export type BinProps = {
   id: string;
   available: boolean;
+  stock_quantity: number;
 }
 
 export type BinContainerProps = {
   id: string;
   available: boolean;
+  stock_quantity: number;
   bins: BinProps[];
 }

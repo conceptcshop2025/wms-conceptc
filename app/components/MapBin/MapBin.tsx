@@ -12,22 +12,22 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
       bins: [...state.bins, bin],
       filteredBins: [...state.bins, bin]
     })),
-  updateBin: (binId:string, available: boolean) => {
+  updateBin: (binId:string, available: boolean, stock_quantity: number) => {
     set((state) => ({
       bins: state.bins.map((bin) => 
-        bin.id === binId ? { ...bin, available } : bin),
+        bin.id === binId ? { ...bin, available, stock_quantity } : bin),
       filteredBins: state.filteredBins.map((bin) => 
-        bin.id === binId ? { ...bin, available } : bin)
+        bin.id === binId ? { ...bin, available, stock_quantity } : bin)
     }))
   },
-  updateSubBin: (parentBinId:string, subBinId:string, available: boolean) => {
+  updateSubBin: (parentBinId:string, subBinId:string, available: boolean, stock_quantity: number) => {
     set((state) => ({
       bins: state.bins.map((bin) => {
         if (bin.id === parentBinId) {
           return {
             ...bin,
             bins: bin.bins.map((subBin) =>
-              subBin.id === subBinId ? { ...subBin, available } : subBin
+              subBin.id === subBinId ? { ...subBin, available, stock_quantity } : subBin
             ),
           };
         }
@@ -38,7 +38,7 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
           return {
             ...bin,
             bins: bin.bins.map((subBin) =>
-              subBin.id === subBinId ? { ...subBin, available } : subBin
+              subBin.id === subBinId ? { ...subBin, available, stock_quantity } : subBin
             ),
           };
         }
@@ -71,7 +71,7 @@ export default function MapBin() {
       const arrayOfBins = useBinLocations.getState().bins;
       const existingBin = arrayOfBins.find(key => binId === key.id);
       if (!existingBin) {
-        useBinLocations.getState().setBin({ id: binId, available: false, bins:[]  });
+        useBinLocations.getState().setBin({ id: binId, available: false, bins:[], stock_quantity: 0 });
       } else {
         console.info('Existing Bin in list!');
       }
@@ -140,9 +140,9 @@ export default function MapBin() {
             const letterB = b.replace(baseId, "").replace(".", "");
             return letterA.localeCompare(letterB);
           })
-          .map((loc) => ({ id: loc, available: false }));
+          .map((loc) => ({ id: loc, available: false, stock_quantity: 0 }));
 
-        return { id: baseId, available: false, bins };
+        return { id: baseId, available: false, bins, stock_quantity: 0 };
       });
 
       return groups.sort((a, b) => {
@@ -210,30 +210,45 @@ export default function MapBin() {
       const binInStore = useBinLocations.getState().bins;
 
       binInStore.forEach((bin) => {
-        
        if (bin.bins.length > 0) {
           bin.bins.forEach((subBin) => {
             const found = data.data.find((item: { bin_location: string }) => item.bin_location === subBin.id);
-            if (found) {
-              const hasStock = Number(found.bin_current_quantity) > 0;
-              useBinLocations.getState().updateSubBin(bin.id, subBin.id, !hasStock);
+            // console.log("Found subBin:", found, "for subBin ID:", subBin.id);
+            if (found === undefined) {
+              useBinLocations.getState().updateSubBin(bin.id, subBin.id, true, 0);
+            } else if (found) {
+              useBinLocations.getState().updateSubBin(bin.id, subBin.id, false, Number(found.bin_current_quantity));
             }
           })
        } else {
           const found = data.data.find((item: { bin_location: string }) => item.bin_location === bin.id); 
-          if (found) {
-            const hasStock = Number(found.bin_current_quantity) > 0;
-            useBinLocations.getState().updateBin(bin.id, !hasStock);
+          if (found === undefined) {
+            useBinLocations.getState().updateBin(bin.id, true, 0);
+          } else if (found) {
+            useBinLocations.getState().updateBin(bin.id, false, Number(found.bin_current_quantity));
           }
         }
 
       });
+
+      // console.log("all bins after update:", useBinLocations.getState().bins);
 
       if (data.failedCount > 0) {
         console.warn("Productos que fallaron:", data.failed);
       }
     } catch(error) {
       console.error("Error saving products in DB:", error);
+    }
+  }
+
+  function binStatus(available:boolean, stock_quantity:number) {
+    if (available) {
+      return "bg-green-300 text-green-900 border-green-900";
+    } else {
+      if (stock_quantity > 0) {
+        return "bg-red-300 text-red-900 border-red-900";
+      }
+      return "bg-sky-300 text-sky-900 border-sky-900";
     }
   }
 
@@ -265,6 +280,7 @@ export default function MapBin() {
         <div className="group flex justify-start gap-4 items-center">
           <span className="w-25 p-1! bg-red-300 border border-red-900 rounded-lg text-red-900 text-center">Bin Occupé</span>
           <span className="w-25 p-1! bg-green-300 border border-green-900 rounded-lg text-green-900 text-center">Bin Vide</span>
+          <span className="w-50 p-1! bg-sky-300 border border-sky-900 rounded-lg text-sky-900 text-center">Bin Occupé sans Stock</span>
           <div className="option-group option-group--hide-products-without-stock">
             <div className="container-input">
               <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => filterBins(e.target.checked)} />
@@ -276,7 +292,9 @@ export default function MapBin() {
       <div className="bin-list mt-8!">
         <ul className="flex justify-start items-start gap-4 flex-wrap">
           {filteredBins.map((bin:BinContainerProps) => (
-            <li key={bin.id} className={`border rounded-lg relative overflow-hidden ${!bin.available ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>
+            <li
+              key={bin.id}
+              className={`border rounded-lg relative overflow-hidden `}>
               <div className="bin-card">
                 {
                   bin.bins.length === 0 ?
@@ -284,14 +302,26 @@ export default function MapBin() {
                       <span>{bin.id}</span>
                     </p> :
                     <details className="sub-bins">
-                      <summary className={`sub-bin--header px-4! py-2! ${ bin.bins.length > 0 && bin.bins.find((b) => b.available === true) ? "bg-green-300 text-green-900 border-green-900" : "bg-red-300 text-red-900 border-red-900"}`}>
+                      <summary
+                        className={`
+                          sub-bin--header
+                          px-4!
+                          py-2!
+                          bg-neutral-200
+                          text-neutral-900
+                          border-neutral-200
+                          ${ bin.bins.every(key => key.available === false) && "bg-red-300 text-red-900 border-red-900" }
+                          ${ bin.bins.every(key => key.available === true) && "bg-green-300 text-green-900 border-green-900" }`}>
                         <span>{bin.id}</span>
-                        <span>({100 - Math.floor((bin.bins.filter((b) => b.available).length / bin.bins.length) * 100)}%)</span>
+                        <span> ({100 - Math.floor((bin.bins.filter((b) => b.available).length / bin.bins.length) * 100)}%)</span>
                       </summary>
                       <div className="sub-bin--body">
                         {
                           bin.bins.map((subBin: BinProps) =>(
-                            <p key={subBin.id} className={`px-4! py-2! ${!subBin.available ? "bg-red-300 text-red-900 border-red-900" : "bg-green-300 text-green-900 border-green-900"}`}>{subBin.id}</p>
+                            <p
+                              key={subBin.id}
+                              className={
+                                `px-4! py-2! ${binStatus(subBin.available, subBin.stock_quantity)} `}>{subBin.id}</p>
                           ))
                         }
                       </div>
