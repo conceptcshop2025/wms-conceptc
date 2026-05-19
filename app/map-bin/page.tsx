@@ -26,7 +26,7 @@ export default function MapBinPage() {
             <div className="logo-sub">WMS · Québec</div>
           </div>
         </div> 
-        <span className="version-badge">v4.5.1</span>
+        <span className="version-badge">v4.6.0</span>
       </div>
       <main>
         <MapBin />

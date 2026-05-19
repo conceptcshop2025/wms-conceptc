@@ -51,7 +51,7 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
       filteredBins:
         value === null || value === false
           ? state.bins
-          : state.bins.filter((bin) => bin.available === value),
+          : state.bins.filter((bin) => bin.bins.some((subBin) => subBin.available === value)),
     }));
   },
 }));
