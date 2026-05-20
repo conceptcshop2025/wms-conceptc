@@ -82,7 +82,11 @@ export default function Home() {
     }
 
     if(hideNotActiveProducts) {
-      list = list.filter(p => p.status === 'ACTIVE');
+      const activeList = list.filter(p => p.status === 'ACTIVE');
+      const withStockList = activeList.filter(p => Number(p.inventory_quantity) > 0);
+      const withBinLocations = withStockList.filter(p => p.bin_location !== "");
+
+      list = withBinLocations;
     }
 
     return list;

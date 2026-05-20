@@ -170,9 +170,53 @@ export default function MapBin() {
 
   const filteredBins = useBinLocations((state) => state.filteredBins);
   const filterBins = useBinLocations((state) => state.filterBins);
-  const storeBins = useBinLocations((state) => state.bins);
+  // const storeBins = useBinLocations((state) => state.bins);
 
   const saveLocations = async () => {
+    /* ************************************************************************************* */
+      const ranges = [
+        { start: 216, end: 246, floors: 2 },
+        /* { start: 316, end: 320, floors: 2 },
+        { start: 332, end: 336, floors: 3 },
+        { start: 340, end: 346, floors: 3 },
+        { start: 412, end: 430, floors: 3 },
+        { start: 446, end: 446, floors: 2 }, */
+      ];
+      
+      const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
+      
+      const result: BinProps[] = [];
+      
+      ranges.forEach(({ start, end, floors }) => {
+        for (let building = start; building <= end; building += 2) {
+          for (let floor = 1; floor <= floors; floor++) {
+            for (let section = 1; section <= 4; section++) {
+              const baseId = `${building}.${String(floor).padStart(2, "0")}.${String(section).padStart(2, "0")}`;
+      
+              // Agrega primero el número base
+              result.push({
+                id: baseId,
+                available: false,
+                stock_quantity: 0,
+              });
+      
+              // Luego agrega las letras A-H
+              for (const letter of letters) {
+                result.push({
+                  id: `${baseId}.${letter}`,
+                  available: false,
+                  stock_quantity: 0,
+                });
+              }
+            }
+          }
+        }
+      });
+      
+      console.log(result);
+    /* ************************************************************************************* */
+
+
     const baseUrl = '/api/bin-locations';
 
     try {
@@ -181,7 +225,7 @@ export default function MapBin() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(storeBins)
+        body: JSON.stringify(result)
       });
 
       const data = await res.json();

@@ -123,7 +123,7 @@ export default function ControlPanel({ onFilterChange, onSortChange, onProductSe
         <div className="option-group option-group--hide-products-without-stock">
           <div className="container-input">
             <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => onChecked(e.target.checked)} />
-            <label htmlFor="hide-products-without-stock">Cacher les produits non actives</label>
+            <label htmlFor="hide-products-without-stock">Cacher les produits non actives, produits sans stock et produits sans bin location</label>
           </div>
         </div>
       </div>
