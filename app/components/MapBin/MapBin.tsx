@@ -3,6 +3,7 @@ import "./MapBin.css";
 import { create } from "zustand";
 import { type BinContainerProps, type BinLocationsProps, type BinProps } from "@/app/types/types";
 import { ArrowDownTrayIcon, ArchiveBoxArrowDownIcon } from "@heroicons/react/24/outline";
+import Loading from "../Loading/Loading";
 
 const useBinLocations = create<BinLocationsProps>((set) => ({
   bins: [],
@@ -57,6 +58,7 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
 }));
 
 export default function MapBin() {
+  const [loading, setLoading] = useState(false);
   const [bin, setBin] = useState<string>("");
   const addBinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -80,6 +82,7 @@ export default function MapBin() {
   }
 
   const getLocations = async () => {
+    setLoading(true);
     try {
       const response = await fetch("/api/bin-locations");
       const data = await response.json();
@@ -284,6 +287,8 @@ export default function MapBin() {
       }
     } catch(error) {
       console.error("Error saving products in DB:", error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -299,85 +304,92 @@ export default function MapBin() {
   }
 
   return (
-    <div className="map-bin block">
-      <button className="action-btn action-btn-confirm mb-8!" onClick={getLocations}>
-        <ArrowDownTrayIcon className="size-6 text-neutral-50" />
-        Get Locations
-      </button>
-      <div className="group-heading flex justify-start items-center gap-8">
-        <div className="input-group search-product hidden!" style={{ width: "220px" }}>
-          <span className="input-icon">
-            <ArchiveBoxArrowDownIcon className="size-5" />
-          </span>
-          <input
-            type="text"
-            className="form-input"
-            placeholder="Ajoute une bin location"
-            style={{ width: "100%" }}
-            value={bin}
-            onChange={handleAddBin}
-          />
-        </div>
-        <div className="group flex justify-start gap-4 items-center hidden!">
-          <button className="action-btn action-btn-confirm" onClick={saveLocations}>
-            Save Locations
+    loading ?
+      <Loading /> : 
+      <div className="map-bin block">
+        <div className="flex items-center justify-start gap-8">
+          <button className="action-btn action-btn-confirm" onClick={getLocations}>
+            <ArrowDownTrayIcon className="size-6 text-neutral-50" />
+            Obtenir la liste des bins
           </button>
-        </div>
-        <div className="group flex justify-start gap-4 items-center">
-          <span className="w-25 p-1! bg-red-300 border border-red-900 rounded-lg text-red-900 text-center">Bin Occupé</span>
-          <span className="w-25 p-1! bg-green-300 border border-green-900 rounded-lg text-green-900 text-center">Bin Vide</span>
-          <span className="w-50 p-1! bg-sky-300 border border-sky-900 rounded-lg text-sky-900 text-center">Bin Occupé sans Stock</span>
-          <div className="option-group option-group--hide-products-without-stock">
-            <div className="container-input">
-              <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => filterBins(e.target.checked)} />
-              <label htmlFor="hide-products-without-stock">Cacher les bins avec stock</label>
+          <div className="group-heading flex justify-start items-center gap-8">
+            <div className="input-group search-product hidden!" style={{ width: "220px" }}>
+              <span className="input-icon">
+                <ArchiveBoxArrowDownIcon className="size-5" />
+              </span>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ajoute une bin location"
+                style={{ width: "100%" }}
+                value={bin}
+                onChange={handleAddBin}
+              />
+            </div>
+            <div className="group flex justify-start gap-4 items-center hidden!">
+              <button className="action-btn action-btn-confirm" onClick={saveLocations}>
+                Save Locations
+              </button>
+            </div>
+            <div className="group flex justify-start gap-4 items-center">
+              <span className="w-25 p-1! bg-red-300 border border-red-900 rounded-lg text-red-900 text-center">Bin Occupé</span>
+              <span className="w-25 p-1! bg-green-300 border border-green-900 rounded-lg text-green-900 text-center">Bin Vide</span>
+              <span className="w-50 p-1! bg-sky-300 border border-sky-900 rounded-lg text-sky-900 text-center">Bin Occupé sans Stock</span>
+              <div className="option-group option-group--hide-products-without-stock">
+                <div className="container-input">
+                  <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => filterBins(e.target.checked)} />
+                  <label htmlFor="hide-products-without-stock">Cacher les bins avec stock</label>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div className="bin-list mt-8!">
-        <ul className="flex justify-start items-start gap-4 flex-wrap">
-          {filteredBins.map((bin:BinContainerProps) => (
-            <li
-              key={bin.id}
-              className={`border rounded-lg relative overflow-hidden `}>
-              <div className="bin-card">
-                {
-                  bin.bins.length === 0 ?
-                    <p className="flex items-center jsutify-around gap-4 w-full px-4! py-2!">
-                      <span>{bin.id}</span>
-                    </p> :
-                    <details className="sub-bins">
-                      <summary
-                        className={`
-                          sub-bin--header
-                          px-4!
-                          py-2!
-                          bg-neutral-200
-                          text-neutral-900
-                          border-neutral-200
-                          ${ bin.bins.every(key => key.available === false) && "bg-red-300 text-red-900 border-red-900" }
-                          ${ bin.bins.every(key => key.available === true) && "bg-green-300 text-green-900 border-green-900" }`}>
+        <div className="bin-list mt-8!">
+          <ul className="grid grid-cols-8 gap-4">
+            {filteredBins.map((bin:BinContainerProps) => (
+              <li
+                key={bin.id}
+                className={`relative overflow-hidden `}>
+                <div className="bin-card">
+                  {
+                    bin.bins.length === 0 ?
+                      <p className="flex items-center jsutify-around gap-4 w-full px-4! py-2!">
                         <span>{bin.id}</span>
-                        <span> ({100 - Math.floor((bin.bins.filter((b) => b.available).length / bin.bins.length) * 100)}%)</span>
-                      </summary>
-                      <div className="sub-bin--body">
-                        {
-                          bin.bins.map((subBin: BinProps) =>(
-                            <p
-                              key={subBin.id}
-                              className={
-                                `px-4! py-2! ${binStatus(subBin.available, subBin.stock_quantity)} `}>{subBin.id}</p>
-                          ))
-                        }
-                      </div>
-                    </details>
-                }
-              </div>
-            </li>
-          ))}
-        </ul>
+                      </p> :
+                      <details className="sub-bins rounded-lg overflow-hidden">
+                        <summary
+                          className={`
+                            relative
+                            sub-bin--header
+                            px-4!
+                            py-2!
+                            bg-neutral-200
+                            text-neutral-900
+                            border-neutral-200
+                            ${ bin.bins.every(key => key.available === false) && "bg-red-300 text-red-900 border-red-900" }
+                            ${ bin.bins.every(key => key.available === true) && "bg-green-300 text-green-900 border-green-900" }`}>
+                          <span>{bin.id}</span>
+                          <span className="absolute top-[50%] right-[3px] -mt-[14px]! opacity-25 text-2xl font-bold -tracking-[2px]">
+                            {100 - Math.floor((bin.bins.filter((b) => b.available).length / bin.bins.length) * 100)}%
+                          </span>
+                        </summary>
+                        <div className="sub-bin--body">
+                          {
+                            bin.bins.map((subBin: BinProps) =>(
+                              <p
+                                key={subBin.id}
+                                className={
+                                  `px-4! py-2! ${binStatus(subBin.available, subBin.stock_quantity)} `}>{subBin.id}</p>
+                            ))
+                          }
+                        </div>
+                      </details>
+                  }
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-    </div>
   )
 }
