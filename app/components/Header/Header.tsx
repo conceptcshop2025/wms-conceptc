@@ -28,7 +28,7 @@ export default function Header({ onSync, onGetAllProducts, onGetSelledProducts, 
             <div className="logo-sub">WMS · Québec</div>
           </div>
         </div>
-        <span className="version-badge">v4.7.0</span>
+        <span className="version-badge">v4.8.0</span>
       </div>
       <div className="topbar-actions">
         <button

@@ -62,7 +62,7 @@ export async function startProductsBulkOperation(): Promise<string> {
       bulkOperationRunQuery(
         query: """
         {
-          products(query: "status:active") {
+          products(query: "status:active,draft") {
             edges {
               node {
                 id
