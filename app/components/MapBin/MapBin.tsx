@@ -266,7 +266,7 @@ export default function MapBin() {
             if (found === undefined) {
               useBinLocations.getState().updateSubBin(bin.id, subBin.id, true, 0);
             } else if (found) {
-              useBinLocations.getState().updateSubBin(bin.id, subBin.id, false, Number(found.bin_current_quantity));
+              useBinLocations.getState().updateSubBin(bin.id, subBin.id, false, Number(found.inventory_quantity));
             }
           })
        } else {
@@ -274,7 +274,7 @@ export default function MapBin() {
           if (found === undefined) {
             useBinLocations.getState().updateBin(bin.id, true, 0);
           } else if (found) {
-            useBinLocations.getState().updateBin(bin.id, false, Number(found.bin_current_quantity));
+            useBinLocations.getState().updateBin(bin.id, false, Number(found.inventory_quantity));
           }
         }
 
