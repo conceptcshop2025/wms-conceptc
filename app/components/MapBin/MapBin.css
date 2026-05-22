@@ -1,3 +1,12 @@
 .map-bin {
   padding: 12px 20px !important;
 }
+.blue-signal::before {
+  content: "";
+  width: 50px;
+  height: 100%;
+  background: #74d4ff;
+  position: absolute;
+  top: 0;
+  right: 0;
+}

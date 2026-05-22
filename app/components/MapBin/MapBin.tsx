@@ -367,7 +367,8 @@ export default function MapBin() {
                             text-neutral-900
                             border-neutral-200
                             ${ bin.bins.every(key => key.available === false) && "bg-red-300 text-red-900 border-red-900" }
-                            ${ bin.bins.every(key => key.available === true) && "bg-green-300 text-green-900 border-green-900" }`}>
+                            ${ bin.bins.every(key => key.available === true) && "bg-green-300 text-green-900 border-green-900" }
+                            ${ bin.bins.some(key => !key.available && key.stock_quantity <= 0) && 'blue-signal' }`}>
                           <span>{bin.id}</span>
                           <span className="absolute top-[50%] right-[3px] -mt-[14px]! opacity-25 text-2xl font-bold -tracking-[2px]">
                             {100 - Math.floor((bin.bins.filter((b) => b.available).length / bin.bins.length) * 100)}%
