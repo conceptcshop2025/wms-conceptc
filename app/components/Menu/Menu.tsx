@@ -13,6 +13,7 @@ export default function Menu({ isOpen, onCloseMenu }: MenuProps) {
         <ul className="w-full flex flex-col gap-6 !mt-8">
           <Link href="/" className="link text-2xl text-neutral-50">Gestion d&apos;entrepôt</Link>
           <Link href="/map-bin" className="link text-2xl text-neutral-50">Localisation des Bins</Link>
+          <Link href="/stocky-api" className="link text-2xl text-neutral-50">Stocky API</Link>
         </ul>
       </div>
     </div>
