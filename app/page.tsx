@@ -292,17 +292,19 @@ export default function Home() {
       }
       
       const productsCopy = [...products];
+      const productsToUpdateFromSales: ProductItemProps[] = [];
 
       data.data.forEach((sale: { sku: string; quantity: number }) => {
         const findProduct = productsCopy.find(p => p.sku === sale.sku);
         if (findProduct) {
           findProduct.bin_current_quantity = Number(findProduct.bin_current_quantity) - sale.quantity;
           findProduct.inventory_quantity = Number(findProduct.inventory_quantity) - sale.quantity;
+          productsToUpdateFromSales.push(findProduct);
         }
       });
-
+      
       setProducts(productsCopy);
-      updateProducts(productsCopy);
+      updateProducts(productsToUpdateFromSales);
 
       try {
         const postDate = fetch(`/api/sync`,{
