@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-// import {SalesDataProps, SummarizedItemProps, SummarizedOrderProps, SummarizedAccProps} from "../../types/types";
+import { type OrdersDataProps, type SelledProductsByUpsellProps } from "../../types/types";
 
 const baseUrl = process.env.SHOPIFY_DOMAIN_NAME || "";
 const apiVersion = process.env.SHOPIFY_API_VERSION || "2025-01";
@@ -63,31 +63,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: data.errors }, { status: 400 });
     }
 
-    /* const formattedData = data.data.orders.edges.map((orderEdge: SalesDataProps) => ({
-      orderShopifyId: orderEdge.node.id,
-      orderId: orderEdge.node.number,
-      items: orderEdge.node.lineItems.edges.map((itemEdge) => ({
-        sku: itemEdge.node.variant?.sku || "NO_SKU",
-        quantity: itemEdge.node.quantity,
-        product_title: itemEdge.node.product?.title || "NO_PRODUCT_TITLE",
-      }))
-    }));
-
-    const summarizedSales = formattedData.reduce((acc:SummarizedAccProps, order:SummarizedOrderProps) => {
-      order.items.forEach((item:SummarizedItemProps) => {
-        const { sku, quantity } = item;
-        if (acc[sku]) {
-          acc[sku].quantity += quantity;
-        } else {
-          acc[sku] = { sku, quantity };
+    const resultData:SelledProductsByUpsellProps[] = [];
+    data.data.orders.edges.forEach((order:OrdersDataProps) => {
+      order.node.lineItems.edges.map((item) => {
+        const productSelled:SelledProductsByUpsellProps = {
+          productTitle: item.node.product.title,
+          variantTitle: item.node.variant.title,
+          sku: item.node.variant.sku,
+          quantity: item.node.quantity,
+          orderNumber: order.node.number,
+          orderId: order.node.id,
+          campaignId: ""
         }
-      });
-      return acc;
-    }, {});
 
-    const finalResult: { sku: string; quantity: number }[] = Object.values(summarizedSales); */
+        if (item.node.customAttributes.length > 0) {
+          const upsellPropertyFinded = item.node.customAttributes.find(k => k.key === "_lb-product")
+          if (upsellPropertyFinded){
+            productSelled.campaignId = upsellPropertyFinded.value;
+            resultData.push(productSelled);
+          }
+        }
+        
+      })
+    });
 
-    return NextResponse.json({ data: data }, { status: 200 });
+
+    return NextResponse.json({ data: resultData }, { status: 200 });
 
   } catch (error) {
     return NextResponse.json(

@@ -193,3 +193,48 @@ export type BinContainerProps = {
   stock_quantity: number;
   bins: BinProps[];
 }
+
+export type OrdersDataProps = {
+  node: {
+    id: string;
+    lineItems: {
+      edges: {
+        node: {
+          customAttributes: {
+            key: string;
+            value: string;
+          }[];
+          product: {
+            title: string;
+          };
+          quantity: number;
+          variant: {
+            sku: string;
+            title: string;
+          }
+        }
+      }[]
+    }
+    number: number;
+  }
+}
+
+export type SelledProductsByUpsellProps = {
+  productTitle: string;
+  variantTitle: string;
+  sku: string;
+  quantity: number;
+  orderNumber: number;
+  orderId: string;
+  campaignId: string;
+}
+
+export type UpsellCampaignProps = {
+  name: string;
+  id: string;
+}
+
+export type UpsellSellCardProps = {
+  campaignTitle: string;
+  data: SelledProductsByUpsellProps[];
+}
