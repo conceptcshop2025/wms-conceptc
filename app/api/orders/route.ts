@@ -18,7 +18,7 @@ export async function POST(req: Request) {
         node {
           id
           number
-          lineItems(first: 100) {
+          lineItems(first: 250) {
             edges {
               node {
                 quantity
