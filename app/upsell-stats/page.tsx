@@ -75,7 +75,7 @@ export default function UpsellStatsPage() {
                 <div className="logo-sub">WMS · Québec</div>
               </div>
             </div> 
-            <span className="version-badge">v5.0.0</span>
+            <span className="version-badge">v5.1.0</span>
           </div>
           <main className="p-8!">
             <button className="action-btn action-btn-confirm" onClick={getUpsellStats}>
