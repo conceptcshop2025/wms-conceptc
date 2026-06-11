@@ -4,6 +4,7 @@ import { useState } from "react";
 import Menu from "../components/Menu/Menu";
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import MapBin from "../components/MapBin/MapBin";
+import InfoAppVersion from "../components/InfoAppVersion/InfoAppVersion";
 
 export default function MapBinPage() {
   const [openMenu, setOpenMenu] = useState<boolean>(false);
@@ -26,7 +27,7 @@ export default function MapBinPage() {
             <div className="logo-sub">WMS · Québec</div>
           </div>
         </div> 
-        <span className="version-badge">v5.1.0</span>
+        <InfoAppVersion />
       </div>
       <main>
         <MapBin />

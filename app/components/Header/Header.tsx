@@ -1,6 +1,7 @@
 "use client";
 
 import { Bars3Icon } from "@heroicons/react/24/outline";
+import InfoAppVersion from "../InfoAppVersion/InfoAppVersion";
 
 interface HeaderProps {
   onSync: () => void;
@@ -28,7 +29,7 @@ export default function Header({ onSync, onGetAllProducts, onGetSelledProducts, 
             <div className="logo-sub">WMS · Québec</div>
           </div>
         </div>
-        <span className="version-badge">v5.1.0</span>
+        <InfoAppVersion />
       </div>
       <div className="topbar-actions">
         <button
