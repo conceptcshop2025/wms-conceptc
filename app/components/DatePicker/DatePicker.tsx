@@ -53,9 +53,13 @@ export default function DatePicker({ onPickerDate }:DatePickerProps) {
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="range"
-            defaultMonth={date?.from}
+            defaultMonth={new Date()}
             selected={date}
             onSelect={setDate}
+            disabled={{
+              before: new Date(2026, 4, 26),
+              after: new Date(),
+            }}
             numberOfMonths={2}
           />
         </PopoverContent>
