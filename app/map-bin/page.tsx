@@ -4,6 +4,7 @@ import { useState } from "react";
 import Menu from "../components/Menu/Menu";
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import MapBin from "../components/MapBin/MapBin";
+import InfoAppVersion from "../components/InfoAppVersion/InfoAppVersion";
 
 export default function MapBinPage() {
   const [openMenu, setOpenMenu] = useState<boolean>(false);
@@ -18,7 +19,7 @@ export default function MapBinPage() {
       <Menu isOpen={openMenu} onCloseMenu={toggleMenu} />
       <div className="topbar">
         <div className="topbar-left">
-          <div className="logo-mark cursor-pointer" onClick={toggleMenu}>
+          <div className="logo-mark cursor-pointer bg-green-800!" onClick={toggleMenu}>
             <Bars3Icon className="size-6" />
           </div>  
           <div>
@@ -26,7 +27,7 @@ export default function MapBinPage() {
             <div className="logo-sub">WMS · Québec</div>
           </div>
         </div> 
-        <span className="version-badge">v5.1.0</span>
+        <InfoAppVersion />
       </div>
       <main>
         <MapBin />

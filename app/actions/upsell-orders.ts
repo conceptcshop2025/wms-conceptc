@@ -21,11 +21,11 @@ async function fetchShopify(query: string) {
   });
   return res.json();
 }
-const last_date = '2026-06-01T00:00:00.000Z';
-const date = new Date().toISOString();
-const queryGraphQL = `created_at:>='${last_date}' created_at:<='${date}' financial_status:paid`;
 
-export async function startProductsBulkOperation(): Promise<string> {
+
+export async function startProductsBulkOperation(initialDate: string, finalDate: string): Promise<string> {
+  const queryGraphQL = `created_at:>='${initialDate}' created_at:<='${finalDate}' financial_status:paid`;
+
   const mutation = `
     mutation {
       bulkOperationRunQuery(
@@ -138,8 +138,8 @@ function parseProductsJSONL(jsonlText: string): SelledProductsByUpsellProps[] {
   return resultData;
 }
 
-export async function fetchBulkUpsellOrders(): Promise<SelledProductsByUpsellProps[]> {
-  const operationId = await startProductsBulkOperation();
+export async function fetchBulkUpsellOrders(datePickerInitialDate:string, datePickerFinalDate:string): Promise<SelledProductsByUpsellProps[]> {
+  const operationId = await startProductsBulkOperation(datePickerInitialDate, datePickerFinalDate);
   const downloadUrl = await pollBulkOperation(operationId);
 
   const res = await fetch(downloadUrl);

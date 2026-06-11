@@ -38,7 +38,7 @@ export default function PaginationBar({ currentPage, totalPages, onPageChange }:
         ) : (
           <button
             key={page}
-            className={`page-btn${page === currentPage ? ' active' : ''}`}
+            className={`page-btn${page === currentPage ? ' active bg-green-800!' : ''}`}
             onClick={() => onPageChange(page as number)}
           >
             {page}

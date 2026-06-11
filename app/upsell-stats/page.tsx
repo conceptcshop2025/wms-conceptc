@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Menu from "../components/Menu/Menu";
-import { Bars3Icon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, DocumentCurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { type SelledProductsByUpsellProps, type UpsellCampaignProps } from "../types/types";
 import UpsellSellCard from "../components/UpsellSellCard/UpsellSellCard";
-import { fetchBulkUpsellOrders } from "../actions/upsell-orders"; 
+import { fetchBulkUpsellOrders } from "../actions/upsell-orders";
+import InfoAppVersion from "../components/InfoAppVersion/InfoAppVersion";
+import Loading from "../components/Loading/Loading";
+import DatePicker from "../components/DatePicker/DatePicker";
 
 export default function UpsellStatsPage() {
+  const [loading, setLoading] = useState<boolean>(false);
   const [openMenu, setOpenMenu] = useState<boolean>(false);
   const [selledProducts, setSelledProducts] = useState<SelledProductsByUpsellProps[]>([]);
-  // const clickTime = new Date().toISOString();
-  // const lastSyncDate = '2026-06-01T00:00:00.000Z';
-  // const lastSyncDate = '2026-06-10T00:00:00.000Z';
   const activeCampaigns:UpsellCampaignProps[] = [
     {
       name: "Product List in PDP",
@@ -31,15 +32,19 @@ export default function UpsellStatsPage() {
       id: "ddb9ba2a"
     }
   ]
+  const [datePickerInitialDate, setDatePickerInitialDate] = useState<string>('');
+  const [datePickerFinalDate, setDatePickerFinalDate] = useState<string>('');
 
   const toggleMenu = () => {
     setOpenMenu(prev => !prev);
   }
 
   const getUpsellStats = async () => {
-    const bulkOperationsOfUpsellOrders = await fetchBulkUpsellOrders();
+    setLoading(true);
+    const bulkOperationsOfUpsellOrders = await fetchBulkUpsellOrders(datePickerInitialDate, datePickerFinalDate);
     console.log(`Data from bulk operation:`, bulkOperationsOfUpsellOrders);
     setSelledProducts(bulkOperationsOfUpsellOrders);
+    setLoading(false);
   }
 
   const filteredDataByCampaign = (campaignId:string) => {
@@ -60,14 +65,17 @@ export default function UpsellStatsPage() {
     return Object.values(mergedBySku).sort((a, b) => b.quantity - a.quantity).slice(0, 10);
   }
 
-  
+  const handlePickerDate = useCallback((initialDate:string, finalDate:string) => {
+    setDatePickerInitialDate(initialDate);
+    setDatePickerFinalDate(finalDate);
+  },[]);
 
   return (
     <div className="map-bin-page">
           <Menu isOpen={openMenu} onCloseMenu={toggleMenu} />
           <div className="topbar">
             <div className="topbar-left">
-              <div className="logo-mark cursor-pointer" onClick={toggleMenu}>
+              <div className="logo-mark cursor-pointer bg-green-800!" onClick={toggleMenu}>
                 <Bars3Icon className="size-6" />
               </div>  
               <div>
@@ -75,24 +83,34 @@ export default function UpsellStatsPage() {
                 <div className="logo-sub">WMS · Québec</div>
               </div>
             </div> 
-            <span className="version-badge">v5.1.0</span>
+            <InfoAppVersion />
           </div>
           <main className="p-8!">
-            <button className="action-btn action-btn-confirm" onClick={getUpsellStats}>
-              <ArrowDownTrayIcon className="size-6 text-neutral-50" />
-              Obtenir la liste des produits plus vendus du mois
-            </button>
-            <div className="campaigns-container grid grid-cols-2 gap-4 mt-4!">
-              {
-                activeCampaigns.length === 0
-                ? <p>Pas de campagnes actives en ce moment.</p>
-                : (
-                  activeCampaigns.map((campaign:UpsellCampaignProps) => (
-                    <UpsellSellCard campaignTitle={campaign.name} data={filteredDataByCampaign(campaign.id)} key={campaign.id} />
-                  ))
-                )
-              }
-            </div>
+            {
+              loading ?
+                <Loading text={"Chargement des données"} /> :
+                  <>
+                    <div className="flex gap-4 justify-start items-center">
+                      <DatePicker onPickerDate={handlePickerDate} />
+                      <button className="action-btn bg-sky-400! text-neutral-100!" onClick={getUpsellStats}>
+                        <DocumentCurrencyDollarIcon className="size-6! text-neutral-100!" />
+                        Consulter ventes
+                      </button>
+                    </div>
+                    <div className="campaigns-container grid grid-cols-2 gap-4 mt-4!">
+                      {
+                        selledProducts.length === 0 ? <p>Sélectionne un range des dates et cliques sur consulter ventes.</p>
+                        : activeCampaigns.length === 0
+                        ? <p>Pas de campagnes actives en ce moment.</p>
+                        : (
+                          activeCampaigns.map((campaign:UpsellCampaignProps) => (
+                            <UpsellSellCard campaignTitle={campaign.name} data={filteredDataByCampaign(campaign.id)} key={campaign.id} />
+                          ))
+                        )
+                      }
+                    </div>
+                  </>
+            }
           </main>
         </div>
   )

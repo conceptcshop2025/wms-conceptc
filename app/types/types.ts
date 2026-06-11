@@ -238,3 +238,7 @@ export type UpsellSellCardProps = {
   campaignTitle: string;
   data: SelledProductsByUpsellProps[];
 }
+
+export type DatePickerProps = {
+  onPickerDate: (initialDate:string, finalDate:string) => void;
+}

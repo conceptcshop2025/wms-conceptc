@@ -76,7 +76,7 @@ export default function Modal({
           <button className="btn btn-secondary" onClick={close}>
             {cancelText}
           </button>
-          <button disabled={disabledConfirmButton} className={`btn btn-primary ${ disabledConfirmButton && 'disabled:opacity-25 disabled:bg-gray-300! text-neutral-700! pointer-events-none' }`} onClick={() => { onConfirm(); close(); }}>
+          <button disabled={disabledConfirmButton} className={`btn btn-primary bg-green-800! ${ disabledConfirmButton && 'disabled:opacity-25 disabled:bg-gray-300! text-neutral-700! pointer-events-none' }`} onClick={() => { onConfirm(); close(); }}>
             {confirmText}
           </button>
         </div>
