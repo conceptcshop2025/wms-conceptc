@@ -21,7 +21,7 @@ export default function Header({ onSync, onGetAllProducts, onGetSelledProducts, 
     <header className="topbar">
       <div className="topbar-left">
         <div className="logo">
-          <div className="logo-mark cursor-pointer" onClick={onShowMenu}>
+          <div className="logo-mark cursor-pointer bg-green-800!" onClick={onShowMenu}>
             <Bars3Icon className="size-6" />
           </div>
           <div>

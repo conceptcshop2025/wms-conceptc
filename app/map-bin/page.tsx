@@ -19,7 +19,7 @@ export default function MapBinPage() {
       <Menu isOpen={openMenu} onCloseMenu={toggleMenu} />
       <div className="topbar">
         <div className="topbar-left">
-          <div className="logo-mark cursor-pointer" onClick={toggleMenu}>
+          <div className="logo-mark cursor-pointer bg-green-800!" onClick={toggleMenu}>
             <Bars3Icon className="size-6" />
           </div>  
           <div>
