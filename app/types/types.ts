@@ -232,10 +232,12 @@ export type SelledProductsByUpsellProps = {
 export type UpsellCampaignProps = {
   name: string;
   id: string;
+  color: string;
 }
 
 export type UpsellSellCardProps = {
   campaignTitle: string;
+  colorCard: string;
   data: SelledProductsByUpsellProps[];
 }
 
