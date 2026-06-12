@@ -19,6 +19,7 @@ async function fetchShopify(query: string) {
     body: JSON.stringify({ query }),
     cache: "no-store",
   });
+
   return res.json();
 }
 

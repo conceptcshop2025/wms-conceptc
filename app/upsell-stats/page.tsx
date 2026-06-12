@@ -9,6 +9,7 @@ import { fetchBulkUpsellOrders } from "../actions/upsell-orders";
 import InfoAppVersion from "../components/InfoAppVersion/InfoAppVersion";
 import Loading from "../components/Loading/Loading";
 import DatePicker from "../components/DatePicker/DatePicker";
+import { toast } from "sonner";
 
 export default function UpsellStatsPage() {
   const [loading, setLoading] = useState<boolean>(false);
@@ -17,19 +18,23 @@ export default function UpsellStatsPage() {
   const activeCampaigns:UpsellCampaignProps[] = [
     {
       name: "Product List in PDP",
-      id: "df4a206c"
+      id: "df4a206c",
+      color: "oklch(68.5% 0.169 237.323)"
     },
     {
       name: "Test MC Air Libre",
-      id: "25467e5c"
+      id: "25467e5c",
+      color: "oklch(76.9% 0.188 70.08)"
     },
     {
       name: "Upsell Popup before Checkout page",
-      id: "bcf05642"
+      id: "bcf05642",
+      color: "oklch(76.8% 0.233 130.85)"
     },
     {
       name: "26-06-03 Checkout page + Test GPT",
-      id: "ddb9ba2a"
+      id: "ddb9ba2a",
+      color: "oklch(60.6% 0.25 292.717)"
     }
   ]
   const [datePickerInitialDate, setDatePickerInitialDate] = useState<string>('');
@@ -41,10 +46,17 @@ export default function UpsellStatsPage() {
 
   const getUpsellStats = async () => {
     setLoading(true);
-    const bulkOperationsOfUpsellOrders = await fetchBulkUpsellOrders(datePickerInitialDate, datePickerFinalDate);
-    console.log(`Data from bulk operation:`, bulkOperationsOfUpsellOrders);
-    setSelledProducts(bulkOperationsOfUpsellOrders);
-    setLoading(false);
+    try {
+      const bulkOperationsOfUpsellOrders = await fetchBulkUpsellOrders(datePickerInitialDate, datePickerFinalDate);
+      setSelledProducts(bulkOperationsOfUpsellOrders);
+    } catch(error) {
+      toast.error(`Erreur: L'obtention de l'information de ventes d'upsell est refusé, validéz le range des dates et essayez autre fois. error info: ${error}`, {
+        position: "top-center",
+        richColors: true
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   const filteredDataByCampaign = (campaignId:string) => {
@@ -97,14 +109,14 @@ export default function UpsellStatsPage() {
                         Consulter ventes
                       </button>
                     </div>
-                    <div className="campaigns-container grid grid-cols-2 gap-4 mt-4!">
+                    <div className="campaigns-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4!">
                       {
                         selledProducts.length === 0 ? <p>Sélectionne un range des dates et cliques sur consulter ventes.</p>
                         : activeCampaigns.length === 0
                         ? <p>Pas de campagnes actives en ce moment.</p>
                         : (
                           activeCampaigns.map((campaign:UpsellCampaignProps) => (
-                            <UpsellSellCard campaignTitle={campaign.name} data={filteredDataByCampaign(campaign.id)} key={campaign.id} />
+                            <UpsellSellCard campaignTitle={campaign.name} colorCard={campaign.color} data={filteredDataByCampaign(campaign.id)} key={campaign.id} />
                           ))
                         )
                       }

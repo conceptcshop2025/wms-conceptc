@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { addDays, format } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { type DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,8 @@ import { type DatePickerProps } from "@/app/types/types";
 
 export default function DatePicker({ onPickerDate }:DatePickerProps) { 
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(new Date().getFullYear(), 0, 20),
-    to: addDays(new Date(new Date().getFullYear(), 0, 20), 20),
+    from: startOfMonth(new Date()),
+    to: new Date(),
   });
 
   useEffect(() => {
