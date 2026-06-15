@@ -1,6 +1,6 @@
 import { type UpsellSellCardProps, type SelledProductsByUpsellProps } from "@/app/types/types"
 
-export default function UpsellSellCard({ campaignTitle, colorCard, data }:UpsellSellCardProps) {
+export default function UpsellSellCard({ campaignTitle, colorCard, begginingDate, data }:UpsellSellCardProps) {
 
   const borderStyles = {
     borderColor: colorCard,
@@ -13,7 +13,8 @@ export default function UpsellSellCard({ campaignTitle, colorCard, data }:Upsell
   return (
     <div className={`upsell-sell-card bg-neutral-50 rounded-lg p-4! shadow-lg border-t-2`} style={borderStyles}>
       <div className="heading-card text-xl mb-4!">
-        Campagne: { campaignTitle }
+        <h2>Campagne: { campaignTitle }</h2>
+        <p className="text-sm">Date de début de campagne: { begginingDate }</p>
       </div>
       <div className="body-card">
         <div className={`product-heading grid grid-cols-[1fr_minmax(90px,95px)_minmax(50px,80px)] gap-4 py-4! rounded-t-lg text-neutral-50`} style={bakgroundStyles}>
