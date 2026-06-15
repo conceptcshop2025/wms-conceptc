@@ -28,6 +28,7 @@ export default function UpsellStatsPage() {
     setLoading(true);
     try {
       const bulkOperationsOfUpsellOrders = await fetchBulkUpsellOrders(datePickerInitialDate, datePickerFinalDate);
+      console.log(bulkOperationsOfUpsellOrders);
       setSelledProducts(bulkOperationsOfUpsellOrders);
     } catch(error) {
       toast.error(`Erreur: L'obtention de l'information de ventes d'upsell est refusé, validéz le range des dates et essayez autre fois. error info: ${error}`, {
@@ -54,7 +55,8 @@ export default function UpsellStatsPage() {
       {}
     );
     
-    return Object.values(mergedBySku).sort((a, b) => b.quantity - a.quantity).slice(0, 10);
+    // Object.values(mergedBySku).sort((a, b) => b.quantity - a.quantity).slice(0, 10);
+    return Object.values(mergedBySku).sort((a, b) => b.quantity - a.quantity);
   }
 
   const handlePickerDate = useCallback((initialDate:string, finalDate:string) => {

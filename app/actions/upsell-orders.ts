@@ -45,6 +45,7 @@ export async function startProductsBulkOperation(initialDate: string, finalDate:
                       variant {
                         sku
                         title
+                        price
                       }
                       product {
                         title
@@ -133,6 +134,7 @@ function parseProductsJSONL(jsonlText: string): SelledProductsByUpsellProps[] {
       orderNumber: order.number,
       orderId: order.id,
       campaignId: upsellAttr.value,
+      productPrice: item.variant?.price
     });
   });
 
