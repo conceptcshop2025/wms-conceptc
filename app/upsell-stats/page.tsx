@@ -10,35 +10,15 @@ import InfoAppVersion from "../components/InfoAppVersion/InfoAppVersion";
 import Loading from "../components/Loading/Loading";
 import DatePicker from "../components/DatePicker/DatePicker";
 import { toast } from "sonner";
+import { getUpsellCampaigns } from "../lib/data/getUpsellCampaigns";
 
 export default function UpsellStatsPage() {
   const [loading, setLoading] = useState<boolean>(false);
   const [openMenu, setOpenMenu] = useState<boolean>(false);
   const [selledProducts, setSelledProducts] = useState<SelledProductsByUpsellProps[]>([]);
-  const activeCampaigns:UpsellCampaignProps[] = [
-    {
-      name: "Product List in PDP",
-      id: "df4a206c",
-      color: "oklch(68.5% 0.169 237.323)"
-    },
-    {
-      name: "Test MC Air Libre",
-      id: "25467e5c",
-      color: "oklch(76.9% 0.188 70.08)"
-    },
-    {
-      name: "Upsell Popup before Checkout page",
-      id: "bcf05642",
-      color: "oklch(76.8% 0.233 130.85)"
-    },
-    {
-      name: "26-06-03 Checkout page + Test GPT",
-      id: "ddb9ba2a",
-      color: "oklch(60.6% 0.25 292.717)"
-    }
-  ]
   const [datePickerInitialDate, setDatePickerInitialDate] = useState<string>('');
   const [datePickerFinalDate, setDatePickerFinalDate] = useState<string>('');
+  const activeCampaigns:UpsellCampaignProps[] = getUpsellCampaigns();
 
   const toggleMenu = () => {
     setOpenMenu(prev => !prev);
@@ -48,6 +28,7 @@ export default function UpsellStatsPage() {
     setLoading(true);
     try {
       const bulkOperationsOfUpsellOrders = await fetchBulkUpsellOrders(datePickerInitialDate, datePickerFinalDate);
+      console.log(bulkOperationsOfUpsellOrders);
       setSelledProducts(bulkOperationsOfUpsellOrders);
     } catch(error) {
       toast.error(`Erreur: L'obtention de l'information de ventes d'upsell est refusé, validéz le range des dates et essayez autre fois. error info: ${error}`, {
@@ -74,7 +55,8 @@ export default function UpsellStatsPage() {
       {}
     );
     
-    return Object.values(mergedBySku).sort((a, b) => b.quantity - a.quantity).slice(0, 10);
+    // Object.values(mergedBySku).sort((a, b) => b.quantity - a.quantity).slice(0, 10);
+    return Object.values(mergedBySku).sort((a, b) => b.quantity - a.quantity);
   }
 
   const handlePickerDate = useCallback((initialDate:string, finalDate:string) => {
@@ -116,7 +98,11 @@ export default function UpsellStatsPage() {
                         ? <p>Pas de campagnes actives en ce moment.</p>
                         : (
                           activeCampaigns.map((campaign:UpsellCampaignProps) => (
-                            <UpsellSellCard campaignTitle={campaign.name} colorCard={campaign.color} data={filteredDataByCampaign(campaign.id)} key={campaign.id} />
+                            campaign.campaignStatus === 'active' && <UpsellSellCard
+                              campaignTitle={campaign.name}
+                              colorCard={campaign.color}
+                              begginingDate={campaign.begginingDate}
+                              data={filteredDataByCampaign(campaign.id)} key={campaign.id} />
                           ))
                         )
                       }

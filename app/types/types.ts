@@ -211,6 +211,7 @@ export type OrdersDataProps = {
           variant: {
             sku: string;
             title: string;
+            price: string;
           }
         }
       }[]
@@ -227,18 +228,22 @@ export type SelledProductsByUpsellProps = {
   orderNumber: number;
   orderId: string;
   campaignId: string;
+  productPrice: string;
 }
 
 export type UpsellCampaignProps = {
   name: string;
   id: string;
   color: string;
+  begginingDate: string;
+  campaignStatus: 'active' | 'draft';
 }
 
 export type UpsellSellCardProps = {
   campaignTitle: string;
   colorCard: string;
   data: SelledProductsByUpsellProps[];
+  begginingDate: string;
 }
 
 export type DatePickerProps = {

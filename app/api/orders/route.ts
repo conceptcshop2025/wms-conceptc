@@ -73,7 +73,8 @@ export async function POST(req: Request) {
           quantity: item.node.quantity,
           orderNumber: order.node.number,
           orderId: order.node.id,
-          campaignId: ""
+          campaignId: "",
+          productPrice: item.node.variant.price,
         }
 
         if (item.node.customAttributes.length > 0) {
