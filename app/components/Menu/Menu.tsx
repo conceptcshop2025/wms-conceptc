@@ -14,6 +14,7 @@ export default function Menu({ isOpen, onCloseMenu }: MenuProps) {
           <Link href="/" className="link text-2xl text-neutral-50">Gestion d&apos;entrepôt</Link>
           <Link href="/map-bin" className="link text-2xl text-neutral-50">Localisation des Bins</Link>
           <Link href="/upsell-stats" className="link text-2xl text-neutral-50">Statistiques d&apos;upsell</Link>
+          <Link href="/stocky" className="link text-2xl text-neutral-50">Stocky</Link>
         </ul>
       </div>
     </div>
