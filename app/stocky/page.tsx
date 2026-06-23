@@ -99,53 +99,53 @@ export default function StockyPage() {
       "paid",
       "adjustments",
       "shipping",
-      "item_id",
-      "item_sku",
-      "item_product_title",
-      "item_variant_title",
-      "item_quantity",
-      "item_status",
-      "item_retail_price",
-      "item_cost_price",
-      "item_accounting_tax_type",
-      "item_received_at",
-      "item_updated_at",
+      "items_count",
+      "total_quantity",
+      "purchase_items",
     ];
 
     const rows: string[] = [headers.join(",")];
     orders.forEach((order) => {
-      const items = order.purchase_items !== null && order.purchase_items.length > 0 ? order.purchase_items : [null];
-      items.forEach((item) => {
-        const row = [
-          order.id,
-          order.number,
-          order.sequential_id,
-          order.invoice_number,
-          order.supplier_name,
-          order.supplier_id,
-          order.currency,
-          order.created_at,
-          order.ordered_at,
-          order.expected_on,
-          order.ship_on,
-          order.archived,
-          order.paid,
-          order.adjustments,
-          order.shipping,
-          item?.id,
-          item?.sku,
-          item?.product_title,
-          item?.variant_title,
-          item?.quantity,
-          item?.status,
-          item?.retail_price,
-          item?.cost_price,
-          item?.accounting_tax_type,
-          item?.received_at,
-          item?.updated_at,
-        ];
-        rows.push(row.map(escapeCsv).join(","));
-      });
+      const items = order.purchase_items || [];
+
+      const itemsList = items
+        .map(
+          (item) =>
+            `${item.quantity} x ${item.product_title}` +
+            `${item.variant_title ? ` (${item.variant_title})` : ""}` +
+            `${item.sku ? ` [SKU: ${item.sku}]` : ""}` +
+            ` [ID: ${item.id}]` +
+            ` [Status: ${item.status}]` +
+            ` [Updated: ${item.updated_at}]`
+        )
+        .join(" | ");
+
+      const totalQuantity = items.reduce(
+        (sum, item) => sum + (item.quantity || 0),
+        0
+      );
+
+      const row = [
+        order.id,
+        order.number,
+        order.sequential_id,
+        order.invoice_number,
+        order.supplier_name,
+        order.supplier_id,
+        order.currency,
+        order.created_at,
+        order.ordered_at,
+        order.expected_on,
+        order.ship_on,
+        order.archived,
+        order.paid,
+        order.adjustments,
+        order.shipping,
+        items.length,
+        totalQuantity,
+        itemsList,
+      ];
+      rows.push(row.map(escapeCsv).join(","));
     });
 
     const csvContent = rows.join("\n");
