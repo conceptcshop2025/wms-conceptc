@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { fetchBulkProducts } from "./actions/shopify";
 // import { getSalesBetweenDates } from "./actions/sales-shopify";
 import Header from "./components/Header/Header";
@@ -35,6 +35,18 @@ export default function Home() {
   const [productListHistoric, setProductListHistoric] = useState<ProductListHistoricProps[]>([]);
   const [hideNotActiveProducts, setHideNotActiveProducts] = useState<boolean>(false);
   const [openMenu, setOpenMenu] = useState<boolean>(false);
+  // IDs of products that changed via real-time polling — used to flag their
+  // cards with the "confirmed" (Récemment changé) badge.
+  const [updatedProductIds, setUpdatedProductIds] = useState<Set<string>>(new Set());
+
+  // Refs for real-time polling: keep the latest products list accessible inside
+  // stable callbacks, and track the last timestamp we polled changes from.
+  const productsRef = useRef<ProductItemProps[]>(products);
+  const lastSyncRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    productsRef.current = products;
+  }, [products]);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -149,10 +161,81 @@ export default function Home() {
     }
   }, [foundedCardKey, currentPage]);
 
+  /* Real-time updates via polling.
+     Every few seconds we ask the API which products changed since the last
+     check (by `updated_at`) and merge only those into the list, so any device
+     using the app sees the latest data. Thanks to React.memo on ProductCard,
+     only the modified product's card re-renders. */
+  useEffect(() => {
+    const POLL_INTERVAL_MS = 3000;
+
+    const pollForUpdates = async () => {
+      // Nothing loaded yet: nothing to keep in sync.
+      if (productsRef.current.length === 0) {
+        lastSyncRef.current = null;
+        return;
+      }
+
+      // First tick after a load: set the watermark to "now" and wait for
+      // changes that happen from this point on.
+      if (!lastSyncRef.current) {
+        lastSyncRef.current = new Date().toISOString();
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `/api/store-products/updates?since=${encodeURIComponent(lastSyncRef.current)}`
+        );
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const changed: ProductItemProps[] = data.products || [];
+        if (changed.length === 0) return;
+
+        // Advance the watermark to the newest timestamp we received, so we
+        // don't re-fetch the same changes on the next poll.
+        lastSyncRef.current = changed.reduce(
+          (max, p) => (p.updated_at && p.updated_at > max ? p.updated_at : max),
+          lastSyncRef.current as string
+        );
+
+        // Keep only products that are currently in the list and whose data
+        // actually changed.
+        const current = productsRef.current;
+        const reallyChanged = changed.filter(p => {
+          const existing = current.find(c => c.id === p.id);
+          return existing && existing.updated_at !== p.updated_at;
+        });
+        if (reallyChanged.length === 0) return;
+
+        reallyChanged.forEach(p => {
+          console.log(
+            `Producto actualizado en tiempo real: "${p.title}" (SKU: ${p.sku || "N/A"}) — bin: ${p.bin_current_quantity}, updated_at: ${p.updated_at}`
+          );
+        });
+
+        const changedById = new Map(reallyChanged.map(p => [p.id, p]));
+        setProducts(prev => prev.map(p => changedById.get(p.id) ?? p));
+        setUpdatedProductIds(prev => {
+          const next = new Set(prev);
+          reallyChanged.forEach(p => next.add(p.id));
+          return next;
+        });
+      } catch (error) {
+        console.error("Error polling product updates:", error);
+      }
+    };
+
+    const intervalId = setInterval(pollForUpdates, POLL_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, []);
+
   const handleSync = async () => {
     setLoading(true);
     setStatus("Solicitando datos a Shopify...");
     setProducts([]);
+    setUpdatedProductIds(new Set());
     try {
 
       setStatus("Shopify está preparando el archivo... (Bulk Operation)");
@@ -209,7 +292,7 @@ export default function Home() {
     setProducts(prev => prev.filter(p => !(p.id === id && (p.sku ?? p.sku) === variantSku)));
   }, []);
 
-  const handleProductConfirm = (sku: string, bin_current_quantity: number, update_at: string) => {
+  const handleProductConfirm = useCallback((sku: string, bin_current_quantity: number, update_at: string) => {
     setProducts(prev =>
       prev.map(p =>
         (p.sku ?? p.sku) === sku
@@ -217,13 +300,14 @@ export default function Home() {
           : p
       )
     );
-  };
+  }, []);
 
   /* Get all products from Neon DB */
   const handleGetAllProductsFromNeon = async () => {
     setLoading(true);
     setStatus("Connexion à la base de données...");
     setMode("warehouse");
+    setUpdatedProductIds(new Set());
 
     try {
       const LIMIT = 200;
@@ -341,8 +425,8 @@ export default function Home() {
   }
 
   /* Get refresh product function */
-  async function handleRefreshProduct(sku:string | undefined) {
-    const findedProduct = products.find(p => p.sku === sku);
+  const handleRefreshProduct = useCallback(async (sku: string | undefined) => {
+    const findedProduct = productsRef.current.find(p => p.sku === sku);
     if (!findedProduct) {
       console.error(`Product with SKU ${sku} not found in current products list.`);
       return;
@@ -359,7 +443,7 @@ export default function Home() {
       );
       alert(`Produit avec sku ${productToUpdate.sku} est à jour correctement!`);
     }
-  }
+  }, []);
 
   /* Add product function */
   const handleAddProduct = async (code: string) => {
@@ -531,10 +615,9 @@ export default function Home() {
   }
 
   /* Remove product from product List */
-  const handleRemoveProductFromProductList = async (variantSku: string | undefined) => {
-    const filteredList = [...products].filter(key => key.sku !== variantSku);
-    setProducts(filteredList);
-  }
+  const handleRemoveProductFromProductList = useCallback((variantSku: string | undefined) => {
+    setProducts(prev => prev.filter(key => key.sku !== variantSku));
+  }, [])
 
   /* save new products to neon DB */
   /* const addNewProductInNeonDB = async (newProduct: ProductItemProps) => {
@@ -582,6 +665,7 @@ export default function Home() {
     setProducts([]);
     setLoading(true);
     setMode("warehouse");
+    setUpdatedProductIds(new Set());
 
     const allProductFromNeon = await getAllProductsFromNeon() as ProductItemProps[];
     const syncedProductsFromIpacky = await syncProductsFromIpacky(allProductFromNeon);
@@ -638,7 +722,8 @@ export default function Home() {
                     onDelete={handleProductDelete}
                     foundedCardKey={foundedCardKey}
                     onRefresh={handleRefreshProduct}
-                    onDeleteFromProductList={handleRemoveProductFromProductList} />
+                    onDeleteFromProductList={handleRemoveProductFromProductList}
+                    recentlyUpdated={updatedProductIds.has(product.id)} />
                 ))
               }
 
