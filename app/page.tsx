@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { fetchBulkProducts } from "./actions/shopify";
 // import { getSalesBetweenDates } from "./actions/sales-shopify";
 import Header from "./components/Header/Header";
 import ControlPanel from "./components/ControlPanel/ControlPanel";
@@ -12,12 +11,9 @@ import Loading from "./components/Loading/Loading";
 import { type ProductListProps, type ProductListHistoricProps, type ProductItemProps } from "./types/types";
 import Modal from "./components/Modal/Modal";
 import Toast from "./components/Toast/Toast";
-import { getAllProductsFromNeon } from "./lib/data/getAllProductsFromNeon";
 import { syncProductsFromIpacky } from "./lib/data/syncProductsFromIpacky";
 import { updateProducts } from "./lib/data/updateProducts";
-import { setProductsInDraftStatus } from "./lib/data/setProductsInDraftStatus";
-import { setProductsInActiveStatus } from "./lib/data/setProductsInActiveStatus";
-import { setProductsExpirationStatus } from "./lib/data/setProductsExpirationStatus";
+import { runIpackySync, runShopifySync } from "./lib/data/syncService";
 import Menu from "./components/Menu/Menu";
 
 export default function Home() {
@@ -239,45 +235,10 @@ export default function Home() {
     try {
 
       setStatus("Shopify está preparando el archivo... (Bulk Operation)");
-      const bulkProducts = await fetchBulkProducts();
+      const { products: refreshProductsFromNeon, shopifyCount } = await runShopifySync();
       setCurrentPage(1);
-      setStatus(`¡Sincronización completa! ${bulkProducts.length} productos cargados.`);
-      const dataFromShopify =  bulkProducts;
-
-      const neonResult = await getAllProductsFromNeon();
-
-      if (!Array.isArray(neonResult)) {
-        throw new Error("Expected getAllProductsFromNeon to return an array");
-      }
-
-      const dataFromNeon = neonResult as ProductItemProps[];
-
-      const skusFromNeon = new Set(dataFromNeon.map(p => p.sku));
-      const skusFromShopify = new Set(dataFromShopify.map(p => p.sku));
-
-      const newProducts = dataFromShopify.filter(p => !skusFromNeon.has(p.sku));
-      const productsInDraftOrArchived = dataFromNeon.filter(p => !skusFromShopify.has(p.sku));
-      const productsInActiveAgain = dataFromNeon.filter(p => skusFromShopify.has(p.sku) && p.status === "DRAFT");
-
-      const completeProductFromIpackyForNewProducts = await syncProductsFromIpacky(newProducts);
-      
-      const productsWithExpirationTag = dataFromShopify.filter(p => p.expiration === true);
-      
-      if (newProducts.length > 0) {
-        updateProducts(completeProductFromIpackyForNewProducts);
-      }
-      if (productsInDraftOrArchived.length > 0) {
-        setProductsInDraftStatus(productsInDraftOrArchived);
-      }
-      if (productsInActiveAgain.length > 0) {
-        setProductsInActiveStatus(productsInActiveAgain);
-      }
-      if (productsWithExpirationTag.length > 0) {
-        setProductsExpirationStatus(productsWithExpirationTag);
-      }
-
-      const refreshProductsFromNeon = await getAllProductsFromNeon();
-      setProducts(refreshProductsFromNeon as ProductItemProps[]);
+      setStatus(`¡Sincronización completa! ${shopifyCount} productos cargados.`);
+      setProducts(refreshProductsFromNeon);
 
       setLoading(false);
 
@@ -667,13 +628,14 @@ export default function Home() {
     setMode("warehouse");
     setUpdatedProductIds(new Set());
 
-    const allProductFromNeon = await getAllProductsFromNeon() as ProductItemProps[];
-    const syncedProductsFromIpacky = await syncProductsFromIpacky(allProductFromNeon);
-  
-    setProducts(syncedProductsFromIpacky);
-    updateProducts(syncedProductsFromIpacky);
-
-    setLoading(false);
+    try {
+      const syncedProductsFromIpacky = await runIpackySync();
+      setProducts(syncedProductsFromIpacky);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const handleHideNotActiveProducts = async (value:boolean) => {

@@ -1,8 +1,10 @@
 import { type ProductItemProps } from "@/app/types/types";
 import pLimit from "p-limit";
+import { getBaseUrl } from "../utils/getBaseUrl";
 
 export async function syncProductsFromIpacky(products:ProductItemProps[]): Promise<ProductItemProps[]> {
   const limit = pLimit(5);
+  const baseUrl = getBaseUrl();
 
   function fieldFormat(fields:string[]) {
     return fields.join(",");
@@ -16,7 +18,7 @@ export async function syncProductsFromIpacky(products:ProductItemProps[]): Promi
         if (!sku) return product;
 
         try {
-          const response = await fetch(`../../api/ipacky?code=${sku}&type=sku`);
+          const response = await fetch(`${baseUrl}/api/ipacky?code=${sku}&type=sku`);
           const result = await response.json();
 
           if (response.ok && result.data[0]) {
