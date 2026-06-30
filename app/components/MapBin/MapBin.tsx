@@ -5,6 +5,10 @@ import { type BinContainerProps, type BinLocationsProps, type BinProps } from "@
 import { ArrowDownTrayIcon, ArchiveBoxArrowDownIcon } from "@heroicons/react/24/outline";
 import Loading from "../Loading/Loading";
 
+// A flat bin location not present in the store, with a flag marking when the
+// same location is shared by two or more products (duplicate assignment).
+type BinNotInStoreProps = BinProps & { duplicated: boolean };
+
 const useBinLocations = create<BinLocationsProps>((set) => ({
   bins: [],
   filteredBins: [],
@@ -60,6 +64,7 @@ const useBinLocations = create<BinLocationsProps>((set) => ({
 export default function MapBin() {
   const [loading, setLoading] = useState(false);
   const [bin, setBin] = useState<string>("");
+  const [binsNotInStore, setBinsNotInStore] = useState<BinNotInStoreProps[]>([]);
   const addBinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleAddBin = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,6 +287,65 @@ export default function MapBin() {
 
       // console.log("all bins after update:", useBinLocations.getState().bins);
 
+      console.log('bins by ENDPOINT available-bins: ', data);
+      console.log('bins by useBinLocations', binInStore);
+      // Build the set of every location id present in the store (sub-bin ids
+      // when a bin has sub-bins, otherwise the bin's own id).
+      const storeLocationIds = new Set<string>();
+      binInStore.forEach((bin) => {
+        if (bin.bins.length > 0) {
+          bin.bins.forEach((subBin) => storeLocationIds.add(subBin.id));
+        } else {
+          storeLocationIds.add(bin.id);
+        }
+      });
+
+      // Keep the items from `data` whose bin_location (which may hold several
+      // comma-separated locations) has NONE of its locations present in the store.
+      const binsNotDrader = (data.data ?? []).filter((item: { bin_location: string }) => {
+        const locations = item.bin_location
+          .split(",")
+          .map((loc: string) => loc.trim())
+          .filter(Boolean);
+        return !locations.some((loc: string) => storeLocationIds.has(loc));
+      });
+
+      console.log("binsNotDrader:", binsNotDrader);
+
+      // Flatten into one object per location: items with several comma-separated
+      // locations become a separate entry for each location. A location coming
+      // from `data` always has a product assigned, so it is not available.
+      const binsNotDraderFormatted: BinProps[] = binsNotDrader.flatMap(
+        (item: { bin_location: string; inventory_quantity: number }) =>
+          item.bin_location
+            .split(",")
+            .map((loc: string) => loc.trim())
+            .filter(Boolean)
+            .map((loc: string) => ({
+              id: loc,
+              available: false,
+              stock_quantity: Number(item.inventory_quantity) || 0,
+            }))
+      );
+
+      // Count how many products reference each location (before de-duplicating).
+      const locationCounts = new Map<string, number>();
+      binsNotDraderFormatted.forEach((b) => {
+        locationCounts.set(b.id, (locationCounts.get(b.id) ?? 0) + 1);
+      });
+
+      // De-duplicate by location id, flag locations shared by 2+ products, and
+      // order ascending (numeric-aware).
+      const uniqueBinsNotDrader: BinNotInStoreProps[] = Array.from(
+        new Map(binsNotDraderFormatted.map((b) => [b.id, b])).values()
+      )
+        .map((b) => ({ ...b, duplicated: (locationCounts.get(b.id) ?? 0) >= 2 }))
+        .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+
+      setBinsNotInStore(uniqueBinsNotDrader);
+
+      console.log("binsNotDraderFormatted:", uniqueBinsNotDrader);
+
       if (data.failedCount > 0) {
         console.warn("Productos que fallaron:", data.failed);
       }
@@ -345,6 +409,7 @@ export default function MapBin() {
           </div>
         </div>
         <div className="bin-list mt-8!">
+          <p className="text-3xl mb-2!">Bin draders</p>
           <ul className="grid grid-cols-8 gap-4">
             {filteredBins.map((bin:BinContainerProps) => (
               <li
@@ -386,6 +451,23 @@ export default function MapBin() {
                         </div>
                       </details>
                   }
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="flex items-center justify-start gap-4 mt-8!">
+            <p className="text-3xl my-2!">Bins not Drader</p>
+            <span className="w-100 p-1! bg-orange-300 border border-orange-900 rounded-lg text-orange-900 text-center">2 ou plus produits dans la même bin location</span>
+          </div>
+          <ul className="grid grid-cols-8 gap-4">
+            {binsNotInStore.map((bin: BinNotInStoreProps) => (
+              <li
+                key={bin.id}
+                className={`relative overflow-hidden `}>
+                <div className="bin-card ">
+                  <p className={`flex rounded-lg items-center jsutify-around gap-4 w-full px-4! py-2! ${bin.duplicated ? "bg-orange-300 text-orange-900 border-orange-900" : binStatus(bin.available, bin.stock_quantity)}`}>
+                    <span>{bin.id}</span>
+                  </p>
                 </div>
               </li>
             ))}
