@@ -4,10 +4,12 @@ import { create } from "zustand";
 import { type BinContainerProps, type BinLocationsProps, type BinProps } from "@/app/types/types";
 import { ArrowDownTrayIcon, ArchiveBoxArrowDownIcon } from "@heroicons/react/24/outline";
 import Loading from "../Loading/Loading";
+import { BookmarkIcon } from "@heroicons/react/24/solid";
 
 // A flat bin location not present in the store, with a flag marking when the
-// same location is shared by two or more products (duplicate assignment).
-type BinNotInStoreProps = BinProps & { duplicated: boolean };
+// same location is shared by two or more products (duplicate assignment) and
+// the number of products that share it.
+type BinNotInStoreProps = BinProps & { duplicated: boolean; count: number };
 
 const useBinLocations = create<BinLocationsProps>((set) => ({
   bins: [],
@@ -339,7 +341,10 @@ export default function MapBin() {
       const uniqueBinsNotDrader: BinNotInStoreProps[] = Array.from(
         new Map(binsNotDraderFormatted.map((b) => [b.id, b])).values()
       )
-        .map((b) => ({ ...b, duplicated: (locationCounts.get(b.id) ?? 0) >= 2 }))
+        .map((b) => {
+          const count = locationCounts.get(b.id) ?? 0;
+          return { ...b, duplicated: count >= 2, count };
+        })
         .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
 
       setBinsNotInStore(uniqueBinsNotDrader);
@@ -409,7 +414,9 @@ export default function MapBin() {
           </div>
         </div>
         <div className="bin-list mt-8!">
-          <p className="text-3xl mb-2!">Bin draders</p>
+          {
+            filteredBins.length > 0 && <p className="text-3xl mb-2!">Bin draders</p>
+          }
           <ul className="grid grid-cols-8 gap-4">
             {filteredBins.map((bin:BinContainerProps) => (
               <li
@@ -455,18 +462,28 @@ export default function MapBin() {
               </li>
             ))}
           </ul>
-          <div className="flex items-center justify-start gap-4 mt-8!">
-            <p className="text-3xl my-2!">Bins not Drader</p>
-            <span className="w-100 p-1! bg-orange-300 border border-orange-900 rounded-lg text-orange-900 text-center">2 ou plus produits dans la même bin location</span>
-          </div>
+          {
+            binsNotInStore.length > 0 &&
+              <div className="flex items-center justify-start gap-4 my-8!">
+                <p className="text-3xl my-2!">Bins not Drader</p>
+                <span className="w-100 p-1! bg-orange-300 border border-orange-900 rounded-lg text-orange-900 text-center">2 ou plus produits dans la même bin location</span>
+                <BookmarkIcon className="size-10 text-orange-900" /> <span>Quantité des produits dans la même bin</span>
+              </div>
+          }
           <ul className="grid grid-cols-8 gap-4">
             {binsNotInStore.map((bin: BinNotInStoreProps) => (
               <li
                 key={bin.id}
-                className={`relative overflow-hidden `}>
+                className={`relative overflow-initial `}>
                 <div className="bin-card ">
-                  <p className={`flex rounded-lg items-center jsutify-around gap-4 w-full px-4! py-2! ${bin.duplicated ? "bg-orange-300 text-orange-900 border-orange-900" : binStatus(bin.available, bin.stock_quantity)}`}>
+                  <p className={`flex rounded-lg items-center jsutify-around gap-4 w-full px-4! py-2! relative ${bin.duplicated ? "bg-orange-300 text-orange-900 border-orange-900" : binStatus(bin.available, bin.stock_quantity)}`}>
                     <span>{bin.id}</span>
+                    {bin.duplicated ? <>
+                      <span className="products-count absolute -top-1.75 -right-2.25">
+                        <BookmarkIcon className="size-10 text-orange-900" />
+                        <span className="absolute top-1 right-3 z-4 text-neutral-50 w-4 text-center ">{ bin.count }</span>
+                      </span>
+                    </> : ""}
                   </p>
                 </div>
               </li>
