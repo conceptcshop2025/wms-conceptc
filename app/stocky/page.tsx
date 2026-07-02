@@ -64,6 +64,7 @@ export default function StockyPage() {
       const data = await response.json();
       // console.log(data.purchase_orders.find(key => key.number === 18709));
       console.log(data);
+      // console.log(data.purchase_orders.find(item => item.number === 19413));
       setOrders(data.purchase_orders || []);
     } catch (err) {
       setError(String(err));
@@ -102,6 +103,7 @@ export default function StockyPage() {
       "items_count",
       "total_quantity",
       "purchase_items",
+      "shopify_receive_location_id"
     ];
 
     const rows: string[] = [headers.join(",")];
@@ -125,6 +127,20 @@ export default function StockyPage() {
         0
       );
 
+      const getLocationNameById = (locationId:string|number) => {
+        const locationString = locationId.toString();
+
+        if (locationString === '67343220887') {
+          return 'Entrêpot QC'
+        } else if (locationString === '14563147837') {
+          return 'Boutique Trois-Rivière'
+        } else if (locationString === '67710976151') {
+          return 'Boutique Québec'
+        }
+
+        return locationId;
+      } 
+
       const row = [
         order.id,
         order.number,
@@ -144,6 +160,7 @@ export default function StockyPage() {
         items.length,
         totalQuantity,
         itemsList,
+        getLocationNameById(order.shopify_receive_location_id)
       ];
       rows.push(row.map(escapeCsv).join(","));
     });
