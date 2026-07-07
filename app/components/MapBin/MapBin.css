@@ -10,3 +10,8 @@
   top: 0;
   right: 0;
 }
+
+details summary,
+.sub-bin--body p {
+  font-family: 'Geist', sans-serif;
+}
