@@ -249,3 +249,11 @@ export type UpsellSellCardProps = {
 export type DatePickerProps = {
   onPickerDate: (initialDate:string, finalDate:string) => void;
 }
+
+export type ProductExportProps = {
+  sku: string;
+  barcode: string;
+  location: 'Entrepôt Québec';
+  bin_location: string;
+  bin_quantity: number;
+}
