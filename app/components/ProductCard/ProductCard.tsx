@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import Image from "next/image";
 import { type ProductItemProps } from "../../types/types";
 import RemainingStock from "../RemainingStock/RemainingStock";
@@ -14,9 +14,10 @@ interface ProductCardProps {
   foundedCardKey?: string | null;
   onRefresh: (sku: string | undefined) => void;
   onDeleteFromProductList: (variantSku: string | undefined) => void;
+  recentlyUpdated?: boolean;
 }
 
-export default function ProductCard({ product, onConfirm, onDelete, foundedCardKey, onRefresh, onDeleteFromProductList }: ProductCardProps) {
+function ProductCard({ product, onConfirm, onDelete, foundedCardKey, onRefresh, onDeleteFromProductList, recentlyUpdated }: ProductCardProps) {
   const activeVariant = product.sku;
   const cardKey = product.id;
   const modeDev = process.env.NODE_ENV === "development";
@@ -174,7 +175,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
   return (
     <div
       ref={cardRef}
-      className={`product-card${confirmed ? " confirmed" : ""} ${foundedCardKey === cardKey ? " founded" : ""}`}
+      className={`product-card${(confirmed || recentlyUpdated) ? " confirmed" : ""} ${foundedCardKey === cardKey ? " founded" : ""}`}
       data-product-id={product.id}
       data-card-key={product.id}
       style={{ position: "relative", overflow: "hidden", transition: "min-height 0.25s ease" }}
@@ -320,7 +321,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               Bin plein
             </button>
-            <button className="action-btn action-btn-confirm" onClick={() => setShowModal(true)}>
+            <button className="action-btn action-btn-confirm bg-green-800!" onClick={() => setShowModal(true)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               Confirmer
             </button>
@@ -467,3 +468,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
     </div>
   )
 }
+
+// Memoized so that a change to one product only re-renders that product's card,
+// not the whole list. Cards whose `product` reference is unchanged skip rendering.
+export default memo(ProductCard);

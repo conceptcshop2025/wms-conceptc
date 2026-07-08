@@ -11,7 +11,7 @@ export default function Loading({ text = "Sincronizando" }: LoadingProps) {
 
         <div className="loading-grid">
           {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className={`loading-cell loading-cell-${i + 1}`} />
+            <div key={i} className={`loading-cell loading-cell-${i + 1} bg-green-800!`} />
           ))}
         </div>
 

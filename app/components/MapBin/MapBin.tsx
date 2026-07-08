@@ -308,7 +308,7 @@ export default function MapBin() {
       <Loading /> : 
       <div className="map-bin block">
         <div className="flex items-center justify-start gap-8">
-          <button className="action-btn action-btn-confirm" onClick={getLocations}>
+          <button className="action-btn action-btn-confirm bg-green-800!" onClick={getLocations}>
             <ArrowDownTrayIcon className="size-6 text-neutral-50" />
             Obtenir la liste des bins
           </button>
@@ -327,7 +327,7 @@ export default function MapBin() {
               />
             </div>
             <div className="group flex justify-start gap-4 items-center hidden!">
-              <button className="action-btn action-btn-confirm" onClick={saveLocations}>
+              <button className="action-btn action-btn-confirm bg-green-800!" onClick={saveLocations}>
                 Save Locations
               </button>
             </div>

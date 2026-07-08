@@ -1,9 +1,10 @@
 import { type ProductItemProps, type ProductPayloadProps } from "@/app/types/types";
+import { getBaseUrl } from "../utils/getBaseUrl";
 
 export async function setProductsInActiveStatus(products: ProductItemProps[]) {
 
   try {
-    const baseUrl = '/api/store-products';
+    const baseUrl = `${getBaseUrl()}/api/store-products`;
     try {
       const payload:ProductPayloadProps[] = products.map((product) => {
         return {

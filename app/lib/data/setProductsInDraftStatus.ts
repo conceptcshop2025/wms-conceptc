@@ -1,9 +1,10 @@
 import { type ProductItemProps, type DraftProductPayload } from "@/app/types/types";
+import { getBaseUrl } from "../utils/getBaseUrl";
 
 export async function setProductsInDraftStatus(products: ProductItemProps[]) {
 
   try {
-    const baseUrl = '/api/store-products';
+    const baseUrl = `${getBaseUrl()}/api/store-products`;
     try {
       const payload:DraftProductPayload[] = products.map((product) => {
         return {
