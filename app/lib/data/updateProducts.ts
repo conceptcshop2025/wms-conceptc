@@ -1,8 +1,9 @@
 import { type ProductItemProps } from "@/app/types/types";
+import { getBaseUrl } from "../utils/getBaseUrl";
 
 export async function updateProducts(products:ProductItemProps[]) {
-  
-  const baseUrl = '/api/store-products';
+
+  const baseUrl = `${getBaseUrl()}/api/store-products`;
   const CHUNK_SIZE = 500;
 
   try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import Image from "next/image";
 import { type ProductItemProps } from "../../types/types";
 import RemainingStock from "../RemainingStock/RemainingStock";
@@ -14,9 +14,10 @@ interface ProductCardProps {
   foundedCardKey?: string | null;
   onRefresh: (sku: string | undefined) => void;
   onDeleteFromProductList: (variantSku: string | undefined) => void;
+  recentlyUpdated?: boolean;
 }
 
-export default function ProductCard({ product, onConfirm, onDelete, foundedCardKey, onRefresh, onDeleteFromProductList }: ProductCardProps) {
+function ProductCard({ product, onConfirm, onDelete, foundedCardKey, onRefresh, onDeleteFromProductList, recentlyUpdated }: ProductCardProps) {
   const activeVariant = product.sku;
   const cardKey = product.id;
   const modeDev = process.env.NODE_ENV === "development";
@@ -174,7 +175,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
   return (
     <div
       ref={cardRef}
-      className={`product-card${confirmed ? " confirmed" : ""} ${foundedCardKey === cardKey ? " founded" : ""}`}
+      className={`product-card${(confirmed || recentlyUpdated) ? " confirmed" : ""} ${foundedCardKey === cardKey ? " founded" : ""}`}
       data-product-id={product.id}
       data-card-key={product.id}
       style={{ position: "relative", overflow: "hidden", transition: "min-height 0.25s ease" }}
@@ -467,3 +468,7 @@ export default function ProductCard({ product, onConfirm, onDelete, foundedCardK
     </div>
   )
 }
+
+// Memoized so that a change to one product only re-renders that product's card,
+// not the whole list. Cards whose `product` reference is unchanged skip rendering.
+export default memo(ProductCard);

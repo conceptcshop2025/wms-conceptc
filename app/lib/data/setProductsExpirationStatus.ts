@@ -1,8 +1,9 @@
 import { type ProductItemProps, type ProductPayloadProps } from "@/app/types/types";
+import { getBaseUrl } from "../utils/getBaseUrl";
 
 export async function setProductsExpirationStatus(products: ProductItemProps[]) {
   try {
-    const baseUrl = '/api/store-products';
+    const baseUrl = `${getBaseUrl()}/api/store-products`;
 
     const payload:ProductPayloadProps[] = products.map((product:ProductItemProps) => {
       return {

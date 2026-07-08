@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sync-sales",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/sync-ipacky",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/sync-shopify",
+      "schedule": "0 11,23 * * *"
+    }
+  ]
+}
