@@ -2,14 +2,12 @@ import { NextResponse } from "next/server";
 
 const STOCKY_API_KEY = process.env.STOCKY_API_KEY
 
-//const BASE_URL_CONFIRMED_UNARCHIVED='https://stocky.shopifyapps.com/api/v2/purchase_orders.json?status=confirmed-unarchived';
-const BASE_URL_DRAFT_UNARCHIVED='https://stocky.shopifyapps.com/api/v2/purchase_orders.json?status=draft-unarchived'
-// const BASE_URL_AJUSTMENTS='https://stocky.shopifyapps.com/api/v2/stock_adjustments.json';
+const BASE_URL='https://stocky.shopifyapps.com/api/v2/stock_adjustment_items.json';
 
 export async function GET() {
   try {
     const response = await fetch(
-      BASE_URL_DRAFT_UNARCHIVED,
+      BASE_URL,
       {
         method: "GET",
         headers: {

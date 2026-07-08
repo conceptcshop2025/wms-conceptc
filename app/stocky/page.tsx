@@ -48,8 +48,57 @@ interface PurchaseOrder {
   purchase_items: PurchaseItem[];
 }
 
+interface AdjustmentProductsProps {
+  id: number;
+  title: string;
+  sku: string;
+  quantity: number;
+}
+
+interface AdjustmentsProps {
+  id: number;
+  location: string;
+  products: AdjustmentProductsProps[];
+}
+
+interface AdjustmentsDataResponseProps {
+  adjusted_at: string | null;
+  archived: boolean;
+  created_at: string;
+  id: number;
+  location: {
+    id: number;
+    shopify_id: number;
+  };
+  sequential_id: number;
+  stock_adjustment_reason: {
+    id: number;
+    reason: string;
+  } | null;
+  updated_at: string;
+}
+
+interface AdjustmentsItemsDataResponseProps {
+  adjusted_at: string | null;
+  id: number;
+  new_quantity: number;
+  previous_quantity: number;
+  quantity: number;
+  status: string;
+  stock_adjustment_id: number;
+  updated_at: string;
+  variant: {
+    barcode: string;
+    id: number;
+    shopify_id: number;
+    sku: string;
+    title: string;
+  }
+}
+
 export default function StockyPage() {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
+  const [adjustments, setAdjustments] = useState<AdjustmentsProps[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +121,95 @@ export default function StockyPage() {
       setLoading(false);
     }
   };
+
+  const fetchAdjustments = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/stocky/adjustments");
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+      const data = await response.json();
+      const adjustmentsData: AdjustmentsProps[] = data.stock_adjustments.map((item: AdjustmentsDataResponseProps) => {
+        return {
+          id: item.id,
+          location: getLocationNameById(item.location.shopify_id),
+          products: []
+        }
+      });
+      return adjustmentsData || [];
+    } catch (err) {
+      setError(String(err));
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAdjustmentsItems = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/stocky/adjustment-items");
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+      const data = await response.json();
+      const adjustmentsItemsData: AdjustmentProductsProps[] = data.stock_adjustment_items.map((item: AdjustmentsItemsDataResponseProps) => {
+        return {
+          id: item.stock_adjustment_id,
+          title: item.variant.title,
+          sku: item.variant.sku,
+          quantity: item.quantity
+        }
+      });
+      return adjustmentsItemsData || [];
+    } catch (err) {
+      setError(String(err));
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const mergeAdjustmentData = (adjustments: AdjustmentsProps[], adjustmentsItems: AdjustmentProductsProps[]): AdjustmentsProps[] => {
+    adjustmentsItems.map((item: AdjustmentProductsProps) => {
+      const findItemToAdjustment = adjustments.find((adjustment: AdjustmentsProps) => adjustment.id === item.id);
+      if (findItemToAdjustment) {
+        findItemToAdjustment.products.push(item);
+      }
+    });
+
+    return adjustments;
+
+  };
+
+  const fetchAdjustmentReport = async () => {
+    const adjustments = await fetchAdjustments();
+    if (adjustments && adjustments.length > 0) {
+      const adjustmentsItems = await fetchAdjustmentsItems();
+      const adjustmentDataMerged = mergeAdjustmentData(adjustments, adjustmentsItems);
+      //console.log(adjustmentDataMerged);
+      setAdjustments(adjustmentDataMerged || []);
+    }
+  }
+
+  const getLocationNameById = (locationId:string|number) => {
+    const locationString = locationId.toString();
+
+    if (locationString === '67343220887') {
+      return 'Entrêpot QC'
+    } else if (locationString === '14563147837') {
+      return 'Boutique Trois-Rivière'
+    } else if (locationString === '67710976151') {
+      return 'Boutique Québec'
+    } else if (locationString === '6494453821') {
+      return 'Concept C. 04 297 Notre-Dame Est - Victoriaville'
+    }
+
+    return locationId;
+  } 
 
   const escapeCsv = (value: unknown): string => {
     const str = value === null || value === undefined ? "" : String(value);
@@ -127,20 +265,6 @@ export default function StockyPage() {
         0
       );
 
-      const getLocationNameById = (locationId:string|number) => {
-        const locationString = locationId.toString();
-
-        if (locationString === '67343220887') {
-          return 'Entrêpot QC'
-        } else if (locationString === '14563147837') {
-          return 'Boutique Trois-Rivière'
-        } else if (locationString === '67710976151') {
-          return 'Boutique Québec'
-        }
-
-        return locationId;
-      } 
-
       const row = [
         order.id,
         order.number,
@@ -184,12 +308,24 @@ export default function StockyPage() {
       <h1>Stocky - Purchase Orders</h1>
 
       <div style={{ display: "flex", gap: "0.5rem", margin: "1rem 0" }}>
-        <button onClick={fetchPurchaseOrders} disabled={loading} className="bg-sky-600 rounded-lg py-1! px-2! text-neutral-50">
-          {loading ? "Loading..." : "Get Purchase Orders"}
-        </button>
-        <button onClick={exportToCsv} disabled={orders.length === 0} className="bg-green-600 rounded-lg py-1! px-2! text-neutral-50">
-          Export to CSV
-        </button>
+        <div className="p-8! shadow-xl rounded-lg mr-4!">
+          <h2 className="text-2xl mb-4!">Purchase Orders</h2>
+          <button onClick={fetchPurchaseOrders} disabled={loading} className="bg-sky-600 rounded-lg py-1! px-2! text-neutral-50 mr-4!">
+            {loading ? "Loading..." : "Get Purchase Orders"}
+          </button>
+          <button onClick={exportToCsv} disabled={orders.length === 0} className="bg-green-600 rounded-lg py-1! px-2! text-neutral-50">
+            Export to CSV
+          </button>
+        </div>
+        <div className="p-8! shadow-xl rounded-lg mr-4!">
+          <h2 className="text-2xl mb-4!">Adjustments</h2>
+          <button onClick={fetchAdjustmentReport} disabled={loading} className="bg-sky-600 rounded-lg py-1! px-2! text-neutral-50 mr-4!">
+            {loading ? "Loading..." : "Get Adjustments"}
+          </button>
+          <button onClick={exportToCsv} disabled={adjustments.length === 0} className="bg-green-600 rounded-lg py-1! px-2! text-neutral-50">
+            Export to CSV
+          </button>
+        </div>
       </div>
 
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
@@ -242,7 +378,7 @@ export default function StockyPage() {
                       <summary>Products</summary>
                       <ul>
                         {
-                          order.purchase_items.map((product) => (
+                          order.purchase_items !== null && order.purchase_items.map((product) => (
                             <li key={product.id}>{product.product_title}</li>
                           ))
                         }
@@ -255,6 +391,49 @@ export default function StockyPage() {
           </table>
         </>
       )}
+
+      {
+        adjustments.length > 0 && (
+          <>
+            <p>
+              Showing first 10 of {adjustments.length} adjustment(s).
+            </p>
+            <table
+              border={1}
+              cellPadding={6}
+              style={{ borderCollapse: "collapse", width: "100%" }}
+            >
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Location</th>
+                  <th>Products</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adjustments.slice(0, 10).map((adjustment) => (
+                  <tr key={adjustment.id} className="odd:bg-neutral-300">
+                    <td className="py-1!">{adjustment.id}</td>
+                    <td className="py-1!">{adjustment.location}</td>
+                    <td className="py-1!">
+                      <details>
+                        <summary>Products</summary>
+                        <ul>
+                          {
+                            adjustment.products !== null && adjustment.products.length > 0 && adjustment.products.map((product:AdjustmentProductsProps) => (
+                              <li key={product.id}>{product.sku} ({product.quantity})</li>
+                            ))
+                          }
+                        </ul>
+                      </details>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )
+      }
     </div>
   );
 }
