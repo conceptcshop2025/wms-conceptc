@@ -303,6 +303,61 @@ export default function StockyPage() {
     URL.revokeObjectURL(url);
   };
 
+  const exportAdjustmentsToCsv = () => {
+    if (adjustments.length === 0) return;
+
+    const headers = [
+      "adjustment_id",
+      "location",
+      "products_count",
+      "total_quantity",
+      "products"
+    ];
+
+    const rows: string[] = [headers.join(",")];
+
+    adjustments.forEach((adjustment) => {
+      const products = adjustment.products || [];
+
+      const productsList = products
+        .map(
+          (product) =>
+            `${product.quantity} x ${product.title}` +
+            `${product.sku ? ` [SKU: ${product.sku}]` : ""}` +
+            ` [ID: ${product.id}]`
+        )
+        .join(" | ");
+
+      const totalQuantity = products.reduce(
+        (sum, product) => sum + (product.quantity || 0),
+        0
+      );
+
+      const row = [
+        adjustment.id,
+        adjustment.location,
+        products.length,
+        totalQuantity,
+        productsList
+      ];
+
+      rows.push(row.map(escapeCsv).join(","));
+    });
+
+    const csvContent = rows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `stocky-adjustments-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="stocky" style={{ padding: "1.5rem" }}>
       <h1>Stocky - Purchase Orders</h1>
@@ -322,7 +377,7 @@ export default function StockyPage() {
           <button onClick={fetchAdjustmentReport} disabled={loading} className="bg-sky-600 rounded-lg py-1! px-2! text-neutral-50 mr-4!">
             {loading ? "Loading..." : "Get Adjustments"}
           </button>
-          <button onClick={exportToCsv} disabled={adjustments.length === 0} className="bg-green-600 rounded-lg py-1! px-2! text-neutral-50">
+          <button onClick={exportAdjustmentsToCsv} disabled={adjustments.length === 0} className="bg-green-600 rounded-lg py-1! px-2! text-neutral-50">
             Export to CSV
           </button>
         </div>
