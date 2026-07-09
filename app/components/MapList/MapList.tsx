@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { type WmsBinLocationProps, type BinItem, type BinGroup } from "@/app/types/types";
 import "../MapBin/MapBin.css";
 import { Button } from "@/components/ui/button";
-import { BinLocationsSection100 } from "@/app/lib/data/warehouse_bin_locations";
+import { BinLocationsSection100, BinLocationsSection200 } from "@/app/lib/data/warehouse_bin_locations";
 import { updateBinLocations } from "@/app/lib/data/updateBinLocations";
 
 export default function MapList() {
@@ -188,6 +188,10 @@ export default function MapList() {
             <div className="map-placeholder">
               <Button className="px-4! py-2!" onClick={async () => updateBinLocations(await BinLocationsSection100())}>
                 Import Bin locations for section 100
+              </Button>
+
+              <Button className="px-4! py-2! ml-4!" onClick={async () => updateBinLocations(await BinLocationsSection200())}>
+                Import Bin locations for section 200
               </Button>
             </div>
           </div>
