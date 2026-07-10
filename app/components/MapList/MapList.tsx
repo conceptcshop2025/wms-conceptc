@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { type WmsBinLocationProps, type BinItem, type BinGroup } from "@/app/types/types";
 import "../MapBin/MapBin.css";
 import { Button } from "@/components/ui/button";
-import { BinLocationsSection100, BinLocationsSection200 } from "@/app/lib/data/warehouse_bin_locations";
+import { BinLocationsSection100, BinLocationsSection200, BinLocationsSection300, BinLocationsSection400, BinLocationSection500, BinLocationSection600, BinLocationSection700 } from "@/app/lib/data/warehouse_bin_locations";
 import { updateBinLocations } from "@/app/lib/data/updateBinLocations";
 
 export default function MapList() {
@@ -122,7 +122,7 @@ export default function MapList() {
               {section.name}
             </TabsTrigger>
           ))}
-          <TabsTrigger className="p-4! text-center cursor-pointer" value="import-locations">
+          <TabsTrigger disabled className="p-4! text-center cursor-pointer" value="import-locations">
             Import locations
           </TabsTrigger>
         </TabsList>
@@ -192,6 +192,26 @@ export default function MapList() {
 
               <Button className="px-4! py-2! ml-4!" onClick={async () => updateBinLocations(await BinLocationsSection200())}>
                 Import Bin locations for section 200
+              </Button>
+
+              <Button className="px-4! py-2! ml-4!" onClick={async () => updateBinLocations(await BinLocationsSection300())}>
+                Import Bin locations for section 300
+              </Button>
+
+              <Button className="px-4! py-2! ml-4!" onClick={async () => updateBinLocations(await BinLocationsSection400())}>
+                Import Bin locations for section 400
+              </Button>
+
+              <Button className="px-4! py-2! ml-4!" onClick={async () => updateBinLocations(await BinLocationSection500())}>
+                Import Bin locations for section 500
+              </Button>
+
+              <Button className="px-4! py-2! mt-4!" onClick={async () => updateBinLocations(await BinLocationSection600())}>
+                Import Bin locations for section 600
+              </Button>
+
+              <Button className="px-4! py-2! mt-4! ml-4!" onClick={async () => updateBinLocations(await BinLocationSection700())}>
+                Import Bin locations for section 700
               </Button>
             </div>
           </div>
