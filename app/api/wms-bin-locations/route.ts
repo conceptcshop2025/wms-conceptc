@@ -1,20 +1,22 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
-import { type BinProps } from "@/app/types/types";
+import { type WmsBinLocationProps } from "@/app/types/types";
 
 const sql = neon(process.env.DATABASE_URL || "");
 const CHUNK_SIZE = 25;
 
-async function upsertProduct(location: BinProps) {
+async function upsertProduct(location: WmsBinLocationProps) {
   try {
     await sql`
-      INSERT INTO bin_locations (
+      INSERT INTO wms_bin_locations (
         id,
-        available
+        sku,
+        bin_quantity
       )
       VALUES (
-        ${ location.id },
-        'false'
+       ${location},
+       '',
+       0
       )
     `;
     return { success: true, location };
@@ -25,7 +27,7 @@ async function upsertProduct(location: BinProps) {
 
 export async function GET() {
   try {
-    const response = await sql`SELECT id, available FROM bin_locations`;
+    const response = await sql`SELECT id, sku, bin_quantity FROM wms_bin_locations`;
 
     const data = response;
     return NextResponse.json(data);
@@ -39,8 +41,8 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
-    const locations: BinProps[] = await req.json();
-    const failed: { location: BinProps; error: string }[] = [];
+    const locations: WmsBinLocationProps[] = await req.json();
+    const failed: { location: WmsBinLocationProps; error: string }[] = [];
 
     for (let i = 0; i < locations.length; i += CHUNK_SIZE) {
       const chunk = locations.slice(i, i + CHUNK_SIZE);

@@ -257,3 +257,35 @@ export type ProductExportProps = {
   bin_location: string;
   bin_quantity: number;
 }
+
+export type BinItemProps = {
+  id: string;
+  available: boolean;
+  bins?: {
+    available: boolean;
+    id: string;
+    stock_quantity: number;
+  }[];
+}
+
+export type BinLocationFormatProps = BinItemProps &{
+  draders: {
+    id: string;
+    available: boolean;
+  }[];
+}
+
+export type WmsBinLocationProps = {
+  id: string;
+  sku: string;
+  bin_quantity: number;
+};
+
+export type BinItem = WmsBinLocationProps & {
+  available: boolean;
+  stock_quantity: number;
+};
+
+export type BinGroup = BinItem & {
+  bins: BinItem[];
+};

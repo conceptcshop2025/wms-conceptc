@@ -5,6 +5,8 @@ import { type BinContainerProps, type BinLocationsProps, type BinProps } from "@
 import { ArrowDownTrayIcon, ArchiveBoxArrowDownIcon } from "@heroicons/react/24/outline";
 import Loading from "../Loading/Loading";
 import { BookmarkIcon } from "@heroicons/react/24/solid";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MapList from "../MapList/MapList";
 
 // A flat bin location not present in the store, with a flag marking when the
 // same location is shared by two or more products (duplicate assignment) and
@@ -373,123 +375,138 @@ export default function MapBin() {
   }
 
   return (
-    loading ?
-      <Loading /> : 
-      <div className="map-bin block">
-        <div className="flex items-center justify-start gap-8">
-          <button className="action-btn action-btn-confirm bg-green-800!" onClick={getLocations}>
-            <ArrowDownTrayIcon className="size-6 text-neutral-50" />
-            Obtenir la liste des bins
-          </button>
-          <div className="group-heading flex justify-start items-center gap-8">
-            <div className="input-group search-product hidden!" style={{ width: "220px" }}>
-              <span className="input-icon">
-                <ArchiveBoxArrowDownIcon className="size-5" />
-              </span>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Ajoute une bin location"
-                style={{ width: "100%" }}
-                value={bin}
-                onChange={handleAddBin}
-              />
-            </div>
-            <div className="group flex justify-start gap-4 items-center hidden!">
-              <button className="action-btn action-btn-confirm bg-green-800!" onClick={saveLocations}>
-                Save Locations
-              </button>
-            </div>
-            <div className="group flex justify-start gap-4 items-center">
-              <span className="w-25 p-1! bg-red-300 border border-red-900 rounded-lg text-red-900 text-center">Bin Occupé</span>
-              <span className="w-25 p-1! bg-green-300 border border-green-900 rounded-lg text-green-900 text-center">Bin Vide</span>
-              <span className="w-50 p-1! bg-sky-300 border border-sky-900 rounded-lg text-sky-900 text-center">Bin Occupé sans Stock</span>
-              <div className="option-group option-group--hide-products-without-stock">
-                <div className="container-input">
-                  <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => filterBins(e.target.checked)} />
-                  <label htmlFor="hide-products-without-stock">Cacher les bins avec stock</label>
+    <Tabs defaultValue="bin-occupancy">
+      <TabsList className="py-8! w-75 mx-auto!">
+        <TabsTrigger value="bin-occupancy" className="p-4! cursor-pointer">Bin Occupancy</TabsTrigger>
+        <TabsTrigger value="bin-locations" className="p-4! cursor-pointer">Bin Locations</TabsTrigger>
+      </TabsList>
+      <TabsContent value="bin-occupancy">
+        {
+          loading ?
+            <Loading /> : 
+            <div className="map-bin block">
+              <div className="flex items-center justify-start gap-8">
+                <button className="action-btn action-btn-confirm bg-green-800!" onClick={getLocations}>
+                  <ArrowDownTrayIcon className="size-6 text-neutral-50" />
+                  Obtenir la liste des bins
+                </button>
+                <div className="group-heading flex justify-start items-center gap-8">
+                  <div className="input-group search-product hidden!" style={{ width: "220px" }}>
+                    <span className="input-icon">
+                      <ArchiveBoxArrowDownIcon className="size-5" />
+                    </span>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Ajoute une bin location"
+                      style={{ width: "100%" }}
+                      value={bin}
+                      onChange={handleAddBin}
+                    />
+                  </div>
+                  <div className="group flex justify-start gap-4 items-center hidden!">
+                    <button className="action-btn action-btn-confirm bg-green-800!" onClick={saveLocations}>
+                      Save Locations
+                    </button>
+                  </div>
+                  <div className="group flex justify-start gap-4 items-center">
+                    <span className="w-25 p-1! bg-red-300 border border-red-900 rounded-lg text-red-900 text-center">Bin Occupé</span>
+                    <span className="w-25 p-1! bg-green-300 border border-green-900 rounded-lg text-green-900 text-center">Bin Vide</span>
+                    <span className="w-50 p-1! bg-sky-300 border border-sky-900 rounded-lg text-sky-900 text-center">Bin Occupé sans Stock</span>
+                    <div className="option-group option-group--hide-products-without-stock">
+                      <div className="container-input">
+                        <input type="checkbox" id="hide-products-without-stock" name="hide-products-without-stock" onChange={(e) => filterBins(e.target.checked)} />
+                        <label htmlFor="hide-products-without-stock">Cacher les bins avec stock</label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div className="bin-list mt-8!">
-          {
-            filteredBins.length > 0 && <p className="text-3xl mb-2!">Bin draders</p>
-          }
-          <ul className="grid grid-cols-8 gap-4">
-            {filteredBins.map((bin:BinContainerProps) => (
-              <li
-                key={bin.id}
-                className={`relative overflow-hidden `}>
-                <div className="bin-card">
-                  {
-                    bin.bins.length === 0 ?
-                      <p className="flex items-center jsutify-around gap-4 w-full px-4! py-2!">
-                        <span>{bin.id}</span>
-                      </p> :
-                      <details className="sub-bins rounded-lg overflow-hidden">
-                        <summary
-                          className={`
-                            relative
-                            sub-bin--header
-                            px-4!
-                            py-2!
-                            bg-neutral-200
-                            text-neutral-900
-                            border-neutral-200
-                            ${ bin.bins.every(key => key.available === false) && "bg-red-300 text-red-900 border-red-900" }
-                            ${ bin.bins.every(key => key.available === true) && "bg-green-300 text-green-900 border-green-900" }
-                            ${ bin.bins.some(key => !key.available && key.stock_quantity <= 0) && 'blue-signal' }`}>
+              <div className="bin-list mt-8!">
+                {
+                  filteredBins.length > 0 && <p className="text-3xl mb-2!">Bin draders</p>
+                }
+                <ul className="grid grid-cols-8 gap-4">
+                  {filteredBins.map((bin:BinContainerProps) => (
+                    <li
+                      key={bin.id}
+                      className={`relative overflow-hidden `}>
+                      <div className="bin-card">
+                        {
+                          bin.bins.length === 0 ?
+                            <p className="flex items-center justify-around gap-4 w-full px-4! py-2!">
+                              <span>{bin.id}</span>
+                            </p> :
+                            <details className="sub-bins rounded-lg overflow-hidden">
+                              <summary
+                                className={`
+                                  relative
+                                  sub-bin--header
+                                  px-4!
+                                  py-2!
+                                  bg-neutral-200
+                                  text-neutral-900
+                                  border-neutral-200
+                                  ${ bin.bins.every(key => key.available === false) && "bg-red-300 text-red-900 border-red-900" }
+                                  ${ bin.bins.every(key => key.available === true) && "bg-green-300 text-green-900 border-green-900" }
+                                  ${ bin.bins.some(key => !key.available && key.stock_quantity <= 0) && 'blue-signal' }`}>
+                                <span>{bin.id}</span>
+                                <span className="absolute top-[50%] right-[3px] -mt-[14px]! opacity-25 text-2xl font-bold -tracking-[2px]">
+                                  {100 - Math.floor((bin.bins.filter((b) => b.available).length / bin.bins.length) * 100)}%
+                                </span>
+                              </summary>
+                              <div className="sub-bin--body">
+                                {
+                                  bin.bins.map((subBin: BinProps) =>(
+                                    <p
+                                      key={subBin.id}
+                                      className={
+                                        `px-4! py-2! ${binStatus(subBin.available, subBin.stock_quantity)} `}>{subBin.id}</p>
+                                  ))
+                                }
+                              </div>
+                            </details>
+                        }
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                {
+                  binsNotInStore.length > 0 &&
+                    <div className="flex items-center justify-start gap-4 my-8!">
+                      <p className="text-3xl my-2!">Bins not Drader</p>
+                      <span className="w-100 p-1! bg-orange-300 border border-orange-900 rounded-lg text-orange-900 text-center">2 ou plus produits dans la même bin location</span>
+                      <BookmarkIcon className="size-10 text-orange-900" /> <span>Quantité des produits dans la même bin</span>
+                    </div>
+                }
+                <ul className="grid grid-cols-8 gap-4">
+                  {binsNotInStore.map((bin: BinNotInStoreProps) => (
+                    <li
+                      key={bin.id}
+                      className={`relative overflow-initial `}>
+                      <div className="bin-card ">
+                        <p className={`flex rounded-lg items-center jsutify-around gap-4 w-full px-4! py-2! relative ${bin.duplicated ? "bg-orange-300 text-orange-900 border-orange-900" : binStatus(bin.available, bin.stock_quantity)}`}>
                           <span>{bin.id}</span>
-                          <span className="absolute top-[50%] right-[3px] -mt-[14px]! opacity-25 text-2xl font-bold -tracking-[2px]">
-                            {100 - Math.floor((bin.bins.filter((b) => b.available).length / bin.bins.length) * 100)}%
-                          </span>
-                        </summary>
-                        <div className="sub-bin--body">
-                          {
-                            bin.bins.map((subBin: BinProps) =>(
-                              <p
-                                key={subBin.id}
-                                className={
-                                  `px-4! py-2! ${binStatus(subBin.available, subBin.stock_quantity)} `}>{subBin.id}</p>
-                            ))
-                          }
-                        </div>
-                      </details>
-                  }
-                </div>
-              </li>
-            ))}
-          </ul>
-          {
-            binsNotInStore.length > 0 &&
-              <div className="flex items-center justify-start gap-4 my-8!">
-                <p className="text-3xl my-2!">Bins not Drader</p>
-                <span className="w-100 p-1! bg-orange-300 border border-orange-900 rounded-lg text-orange-900 text-center">2 ou plus produits dans la même bin location</span>
-                <BookmarkIcon className="size-10 text-orange-900" /> <span>Quantité des produits dans la même bin</span>
+                          {bin.duplicated ? <>
+                            <span className="products-count absolute -top-1.75 -right-2.25">
+                              <BookmarkIcon className="size-10 text-orange-900" />
+                              <span className="absolute top-1 right-3 z-4 text-neutral-50 w-4 text-center ">{ bin.count }</span>
+                            </span>
+                          </> : ""}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-          }
-          <ul className="grid grid-cols-8 gap-4">
-            {binsNotInStore.map((bin: BinNotInStoreProps) => (
-              <li
-                key={bin.id}
-                className={`relative overflow-initial `}>
-                <div className="bin-card ">
-                  <p className={`flex rounded-lg items-center jsutify-around gap-4 w-full px-4! py-2! relative ${bin.duplicated ? "bg-orange-300 text-orange-900 border-orange-900" : binStatus(bin.available, bin.stock_quantity)}`}>
-                    <span>{bin.id}</span>
-                    {bin.duplicated ? <>
-                      <span className="products-count absolute -top-1.75 -right-2.25">
-                        <BookmarkIcon className="size-10 text-orange-900" />
-                        <span className="absolute top-1 right-3 z-4 text-neutral-50 w-4 text-center ">{ bin.count }</span>
-                      </span>
-                    </> : ""}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
+            </div>
+        }
+      </TabsContent>
+      <TabsContent value="bin-locations">
+        <div className="map-bin">
+          <MapList />
         </div>
-      </div>
+      </TabsContent>
+    </Tabs>
   )
 }
