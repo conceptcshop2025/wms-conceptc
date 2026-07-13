@@ -26,12 +26,13 @@ export default function ExportsPage() {
       const data = await response.json();
 
       const rows: ProductExportProps[] = (data.data ?? []).map(
-        (item: { sku: string; barcode: string; bin_location: string; bin_current_quantity: number }) => ({
+        (item: { sku: string; barcode: string; bin_location: string; bin_current_quantity: number, title: string }) => ({
           sku: item.sku,
           barcode: item.barcode,
           location: "Entrepôt Québec",
           bin_location: item.bin_location,
           bin_quantity: item.bin_current_quantity,
+          title: item.title,
         })
       );
 
@@ -52,12 +53,12 @@ export default function ExportsPage() {
       return;
     }
 
-    const headers = ["SKU", "Barcode", "Location", "Bin", "Quantité par bin"];
+    const headers = ["Title", "SKU", "Barcode", "Location", "Bin", "Quantité par bin"];
     const lines = [headers.join(",")];
 
     rows.forEach((row) => {
       lines.push(
-        [row.sku, row.barcode, row.location, row.bin_location, row.bin_quantity]
+        [row.title, row.sku, row.barcode, row.location, row.bin_location, row.bin_quantity]
           .map(escapeCsv)
           .join(",")
       );

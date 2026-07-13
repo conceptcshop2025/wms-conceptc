@@ -7,7 +7,7 @@ export async function GET() {
 
   try {
     const result = await sql`
-      SELECT sku, barcode, bin_location, bin_current_quantity FROM store_products;
+      SELECT sku, barcode, bin_location, bin_current_quantity, title FROM store_products;
     `;
 
     if (result.length === 0) {

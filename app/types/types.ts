@@ -256,6 +256,7 @@ export type ProductExportProps = {
   location: 'Entrepôt Québec';
   bin_location: string;
   bin_quantity: number;
+  title: string;
 }
 
 export type BinItemProps = {
