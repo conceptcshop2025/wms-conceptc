@@ -146,7 +146,7 @@ export default function MapList() {
       {
         loading ? <Loading /> : 
         <Tabs orientation="vertical" defaultValue="section-100">
-          <TabsList className="w-[150px]">
+          <TabsList className="w-[150px] sticky top-[70px]">
             {sections.map((section: { id: string; name: string; initialNumber: string }) => (
               <TabsTrigger
                 key={section.id}
