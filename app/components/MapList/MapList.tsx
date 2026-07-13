@@ -1,11 +1,13 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
-import { type WmsBinLocationProps, type BinItem, type BinGroup } from "@/app/types/types";
+import { type WmsBinLocationProps, type BinItem, type BinGroup, type ProductItemProps } from "@/app/types/types";
 import "../MapBin/MapBin.css";
 import { Button } from "@/components/ui/button";
 import { BinLocationsSection100, BinLocationsSection200, BinLocationsSection300, BinLocationsSection400, BinLocationSection500, BinLocationSection600, BinLocationSection700 } from "@/app/lib/data/warehouse_bin_locations";
 import { updateBinLocations } from "@/app/lib/data/updateBinLocations";
 import Loading from "../Loading/Loading";
+import { getAllProductsFromNeon } from "@/app/lib/data/getAllProductsFromNeon";
+import { BookmarkIcon } from "@heroicons/react/24/solid";
 
 export default function MapList() {
 
@@ -32,13 +34,16 @@ export default function MapList() {
       }
 
       const data = await response.json();
+
+      if (data.length > 0) {
+        await synchronizeBinLocations(data);
+      }
+
       return data as WmsBinLocationProps[];
     }
     catch (error) {
       console.error('Error fetching bin locations:', error);
       return [];
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -104,9 +109,32 @@ export default function MapList() {
     });
   };
 
+  const synchronizeBinLocations = async (binLocations: WmsBinLocationProps[]) => {
+    console.log(binLocations);
+
+    const products = await getAllProductsFromNeon() as ProductItemProps[];
+    console.log(products);
+
+    products.forEach((product: ProductItemProps) => {
+      const productBins = Array.isArray(product.bin_location)
+        ? product.bin_location.map(bin => bin.trim())
+        : product.bin_location.split(",").map(bin => bin.trim());
+
+      productBins.forEach((binId: string) => {
+        const matchBinLocation = binLocations.find((binLocation: WmsBinLocationProps) => binLocation.id === binId);
+        if (matchBinLocation) {
+          matchBinLocation.sku === '' ? matchBinLocation.sku = product.sku : matchBinLocation.sku += ',' + product.sku;
+          matchBinLocation.bin_quantity = product.bin_current_quantity;
+        }
+      });
+    });
+    
+    // finally when end the synchronization with the products
+    setLoading(false);
+  };
+
   useEffect(() => {
     getAllBinLocations().then((locations) => {
-      console.log(formatBinItems(locations));
       setBinLocations(formatBinItems(locations));
     });
   },[]);
@@ -128,7 +156,7 @@ export default function MapList() {
                 {section.name}
               </TabsTrigger>
             ))}
-            <TabsTrigger disabled className="p-4! text-center cursor-pointer" value="import-locations">
+            <TabsTrigger disabled className="p-4! text-center cursor-pointer hidden!" value="import-locations">
               Import locations
             </TabsTrigger>
           </TabsList>
@@ -136,40 +164,53 @@ export default function MapList() {
             <TabsContent key={section.id} value={section.id}>
               <div className="map-section">
                 <div className="map-placeholder">
-                  <ul className="grid grid-cols-8 gap-4">
+                  <ul className="grid grid-cols-7 gap-4">
                     {
                       binLocations
                         .filter((location: BinGroup) => location.id.startsWith(section.initialNumber))
                         .map((location: BinGroup) => (
                           <li
                             key={location.id}
-                            className="relative overflow-hidden">
+                            className="relative">
                             <div className="bin-card">
-                              <details className="sub-bins rounded-lg overflow-hidden border-2 border-neutral-300">
-                                <summary className="relative
-                                    sub-bin--header
-                                    px-4!
-                                    py-2!
-                                    bg-neutral-200
-                                    text-neutral-600
-                                    border-neutral-200
-                                    text-lg
-                                    font-bold
-                                    cursor-pointer">
+                              <details className={`
+                                sub-bins
+                              `}>
+                                <summary className={`
+                                  relative
+                                  sub-bin--header
+                                  px-4!
+                                  py-2!
+                                  bg-neutral-200
+                                  text-neutral-600
+                                  text-lg
+                                  font-bold
+                                  cursor-pointer
+                                  rounded-t-lg
+                                  ${ location.sku !== '' ? 'bg-red-300 text-red-900!': '' }
+                                `}>
                                   <span>{location.id}</span>
-                                  <span className="block text-sm font-normal">
-                                    {location.sku}
-                                  </span>
+                                  {
+                                    location.sku !== '' && location.sku.split(',').length > 1 && (
+                                      <div className="products-count absolute -top-1.75 -right-2.25 z-4">
+                                        <BookmarkIcon className="size-10 text-orange-900" />
+                                        <span className="absolute w-full text-center top-[4px] text-neutral-50 font-bold">{location.sku.split(',').length}</span>
+                                      </div>
+                                    )
+                                  }
                                 </summary>
-                                <div className="sub-bin--body bg-neutral-200">
+                                <div className="sub-bin--body bg-neutral-200 rounded-b-lg overflow-hidden">
                                   {
                                     location.bins.length > 0 ? (
                                       location.bins.map((bin: BinItem) => (
-                                        <div key={bin.id} className="px-9! py-2! flex justify-between">
-                                          <span>{bin.id}</span>
-                                          <span className="text-sm text-neutral-500">
-                                            {bin.sku}
-                                          </span>
+                                        <div key={bin.id} className={`
+                                          px-9!
+                                          py-2!
+                                          flex
+                                          justify-between
+                                          ${ location.sku !== '' ? 'bg-red-300 text-red-900! border-red-900!': '' }
+                                        `}>
+                                          <span className={`${ location.sku !== '' ? 'text-red-900!': '' }`}>{bin.id}</span>
                                         </div>
                                       ))
                                     ) : (
