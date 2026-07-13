@@ -187,7 +187,7 @@ export default function MapList() {
                                   font-bold
                                   cursor-pointer
                                   rounded-t-lg
-                                  ${ location.sku !== '' ? 'bg-red-300 text-red-900!': '' }
+                                  ${ location.sku !== '' ? 'bg-red-300 text-red-900!': 'bg-green-300! text-green-900!' }
                                 `}>
                                   <span>{location.id}</span>
                                   {
@@ -208,9 +208,20 @@ export default function MapList() {
                                           py-2!
                                           flex
                                           justify-between
-                                          ${ location.sku !== '' ? 'bg-red-300 text-red-900! border-red-900!': '' }
+                                          relative
+                                          ${ location.sku !== '' ? 'bg-red-300 text-red-900!': 'bg-green-300 text-green-900!' }
                                         `}>
-                                          <span className={`${ location.sku !== '' ? 'text-red-900!': '' }`}>{bin.id}</span>
+                                          <span className={`${ location.sku !== '' ? 'text-red-900!': '' }`}>
+                                            {bin.id}
+                                            {
+                                              location.sku !== '' && location.sku.split(',').length > 1 && (
+                                                <div className="products-count absolute top-0 right-0 z-4">
+                                                  <BookmarkIcon className="size-8 text-orange-900" />
+                                                  <span className="absolute w-full text-center top-[4px] text-neutral-50 font-bold text-xs">{location.sku.split(',').length}</span>
+                                                </div>
+                                              )
+                                            }
+                                          </span>
                                         </div>
                                       ))
                                     ) : (
