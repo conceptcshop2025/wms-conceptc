@@ -8,6 +8,14 @@ import { updateBinLocations } from "@/app/lib/data/updateBinLocations";
 import Loading from "../Loading/Loading";
 import { getAllProductsFromNeon } from "@/app/lib/data/getAllProductsFromNeon";
 import { BookmarkIcon } from "@heroicons/react/24/solid";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function MapList() {
 
@@ -110,10 +118,7 @@ export default function MapList() {
   };
 
   const synchronizeBinLocations = async (binLocations: WmsBinLocationProps[]) => {
-    console.log(binLocations);
-
     const products = await getAllProductsFromNeon() as ProductItemProps[];
-    console.log(products);
 
     products.forEach((product: ProductItemProps) => {
       const productBins = Array.isArray(product.bin_location)
@@ -123,7 +128,13 @@ export default function MapList() {
       productBins.forEach((binId: string) => {
         const matchBinLocation = binLocations.find((binLocation: WmsBinLocationProps) => binLocation.id === binId);
         if (matchBinLocation) {
-          matchBinLocation.sku === '' ? matchBinLocation.sku = product.sku : matchBinLocation.sku += ',' + product.sku;
+          if (matchBinLocation.sku === '') {
+            matchBinLocation.sku = product.sku;
+            matchBinLocation.bin_current_quantity = [product.bin_current_quantity];
+          } else {
+            matchBinLocation.sku += ',' + product.sku;
+            matchBinLocation.bin_current_quantity?.push(product.bin_current_quantity);
+          }
           matchBinLocation.bin_quantity = product.bin_current_quantity;
         }
       });
@@ -136,10 +147,55 @@ export default function MapList() {
   useEffect(() => {
     getAllBinLocations().then((locations) => {
       setBinLocations(formatBinItems(locations));
+      const binTest = formatBinItems(locations).find(item => item.id === '102.01.02')
+      console.log('Bin Location Test: ', binTest);
     });
   },[]);
 
-  
+  const binAvailable = (address: BinGroup) => {
+    if (address.sku === '') {
+      return true
+    }
+
+    return false;
+  }
+
+  const productsInSamePrincipalBin = (skus: string) => {
+    if (skus !== '') {
+      if (skus.split(',').length > 1) {
+        return <div className="products-count absolute -top-1.75 -right-2.25 z-4">
+          <BookmarkIcon className="size-10 text-orange-900" />
+          <span className="absolute w-full text-center top-1 text-neutral-50 font-bold">{skus.split(',').length}</span>
+        </div>
+      }
+    }
+    return;
+  }
+
+  const draderAvailable = (draderSkus: string) => {
+    if (draderSkus === '') {
+      return true;
+    }
+
+    return false;
+  }
+
+  const draderAvailableInBin = (draders: BinItem[]) => {
+    const availableDrader = (drader:BinItem) => drader.sku === '';
+    return draders.every(availableDrader);
+  }
+
+  const productsInSameDrader = (skus: string) => {
+    if (skus !== ''){
+      if (skus.split(',').length > 1) {
+        return <div className="products-count absolute top-0 right-0 z-4">
+          <BookmarkIcon className="size-8 text-orange-900" />
+          <span className="absolute w-full text-center top-1 text-neutral-50 font-bold text-xs">{skus.split(',').length}</span>
+        </div>
+      }
+    }
+    return;
+  }
 
   return (
     <div className="map-list">
@@ -187,17 +243,10 @@ export default function MapList() {
                                   font-bold
                                   cursor-pointer
                                   rounded-t-lg
-                                  ${ location.sku !== '' ? 'bg-red-300 text-red-900!': 'bg-green-300! text-green-900!' }
+                                  ${ binAvailable(location) ? draderAvailableInBin(location.bins) ? 'bg-green-300! text-green-900!' : 'bg-orange-300! text-orange-900!' : 'bg-red-300 text-red-900!' }
                                 `}>
                                   <span>{location.id}</span>
-                                  {
-                                    location.sku !== '' && location.sku.split(',').length > 1 && (
-                                      <div className="products-count absolute -top-1.75 -right-2.25 z-4">
-                                        <BookmarkIcon className="size-10 text-orange-900" />
-                                        <span className="absolute w-full text-center top-[4px] text-neutral-50 font-bold">{location.sku.split(',').length}</span>
-                                      </div>
-                                    )
-                                  }
+                                  { productsInSamePrincipalBin(location.sku) }
                                 </summary>
                                 <div className="sub-bin--body bg-neutral-200 rounded-b-lg overflow-hidden">
                                   {
@@ -209,18 +258,11 @@ export default function MapList() {
                                           flex
                                           justify-between
                                           relative
-                                          ${ location.sku !== '' ? 'bg-red-300 text-red-900!': 'bg-green-300 text-green-900!' }
+                                          ${ draderAvailable(bin.sku) ? 'bg-green-300 text-green-900!' : 'bg-red-300 text-red-900!' }
                                         `}>
                                           <span className={`${ location.sku !== '' ? 'text-red-900!': '' }`}>
                                             {bin.id}
-                                            {
-                                              location.sku !== '' && location.sku.split(',').length > 1 && (
-                                                <div className="products-count absolute top-0 right-0 z-4">
-                                                  <BookmarkIcon className="size-8 text-orange-900" />
-                                                  <span className="absolute w-full text-center top-[4px] text-neutral-50 font-bold text-xs">{location.sku.split(',').length}</span>
-                                                </div>
-                                              )
-                                            }
+                                            { productsInSameDrader(bin.sku) }
                                           </span>
                                         </div>
                                       ))
@@ -229,6 +271,32 @@ export default function MapList() {
                                         Not sub-bins
                                       </p>
                                     )
+                                  }
+                                  {
+                                    location.sku !== '' &&
+                                    <Popover>
+                                      <PopoverTrigger className="text-center bg-sky-400 text-neutral-50 font-bold w-full py-1! cursor-pointer hover:bg-sky-600 transition-all">
+                                        Voir Détails
+                                      </PopoverTrigger>
+                                      <PopoverContent  className="p-4!">
+                                        <PopoverHeader>
+                                          <PopoverTitle>SKU des produits assignées:</PopoverTitle>
+                                          <PopoverDescription>
+                                            <ol>
+                                              {
+                                                location.sku.split(',').map((sku:string, index:number) => (
+                                                  <li key={index} className="list-disc ml-4!">{sku}</li>
+                                                ))
+                                              }
+                                            </ol>
+                                          </PopoverDescription>
+                                          <PopoverTitle>Quantité des produits dans la bin:</PopoverTitle>
+                                          <PopoverDescription>
+                                            <span>{ location.bin_quantity }</span>
+                                          </PopoverDescription>
+                                        </PopoverHeader>
+                                      </PopoverContent>
+                                    </Popover>
                                   }
                                 </div>
                               </details>
