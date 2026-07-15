@@ -279,7 +279,7 @@ export type BinLocationFormatProps = BinItemProps &{
 export type WmsBinLocationProps = {
   id: string;
   sku: string;
-  bin_quantity: number;
+  bin_quantity: number | number[];
   bin_current_quantity?: number[];
 };
 

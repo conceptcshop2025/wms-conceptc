@@ -8,14 +8,7 @@ import { updateBinLocations } from "@/app/lib/data/updateBinLocations";
 import Loading from "../Loading/Loading";
 import { getAllProductsFromNeon } from "@/app/lib/data/getAllProductsFromNeon";
 import { BookmarkIcon } from "@heroicons/react/24/solid";
-import {
-  Popover,
-  PopoverContent,
-  PopoverDescription,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import InfoBinLocation from "../InfoBinLocation/InfoBinLocation";
 
 export default function MapList() {
 
@@ -88,18 +81,20 @@ export default function MapList() {
           const letterB = b.id.replace(baseItem.id, "").replace(".", "");
           return letterA.localeCompare(letterB);
         })
-        .map((loc) => ({
-          id: loc.id,
-          sku: loc.sku,
-          bin_quantity: loc.bin_quantity,
-          available: false,
-          stock_quantity: 0,
-        }));
+        .map((loc) => {
+          return  {
+            id: loc.id,
+            sku: loc.sku,
+            bin_quantity: loc.bin_current_quantity ? loc.bin_current_quantity : 0,
+            available: false,
+            stock_quantity: 0,
+          }
+        });
 
       return {
         id: baseItem.id,
         sku: baseItem.sku,
-        bin_quantity: baseItem.bin_quantity,
+        bin_quantity: baseItem.bin_current_quantity !== undefined ? baseItem.bin_current_quantity : 0,
         available: false,
         bins,
         stock_quantity: 0,
@@ -126,7 +121,7 @@ export default function MapList() {
         : product.bin_location.split(",").map(bin => bin.trim());
 
       productBins.forEach((binId: string) => {
-        const matchBinLocation = binLocations.find((binLocation: WmsBinLocationProps) => binLocation.id === binId);
+          const matchBinLocation = binLocations.find((binLocation: WmsBinLocationProps) => binLocation.id === binId);
         if (matchBinLocation) {
           if (matchBinLocation.sku === '') {
             matchBinLocation.sku = product.sku;
@@ -142,13 +137,12 @@ export default function MapList() {
     
     // finally when end the synchronization with the products
     setLoading(false);
+    return products;
   };
 
   useEffect(() => {
     getAllBinLocations().then((locations) => {
       setBinLocations(formatBinItems(locations));
-      const binTest = formatBinItems(locations).find(item => item.id === '102.01.02')
-      console.log('Bin Location Test: ', binTest);
     });
   },[]);
 
@@ -202,7 +196,7 @@ export default function MapList() {
       {
         loading ? <Loading /> : 
         <Tabs orientation="vertical" defaultValue="section-100">
-          <TabsList className="w-[150px] sticky top-[70px]">
+          <TabsList className="w-37.5 sticky top-17.5">
             {sections.map((section: { id: string; name: string; initialNumber: string }) => (
               <TabsTrigger
                 key={section.id}
@@ -273,30 +267,11 @@ export default function MapList() {
                                     )
                                   }
                                   {
-                                    location.sku !== '' &&
-                                    <Popover>
-                                      <PopoverTrigger className="text-center bg-sky-400 text-neutral-50 font-bold w-full py-1! cursor-pointer hover:bg-sky-600 transition-all">
-                                        Voir Détails
-                                      </PopoverTrigger>
-                                      <PopoverContent  className="p-4!">
-                                        <PopoverHeader>
-                                          <PopoverTitle>SKU des produits assignées:</PopoverTitle>
-                                          <PopoverDescription>
-                                            <ol>
-                                              {
-                                                location.sku.split(',').map((sku:string, index:number) => (
-                                                  <li key={index} className="list-disc ml-4!">{sku}</li>
-                                                ))
-                                              }
-                                            </ol>
-                                          </PopoverDescription>
-                                          <PopoverTitle>Quantité des produits dans la bin:</PopoverTitle>
-                                          <PopoverDescription>
-                                            <span>{ location.bin_quantity }</span>
-                                          </PopoverDescription>
-                                        </PopoverHeader>
-                                      </PopoverContent>
-                                    </Popover>
+                                    binAvailable(location) ?
+                                      draderAvailableInBin(location.bins) ?
+                                      '' :
+                                      <InfoBinLocation location={location} /> :
+                                      <InfoBinLocation location={location} />
                                   }
                                 </div>
                               </details>
