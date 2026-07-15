@@ -8,6 +8,7 @@ import { updateBinLocations } from "@/app/lib/data/updateBinLocations";
 import Loading from "../Loading/Loading";
 import { getAllProductsFromNeon } from "@/app/lib/data/getAllProductsFromNeon";
 import { BookmarkIcon } from "@heroicons/react/24/solid";
+import InfoBinLocation from "../InfoBinLocation/InfoBinLocation";
 
 export default function MapList() {
 
@@ -80,18 +81,20 @@ export default function MapList() {
           const letterB = b.id.replace(baseItem.id, "").replace(".", "");
           return letterA.localeCompare(letterB);
         })
-        .map((loc) => ({
-          id: loc.id,
-          sku: loc.sku,
-          bin_quantity: loc.bin_quantity,
-          available: false,
-          stock_quantity: 0,
-        }));
+        .map((loc) => {
+          return  {
+            id: loc.id,
+            sku: loc.sku,
+            bin_quantity: loc.bin_current_quantity ? loc.bin_current_quantity : 0,
+            available: false,
+            stock_quantity: 0,
+          }
+        });
 
       return {
         id: baseItem.id,
         sku: baseItem.sku,
-        bin_quantity: baseItem.bin_quantity,
+        bin_quantity: baseItem.bin_current_quantity !== undefined ? baseItem.bin_current_quantity : 0,
         available: false,
         bins,
         stock_quantity: 0,
@@ -110,10 +113,7 @@ export default function MapList() {
   };
 
   const synchronizeBinLocations = async (binLocations: WmsBinLocationProps[]) => {
-    console.log(binLocations);
-
     const products = await getAllProductsFromNeon() as ProductItemProps[];
-    console.log(products);
 
     products.forEach((product: ProductItemProps) => {
       const productBins = Array.isArray(product.bin_location)
@@ -121,9 +121,15 @@ export default function MapList() {
         : product.bin_location.split(",").map(bin => bin.trim());
 
       productBins.forEach((binId: string) => {
-        const matchBinLocation = binLocations.find((binLocation: WmsBinLocationProps) => binLocation.id === binId);
+          const matchBinLocation = binLocations.find((binLocation: WmsBinLocationProps) => binLocation.id === binId);
         if (matchBinLocation) {
-          matchBinLocation.sku === '' ? matchBinLocation.sku = product.sku : matchBinLocation.sku += ',' + product.sku;
+          if (matchBinLocation.sku === '') {
+            matchBinLocation.sku = product.sku;
+            matchBinLocation.bin_current_quantity = [product.bin_current_quantity];
+          } else {
+            matchBinLocation.sku += ',' + product.sku;
+            matchBinLocation.bin_current_quantity?.push(product.bin_current_quantity);
+          }
           matchBinLocation.bin_quantity = product.bin_current_quantity;
         }
       });
@@ -131,6 +137,7 @@ export default function MapList() {
     
     // finally when end the synchronization with the products
     setLoading(false);
+    return products;
   };
 
   useEffect(() => {
@@ -139,14 +146,57 @@ export default function MapList() {
     });
   },[]);
 
-  
+  const binAvailable = (address: BinGroup) => {
+    if (address.sku === '') {
+      return true
+    }
+
+    return false;
+  }
+
+  const productsInSamePrincipalBin = (skus: string) => {
+    if (skus !== '') {
+      if (skus.split(',').length > 1) {
+        return <div className="products-count absolute -top-1.75 -right-2.25 z-4">
+          <BookmarkIcon className="size-10 text-orange-900" />
+          <span className="absolute w-full text-center top-1 text-neutral-50 font-bold">{skus.split(',').length}</span>
+        </div>
+      }
+    }
+    return;
+  }
+
+  const draderAvailable = (draderSkus: string) => {
+    if (draderSkus === '') {
+      return true;
+    }
+
+    return false;
+  }
+
+  const draderAvailableInBin = (draders: BinItem[]) => {
+    const availableDrader = (drader:BinItem) => drader.sku === '';
+    return draders.every(availableDrader);
+  }
+
+  const productsInSameDrader = (skus: string) => {
+    if (skus !== ''){
+      if (skus.split(',').length > 1) {
+        return <div className="products-count absolute top-0 right-0 z-4">
+          <BookmarkIcon className="size-8 text-orange-900" />
+          <span className="absolute w-full text-center top-1 text-neutral-50 font-bold text-xs">{skus.split(',').length}</span>
+        </div>
+      }
+    }
+    return;
+  }
 
   return (
     <div className="map-list">
       {
         loading ? <Loading /> : 
         <Tabs orientation="vertical" defaultValue="section-100">
-          <TabsList className="w-[150px] sticky top-[70px]">
+          <TabsList className="w-37.5 sticky top-17.5">
             {sections.map((section: { id: string; name: string; initialNumber: string }) => (
               <TabsTrigger
                 key={section.id}
@@ -187,17 +237,10 @@ export default function MapList() {
                                   font-bold
                                   cursor-pointer
                                   rounded-t-lg
-                                  ${ location.sku !== '' ? 'bg-red-300 text-red-900!': 'bg-green-300! text-green-900!' }
+                                  ${ binAvailable(location) ? draderAvailableInBin(location.bins) ? 'bg-green-300! text-green-900!' : 'bg-orange-300! text-orange-900!' : 'bg-red-300 text-red-900!' }
                                 `}>
                                   <span>{location.id}</span>
-                                  {
-                                    location.sku !== '' && location.sku.split(',').length > 1 && (
-                                      <div className="products-count absolute -top-1.75 -right-2.25 z-4">
-                                        <BookmarkIcon className="size-10 text-orange-900" />
-                                        <span className="absolute w-full text-center top-[4px] text-neutral-50 font-bold">{location.sku.split(',').length}</span>
-                                      </div>
-                                    )
-                                  }
+                                  { productsInSamePrincipalBin(location.sku) }
                                 </summary>
                                 <div className="sub-bin--body bg-neutral-200 rounded-b-lg overflow-hidden">
                                   {
@@ -209,18 +252,11 @@ export default function MapList() {
                                           flex
                                           justify-between
                                           relative
-                                          ${ location.sku !== '' ? 'bg-red-300 text-red-900!': 'bg-green-300 text-green-900!' }
+                                          ${ draderAvailable(bin.sku) ? 'bg-green-300 text-green-900!' : 'bg-red-300 text-red-900!' }
                                         `}>
                                           <span className={`${ location.sku !== '' ? 'text-red-900!': '' }`}>
                                             {bin.id}
-                                            {
-                                              location.sku !== '' && location.sku.split(',').length > 1 && (
-                                                <div className="products-count absolute top-0 right-0 z-4">
-                                                  <BookmarkIcon className="size-8 text-orange-900" />
-                                                  <span className="absolute w-full text-center top-[4px] text-neutral-50 font-bold text-xs">{location.sku.split(',').length}</span>
-                                                </div>
-                                              )
-                                            }
+                                            { productsInSameDrader(bin.sku) }
                                           </span>
                                         </div>
                                       ))
@@ -229,6 +265,13 @@ export default function MapList() {
                                         Not sub-bins
                                       </p>
                                     )
+                                  }
+                                  {
+                                    binAvailable(location) ?
+                                      draderAvailableInBin(location.bins) ?
+                                      '' :
+                                      <InfoBinLocation location={location} /> :
+                                      <InfoBinLocation location={location} />
                                   }
                                 </div>
                               </details>
