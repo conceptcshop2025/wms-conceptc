@@ -291,3 +291,9 @@ export type BinItem = WmsBinLocationProps & {
 export type BinGroup = BinItem & {
   bins: BinItem[];
 };
+
+export type BinsToModifyProps = {
+  id: string;
+  sku: string;
+  bin_quantity: string;
+}

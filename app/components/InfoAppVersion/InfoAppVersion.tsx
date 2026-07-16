@@ -1,5 +1,5 @@
 export default function InfoAppVersion() {
   return (
-    <span className="version-badge">v5.10.0</span>
+    <span className="version-badge">v5.11.0</span>
   )
 }

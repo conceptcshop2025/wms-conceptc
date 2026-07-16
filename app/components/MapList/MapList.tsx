@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
-import { type WmsBinLocationProps, type BinItem, type BinGroup, type ProductItemProps } from "@/app/types/types";
+import { type WmsBinLocationProps, type BinItem, type BinGroup, type ProductItemProps, type BinsToModifyProps } from "@/app/types/types";
 import "../MapBin/MapBin.css";
 import { Button } from "@/components/ui/button";
 import { BinLocationsSection100, BinLocationsSection200, BinLocationsSection300, BinLocationsSection400, BinLocationSection500, BinLocationSection600, BinLocationSection700 } from "@/app/lib/data/warehouse_bin_locations";
@@ -14,6 +14,7 @@ export default function MapList() {
 
   const [binLocations, setBinLocations] = useState<BinGroup[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [binsToModify, setBinsToModify] = useState<BinsToModifyProps[]>([]);
 
   const sections = [
     { id: 'section-100', name: 'Section 100', initialNumber: '1' },
@@ -179,6 +180,22 @@ export default function MapList() {
     return draders.every(availableDrader);
   }
 
+  const handleBinToModify = (binToModify: BinsToModifyProps) => {
+    setBinsToModify((prevBins: BinsToModifyProps[]) => {
+      const existingIndex = prevBins.findIndex(
+        (bin) => bin.id === binToModify.id && bin.sku === binToModify.sku
+      );
+
+      const updatedBins = existingIndex !== -1
+        ? prevBins.map((bin, index) => (index === existingIndex ? binToModify : bin))
+        : [...prevBins, binToModify];
+
+      console.log('Bins to modify: ', updatedBins);
+      console.log(binsToModify);
+      return updatedBins;
+    });
+  };
+
   const productsInSameDrader = (skus: string) => {
     if (skus !== ''){
       if (skus.split(',').length > 1) {
@@ -270,8 +287,8 @@ export default function MapList() {
                                     binAvailable(location) ?
                                       draderAvailableInBin(location.bins) ?
                                       '' :
-                                      <InfoBinLocation location={location} /> :
-                                      <InfoBinLocation location={location} />
+                                      <InfoBinLocation location={location} onBinModify={handleBinToModify} /> :
+                                      <InfoBinLocation location={location} onBinModify={handleBinToModify} />
                                   }
                                 </div>
                               </details>
