@@ -32,3 +32,38 @@ export async function BinLocationSection700() {
   const data_section_700 = ['700.01.01','700.01.02','700.04.01','700.04.02','700.08.01','700.08.02','700.09.01','700.09.02','702.08.01','702.09.01','704.08.01','704.09.01','706.08.01','706.09.01','708.08.01','708.09.01'];
   return data_section_700;
 }
+
+export async function AllSections() {
+  return [
+    { id: 'section-100', name: 'Section 100', initialNumber: '1' },
+    { id: 'section-200', name: 'Section 200', initialNumber: '2' },
+    { id: 'section-300', name: 'Section 300', initialNumber: '3' },
+    { id: 'section-400', name: 'Section 400', initialNumber: '4' },
+    { id: 'section-500', name: 'Section 500', initialNumber: '5' },
+    { id: 'section-600', name: 'Section 600', initialNumber: '6' },
+    { id: 'section-700', name: 'Section 700', initialNumber: '7' },
+  ]
+}
+
+export async function getAllBinLocations() {
+  try {
+    const response = await fetch('/api/wms-bin-locations');
+    
+    if (!response.ok) {
+      console.error('Failed to fetch bin locations:', response.statusText);
+      return [];
+    }
+
+    const data = await response.json();
+
+    /* if (data.length > 0) {
+      await synchronizeBinLocations(data);
+    } */
+
+    return data;
+  }
+  catch (error) {
+    console.error('Error fetching bin locations:', error);
+    return [];
+  }
+}
