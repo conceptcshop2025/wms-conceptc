@@ -39,7 +39,7 @@ function QuantityInput({ id, sku, initialQuantity, onCommit }: QuantityInputProp
       value={quantity}
       onChange={(event) => setQuantity(event.target.value)}
       onBlur={handleBlur}
-      className="block w-full"
+      className="block w-full hidden!"
     />
   );
 }
@@ -79,12 +79,15 @@ export default function InfoBinLocation({ location, onBinDataChange }: InfoBinLo
                       ? location.bin_quantity.map((qty, index) => (
                         <span key={`${location.id}--${index}`} className="block">{ qty }</span>
                       ))
-                      : <QuantityInput
-                          id={location.id}
-                          sku={firstSku(location.sku)}
-                          initialQuantity={location.bin_quantity[0] ?? 0}
-                          onCommit={onBinDataChange}
-                        />
+                      : <>
+                          <QuantityInput
+                            id={location.id}
+                            sku={firstSku(location.sku)}
+                            initialQuantity={location.bin_quantity[0] ?? 0}
+                            onCommit={onBinDataChange}
+                          />
+                          <span className="block">{ location.bin_quantity }</span>
+                        </>
                 }
               </span>
             </span>
@@ -107,12 +110,15 @@ export default function InfoBinLocation({ location, onBinDataChange }: InfoBinLo
                           ? drader.bin_quantity.map((qty, index) => (
                             <span key={index} className="block">{qty}</span>
                           ))
-                          : <QuantityInput
-                              id={drader.id}
-                              sku={firstSku(drader.sku)}
-                              initialQuantity={drader.bin_quantity[0] ?? 0}
-                              onCommit={onBinDataChange}
-                            />
+                          : <>
+                              <QuantityInput
+                                id={drader.id}
+                                sku={firstSku(drader.sku)}
+                                initialQuantity={drader.bin_quantity[0] ?? 0}
+                                onCommit={onBinDataChange}
+                              />
+                              <span>{drader.bin_quantity}</span>
+                            </>
                     }
                   </span>
                 </span>
