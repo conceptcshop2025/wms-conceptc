@@ -10,14 +10,15 @@ import {
   BinLocationSection600,
   BinLocationSection700,
 } from "@/app/lib/data/warehouse_bin_locations";
-import { updateBinLocations } from "@/app/lib/data/updateBinLocations";
+import { updateBinLocations, updateBinLocationData } from "@/app/lib/data/updateBinLocations";
 import { getAllProductsFromNeon } from "@/app/lib/data/getAllProductsFromNeon";
-import { type ProductItemProps, type BinLocationProps, type BinRenderProps, type BinSectionsProps, type BinColorStatus } from "@/app/types/types";
+import { type ProductItemProps, type BinLocationProps, type BinRenderProps, type BinSectionsProps, type BinColorStatus, type BinsToModifyProps } from "@/app/types/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import Loading from "../Loading/Loading";
 import InfoBinLocation from "../InfoBinLocation/InfoBinLocation";
 import { BookmarkIcon } from "@heroicons/react/24/solid";
+import { toast } from "sonner";
 
 export default function MapList() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -148,6 +149,45 @@ export default function MapList() {
     })
   }, [])
 
+  const binDataToChange = async (binData: BinsToModifyProps) => {
+    const newQuantity = [Number(binData.bin_quantity)];
+
+    setBinLocations((prev) =>
+      prev.map((bin) => {
+        if (bin.id === binData.id) {
+          return { ...bin, bin_quantity: newQuantity };
+        }
+
+        if (bin.bins.some((drader) => drader.id === binData.id)) {
+          return {
+            ...bin,
+            bins: bin.bins.map((drader) =>
+              drader.id === binData.id
+                ? { ...drader, bin_quantity: newQuantity }
+                : drader
+            ),
+          };
+        }
+
+        return bin;
+      })
+    );
+
+    const response = await updateBinLocationData(binData);
+    console.log(response.data.status);
+    if (response.data.status === 200) {
+      toast.success(`La bin location ${binData.id} est mis à jour avec succès!`, {
+        position: 'top-center',
+        richColors: true
+      });
+    } else {
+      toast.error(`Il y a un problème avec la mis à jour de la bin ${binData.id} svp, essayez autre fois.`, {
+        position: 'top-center',
+        richColors: true
+      });
+    }
+  }
+
   return (
     <div className="map-list">
       {
@@ -227,7 +267,8 @@ export default function MapList() {
                                     }
                                     {
                                       <InfoBinLocation
-                                        location={bin} />
+                                        location={bin}
+                                        onBinDataChange={binDataToChange} />
                                     }
                                   </div>
                                 </details>

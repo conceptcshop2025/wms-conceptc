@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Popover,
   PopoverContent,
@@ -6,20 +7,51 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { type BinRenderProps } from "@/app/types/types";
+import { type BinRenderProps, type BinsToModifyProps } from "@/app/types/types";
 
 interface InfoBinLocationProps {
   location: BinRenderProps;
+  onBinDataChange: (data: BinsToModifyProps) => void;
 }
 
-export default function InfoBinLocation({location}:InfoBinLocationProps) {
+interface QuantityInputProps {
+  id: string;
+  sku: string;
+  initialQuantity: number;
+  onCommit: (data: BinsToModifyProps) => void;
+}
+
+const firstSku = (sku: string | string[]) =>
+  Array.isArray(sku) ? sku[0] ?? "" : sku;
+
+function QuantityInput({ id, sku, initialQuantity, onCommit }: QuantityInputProps) {
+  const [quantity, setQuantity] = useState<string>(String(initialQuantity));
+
+  const handleBlur = () => {
+    if (Number(quantity) !== initialQuantity) {
+      onCommit({ id, sku, bin_quantity: quantity });
+    }
+  };
+
+  return (
+    <input
+      type="number"
+      value={quantity}
+      onChange={(event) => setQuantity(event.target.value)}
+      onBlur={handleBlur}
+      className="block w-full"
+    />
+  );
+}
+
+export default function InfoBinLocation({ location, onBinDataChange }: InfoBinLocationProps) {
 
   return (
     <Popover>
       <PopoverTrigger className="text-center bg-sky-400 text-neutral-50 font-bold w-full py-1! cursor-pointer hover:bg-sky-600 transition-all">
         Voir Détails
       </PopoverTrigger>
-      <PopoverContent  className="p-4!">
+      <PopoverContent className="p-4!" onOpenAutoFocus={(event) => event.preventDefault()}>
         <PopoverHeader>
           <PopoverTitle className="text-lg">Bin Détails:</PopoverTitle>
           <PopoverDescription>
@@ -33,7 +65,7 @@ export default function InfoBinLocation({location}:InfoBinLocationProps) {
               <span>
                 {
                   !Array.isArray(location.sku)
-                    ? <span>{ location.sku }</span> 
+                    ? <span>{ location.sku }</span>
                     : location.sku.map((sku, index) => (
                         <span key={`loc-${sku}--${index}`} className="block">{sku}</span>
                       ))
@@ -45,9 +77,14 @@ export default function InfoBinLocation({location}:InfoBinLocationProps) {
                     ? <span className="block">{ location.bin_quantity }</span>
                     : location.bin_quantity.length > 1
                       ? location.bin_quantity.map((qty, index) => (
-                        <span key={`${location}--${index}`} className="block">{ qty }</span>
+                        <span key={`${location.id}--${index}`} className="block">{ qty }</span>
                       ))
-                      : <input type="number" defaultValue={location.bin_quantity[0]} className="block w-full" />
+                      : <QuantityInput
+                          id={location.id}
+                          sku={firstSku(location.sku)}
+                          initialQuantity={location.bin_quantity[0] ?? 0}
+                          onCommit={onBinDataChange}
+                        />
                 }
               </span>
             </span>
@@ -70,7 +107,12 @@ export default function InfoBinLocation({location}:InfoBinLocationProps) {
                           ? drader.bin_quantity.map((qty, index) => (
                             <span key={index} className="block">{qty}</span>
                           ))
-                          : <input type="number" defaultValue={drader.bin_quantity[0]} className="block w-full" />
+                          : <QuantityInput
+                              id={drader.id}
+                              sku={firstSku(drader.sku)}
+                              initialQuantity={drader.bin_quantity[0] ?? 0}
+                              onCommit={onBinDataChange}
+                            />
                     }
                   </span>
                 </span>

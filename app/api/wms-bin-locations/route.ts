@@ -81,13 +81,13 @@ export async function PATCH(req: Request) {
     `;
 
     return NextResponse.json(
-      {data: {id, sku, bin_quantity}},
+      {data: {id, sku, bin_quantity, status: 200}},
       {status: 200}
     );
   } catch(error) {
     console.error(error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error) },
+      { error: "Internal server error", details: String(error), data: { status: 500} },
       { status: 500 }
     );
   }
