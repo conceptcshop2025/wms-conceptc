@@ -32,16 +32,22 @@ export default function InfoBinLocation({location}:InfoBinLocationProps) {
               <span>{ location.id }</span>
               <span>
                 {
-                  !Array.isArray(location.sku) ? <span>{ location.sku }</span> : location.sku.map((sku, index) => (
-                    <span key={`loc-${sku}--${index}`} className="block">{sku}</span>
-                  ))
+                  !Array.isArray(location.sku)
+                    ? <span>{ location.sku }</span> 
+                    : location.sku.map((sku, index) => (
+                        <span key={`loc-${sku}--${index}`} className="block">{sku}</span>
+                      ))
                 }
               </span>
               <span>
                 {
-                  !Array.isArray(location.bin_quantity) ? <span>{ location.bin_quantity }</span> : location.bin_quantity.map((qty, index) => (
-                    <span key={`${location}--${index}`} className="block">{ qty }</span>
-                  ))
+                  !Array.isArray(location.bin_quantity)
+                    ? <span className="block">{ location.bin_quantity }</span>
+                    : location.bin_quantity.length > 1
+                      ? location.bin_quantity.map((qty, index) => (
+                        <span key={`${location}--${index}`} className="block">{ qty }</span>
+                      ))
+                      : <input type="number" defaultValue={location.bin_quantity[0]} className="block w-full" />
                 }
               </span>
             </span>
@@ -58,9 +64,13 @@ export default function InfoBinLocation({location}:InfoBinLocationProps) {
                   </span>
                   <span>
                     {
-                      !Array.isArray(drader.bin_quantity) ? <span>{drader.bin_quantity}</span>: drader.bin_quantity.map((qty, index) => (
-                        <span key={index} className="block">{qty}</span>
-                      ))
+                      !Array.isArray(drader.bin_quantity)
+                        ? <span>{drader.bin_quantity}</span>
+                        : drader.bin_quantity.length > 1
+                          ? drader.bin_quantity.map((qty, index) => (
+                            <span key={index} className="block">{qty}</span>
+                          ))
+                          : <input type="number" defaultValue={drader.bin_quantity[0]} className="block w-full" />
                     }
                   </span>
                 </span>

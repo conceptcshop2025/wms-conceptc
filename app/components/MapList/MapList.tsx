@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import Loading from "../Loading/Loading";
 import InfoBinLocation from "../InfoBinLocation/InfoBinLocation";
+import { BookmarkIcon } from "@heroicons/react/24/solid";
 
 export default function MapList() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -126,6 +127,13 @@ export default function MapList() {
     }
   }
 
+  const multiplesSkusInSameBinOrDrader = (skus:string[], type: 'bin'| 'drader') => {
+    return skus.length > 1 && <div className={`products-count absolute z-4 ${ type === 'bin' ? '-top-1.75 -right-2.25': 'top-0 right-0' }`}>
+      <BookmarkIcon className="size-10 text-orange-900" />
+      <span className="absolute w-full text-center top-1 text-neutral-50 font-bold">{ skus.length }</span>
+    </div>;
+  }
+
   useEffect(() => {
     getAllBinLocations().then((locations) => {
       getAllProductsFromNeon().then((products) => {
@@ -187,6 +195,9 @@ export default function MapList() {
                                     ${ binStatus(bin) }
                                   `}>
                                     <span>{bin.id}</span>
+                                    {
+                                      multiplesSkusInSameBinOrDrader(bin.sku, 'bin')
+                                    }
                                   </summary>
                                   <div className="sub-bin--body bg-neutral-200 rounded-b-lg overflow-hidden">
                                     {
@@ -202,6 +213,9 @@ export default function MapList() {
                                           `}>
                                             <span className="">
                                               {drader.id}
+                                              {
+                                                multiplesSkusInSameBinOrDrader(drader.sku, 'drader')
+                                              }
                                             </span>
                                           </div>
                                         ))
