@@ -129,7 +129,7 @@ export default function MapList() {
 
   const multiplesSkusInSameBinOrDrader = (skus:string[], type: 'bin'| 'drader') => {
     return skus.length > 1 && <div className={`products-count absolute z-4 ${ type === 'bin' ? '-top-1.75 -right-2.25': 'top-0 right-0' }`}>
-      <BookmarkIcon className="size-10 text-orange-900" />
+      <BookmarkIcon className={`text-orange-900 ${ type === 'bin' ? 'size-10' : 'size-8' }`} />
       <span className="absolute w-full text-center top-1 text-neutral-50 font-bold">{ skus.length }</span>
     </div>;
   }
