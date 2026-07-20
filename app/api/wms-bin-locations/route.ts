@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
-import { type WmsBinLocationProps } from "@/app/types/types";
+import { type WmsBinLocationProps, type BinsToModifyProps } from "@/app/types/types";
 
 const sql = neon(process.env.DATABASE_URL || "");
 const CHUNK_SIZE = 25;
@@ -14,9 +14,9 @@ async function upsertProduct(location: WmsBinLocationProps) {
         bin_quantity
       )
       VALUES (
-       ${location},
-       '',
-       0
+      ${location},
+      '',
+      0
       )
     `;
     return { success: true, location };
@@ -66,6 +66,28 @@ export async function PUT(req: Request) {
     console.error(error);
     return NextResponse.json(
       { error: "Internal server error", details: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(req: Request) {
+
+  const { id, sku, bin_quantity } = await req.json() as BinsToModifyProps;
+
+  try {
+    await sql`
+      UPDATE wms_bin_locations SET sku = ${ sku }, bin_quantity = ${ bin_quantity } WHERE id = ${ id }
+    `;
+
+    return NextResponse.json(
+      {data: {id, sku, bin_quantity, status: 200}},
+      {status: 200}
+    );
+  } catch(error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error", details: String(error), data: { status: 500} },
       { status: 500 }
     );
   }

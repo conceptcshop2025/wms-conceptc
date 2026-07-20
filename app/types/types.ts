@@ -291,3 +291,31 @@ export type BinItem = WmsBinLocationProps & {
 export type BinGroup = BinItem & {
   bins: BinItem[];
 };
+
+export type BinsToModifyProps = {
+  id: string;
+  sku: string;
+  bin_quantity: string;
+}
+
+export type BinLocationProps = {
+  id: string;
+  sku: string[];
+  bin_quantity: number[];
+}
+
+export type BinRenderProps = BinLocationProps & {
+  bins: BinLocationProps[];
+}
+
+export type BinSectionsProps = {
+  id: string;
+  name: string;
+  initialNumber: string;
+}
+
+export type BinColorStatus = {
+  available: string;
+  partialOccuped: string;
+  occuped: string;
+}

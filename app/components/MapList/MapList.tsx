@@ -1,194 +1,191 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect, useState } from "react";
-import { type WmsBinLocationProps, type BinItem, type BinGroup, type ProductItemProps } from "@/app/types/types";
-import "../MapBin/MapBin.css";
-import { Button } from "@/components/ui/button";
-import { BinLocationsSection100, BinLocationsSection200, BinLocationsSection300, BinLocationsSection400, BinLocationSection500, BinLocationSection600, BinLocationSection700 } from "@/app/lib/data/warehouse_bin_locations";
-import { updateBinLocations } from "@/app/lib/data/updateBinLocations";
-import Loading from "../Loading/Loading";
+import { useState, useEffect } from "react";
+import {
+  getAllBinLocations,
+  AllSections,
+  BinLocationsSection100,
+  BinLocationsSection200,
+  BinLocationsSection300,
+  BinLocationsSection400,
+  BinLocationSection500,
+  BinLocationSection600,
+  BinLocationSection700,
+} from "@/app/lib/data/warehouse_bin_locations";
+import { updateBinLocations, updateBinLocationData } from "@/app/lib/data/updateBinLocations";
 import { getAllProductsFromNeon } from "@/app/lib/data/getAllProductsFromNeon";
-import { BookmarkIcon } from "@heroicons/react/24/solid";
+import { type ProductItemProps, type BinLocationProps, type BinRenderProps, type BinSectionsProps, type BinColorStatus, type BinsToModifyProps } from "@/app/types/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import Loading from "../Loading/Loading";
 import InfoBinLocation from "../InfoBinLocation/InfoBinLocation";
+import { BookmarkIcon } from "@heroicons/react/24/solid";
+import { toast } from "sonner";
 
 export default function MapList() {
-
-  const [binLocations, setBinLocations] = useState<BinGroup[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [binLocations, setBinLocations] = useState<BinRenderProps[]>([]);
+  const [sections, setSections] = useState<BinSectionsProps[]>([]);
 
-  const sections = [
-    { id: 'section-100', name: 'Section 100', initialNumber: '1' },
-    { id: 'section-200', name: 'Section 200', initialNumber: '2' },
-    { id: 'section-300', name: 'Section 300', initialNumber: '3' },
-    { id: 'section-400', name: 'Section 400', initialNumber: '4' },
-    { id: 'section-500', name: 'Section 500', initialNumber: '5' },
-    { id: 'section-600', name: 'Section 600', initialNumber: '6' },
-    { id: 'section-700', name: 'Section 700', initialNumber: '7' },
-  ];
+  const syncProductsToBinLocations = (locations:BinLocationProps[], products:ProductItemProps[]) => {
+    products.forEach((product:ProductItemProps) => {
+      if (product.bin_location !== undefined || product.bin_location !== null) {
+        if (!Array.isArray(product.bin_location)) {
+          const locationsInProduct = product.bin_location.split(",");
+          locationsInProduct.forEach((location:string) => {
+            if (location !== '') {
+              const locationsFinded = locations.filter((key) => key.id === location);
+              locationsFinded.forEach((locationFinded) => {
+                if (!Array.isArray(locationFinded.sku)) {
+                  locationFinded.sku = [];
+                }
+                if (!Array.isArray(locationFinded.bin_quantity)) {
+                  locationFinded.bin_quantity = [];
+                }
 
-  const getAllBinLocations = async () => {
-    try {
-      const response = await fetch('/api/wms-bin-locations');
-      
-      if (!response.ok) {
-        console.error('Failed to fetch bin locations:', response.statusText);
-        return [];
+                locationFinded.sku.push(product.sku);
+                locationFinded.bin_quantity.push(product.bin_current_quantity);
+              });
+            }
+          })
+        }
       }
+    });
+    
+    return locations;
+  }
 
-      const data = await response.json();
+  const formatBinItems = (locations: BinLocationProps[]): BinRenderProps[] => {
+    const parents = new Map<string, BinRenderProps>();
 
-      if (data.length > 0) {
-        await synchronizeBinLocations(data);
+    const getOrCreateParent = (id: string): BinRenderProps => {
+      let parent = parents.get(id);
+      if (!parent) {
+        parent = { id, sku: [], bin_quantity: [], bins: [] };
+        parents.set(id, parent);
       }
+      return parent;
+    };
 
-      return data as WmsBinLocationProps[];
+    locations.forEach((location) => {
+      const segments = location.id.split(".");
+      const lastSegment = segments[segments.length - 1] ?? "";
+      const isChild = /[a-zA-Z]/.test(lastSegment);
+
+      if (isChild) {
+        const parentId = segments.slice(0, -1).join(".");
+        getOrCreateParent(parentId).bins.push(location);
+      } else {
+        const parent = getOrCreateParent(location.id);
+        parent.sku = location.sku;
+        parent.bin_quantity = location.bin_quantity;
+      }
+    });
+
+    const sortByIdNumeric = (a: { id: string }, b: { id: string }) =>
+      a.id.localeCompare(b.id, undefined, { numeric: true });
+
+    const result = Array.from(parents.values());
+    result.forEach((parent) => parent.bins.sort(sortByIdNumeric));
+
+    return result.sort(sortByIdNumeric);
+  };
+
+  const binStatus = (bin:BinRenderProps) => {
+    const status:BinColorStatus = {
+      available: "bg-green-300! text-green-900!",
+      partialOccuped: "bg-orange-300! text-orange-900!",
+      occuped: "bg-red-300! text-red-900!"
     }
-    catch (error) {
-      console.error('Error fetching bin locations:', error);
-      return [];
+
+    if (Array.isArray(bin.sku)) {
+      return status.occuped;
+    } else {
+      if (bin.sku === '') {
+        const validationOccupationDrader = (drader:BinLocationProps) => draderStatus(drader) === status.available;
+        // @TODO: validador cuando los draders ejemplo de la A a la H estan todas ocupadas pero no la bin principal, igual la bin principal deberia ponerse color rojo de totalmente ocupado (validar si aplica para los draders que solo tienen A y B como draders)
+        if (bin.bins.every(validationOccupationDrader)) {
+          return status.available;
+        }
+        return status.partialOccuped;
+      }
+      return status.available;
     }
   }
 
-  const getBaseId = (id: string) => id.replace(/[A-Za-z]+$/, "").replace(/\.$/, "");
+  const draderStatus = (drader:BinLocationProps) => {
+    const status:BinColorStatus = {
+      available: "bg-green-300! text-green-900!",
+      partialOccuped: "bg-orange-300! text-orange-900!",
+      occuped: "bg-red-300! text-red-900!"
+    }
 
-  const formatBinItems = (locations: WmsBinLocationProps[]): BinGroup[] => {
-    const baseItems = new Map<string, WmsBinLocationProps>();
-    const withLetter: WmsBinLocationProps[] = [];
-
-    locations.forEach((loc) => {
-      if (/[A-Za-z]$/.test(loc.id)) {
-        withLetter.push(loc);
-      } else {
-        baseItems.set(loc.id, loc);
+    if (Array.isArray(drader.sku)) {
+      return status.occuped;
+    } else {
+      if (drader.sku === '') {
+        return status.available;
       }
-    });
+      return status.occuped;
+    }
+  }
 
-    withLetter.forEach((loc) => {
-      const baseId = getBaseId(loc.id);
-      if (!baseItems.has(baseId)) {
-        baseItems.set(baseId, {
-          id: baseId,
-          sku: loc.sku,
-          bin_quantity: 0,
-        });
-      }
-    });
-
-    const groups: BinGroup[] = Array.from(baseItems.values()).map((baseItem) => {
-      const bins: BinItem[] = withLetter
-        .filter((loc) => getBaseId(loc.id) === baseItem.id)
-        .sort((a, b) => {
-          const letterA = a.id.replace(baseItem.id, "").replace(".", "");
-          const letterB = b.id.replace(baseItem.id, "").replace(".", "");
-          return letterA.localeCompare(letterB);
-        })
-        .map((loc) => {
-          return  {
-            id: loc.id,
-            sku: loc.sku,
-            bin_quantity: loc.bin_current_quantity ? loc.bin_current_quantity : 0,
-            available: false,
-            stock_quantity: 0,
-          }
-        });
-
-      return {
-        id: baseItem.id,
-        sku: baseItem.sku,
-        bin_quantity: baseItem.bin_current_quantity !== undefined ? baseItem.bin_current_quantity : 0,
-        available: false,
-        bins,
-        stock_quantity: 0,
-      };
-    });
-
-    return groups.sort((a, b) => {
-      const partsA = a.id.split(".").map(Number);
-      const partsB = b.id.split(".").map(Number);
-      for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
-        const diff = (partsA[i] ?? 0) - (partsB[i] ?? 0);
-        if (diff !== 0) return diff;
-      }
-      return 0;
-    });
-  };
-
-  const synchronizeBinLocations = async (binLocations: WmsBinLocationProps[]) => {
-    const products = await getAllProductsFromNeon() as ProductItemProps[];
-
-    products.forEach((product: ProductItemProps) => {
-      const productBins = Array.isArray(product.bin_location)
-        ? product.bin_location.map(bin => bin.trim())
-        : product.bin_location.split(",").map(bin => bin.trim());
-
-      productBins.forEach((binId: string) => {
-          const matchBinLocation = binLocations.find((binLocation: WmsBinLocationProps) => binLocation.id === binId);
-        if (matchBinLocation) {
-          if (matchBinLocation.sku === '') {
-            matchBinLocation.sku = product.sku;
-            matchBinLocation.bin_current_quantity = [product.bin_current_quantity];
-          } else {
-            matchBinLocation.sku += ',' + product.sku;
-            matchBinLocation.bin_current_quantity?.push(product.bin_current_quantity);
-          }
-          matchBinLocation.bin_quantity = product.bin_current_quantity;
-        }
-      });
-    });
-    
-    // finally when end the synchronization with the products
-    setLoading(false);
-    return products;
-  };
+  const multiplesSkusInSameBinOrDrader = (skus:string[], type: 'bin'| 'drader') => {
+    return skus.length > 1 && <div className={`products-count absolute z-4 ${ type === 'bin' ? '-top-1.75 -right-2.25': 'top-0 right-0' }`}>
+      <BookmarkIcon className={`text-orange-900 ${ type === 'bin' ? 'size-10' : 'size-8' }`} />
+      <span className="absolute w-full text-center top-1 text-neutral-50 font-bold">{ skus.length }</span>
+    </div>;
+  }
 
   useEffect(() => {
     getAllBinLocations().then((locations) => {
-      setBinLocations(formatBinItems(locations));
-    });
-  },[]);
+      getAllProductsFromNeon().then((products) => {
+        const syncData = syncProductsToBinLocations(locations, products as ProductItemProps[]);
+        setBinLocations(formatBinItems(syncData));
+        AllSections().then((data) => {
+          setSections(data);
+          setLoading(false);
+        });
+        console.log(formatBinItems(syncData));
+      });
+    })
+  }, [])
 
-  const binAvailable = (address: BinGroup) => {
-    if (address.sku === '') {
-      return true
+  const binDataToChange = async (binData: BinsToModifyProps) => {
+    const newQuantity = [Number(binData.bin_quantity)];
+
+    setBinLocations((prev) =>
+      prev.map((bin) => {
+        if (bin.id === binData.id) {
+          return { ...bin, bin_quantity: newQuantity };
+        }
+
+        if (bin.bins.some((drader) => drader.id === binData.id)) {
+          return {
+            ...bin,
+            bins: bin.bins.map((drader) =>
+              drader.id === binData.id
+                ? { ...drader, bin_quantity: newQuantity }
+                : drader
+            ),
+          };
+        }
+
+        return bin;
+      })
+    );
+
+    const response = await updateBinLocationData(binData);
+    console.log(response.data.status);
+    if (response.data.status === 200) {
+      toast.success(`La bin location ${binData.id} est mis à jour avec succès!`, {
+        position: 'top-center',
+        richColors: true
+      });
+    } else {
+      toast.error(`Il y a un problème avec la mis à jour de la bin ${binData.id} svp, essayez autre fois.`, {
+        position: 'top-center',
+        richColors: true
+      });
     }
-
-    return false;
-  }
-
-  const productsInSamePrincipalBin = (skus: string) => {
-    if (skus !== '') {
-      if (skus.split(',').length > 1) {
-        return <div className="products-count absolute -top-1.75 -right-2.25 z-4">
-          <BookmarkIcon className="size-10 text-orange-900" />
-          <span className="absolute w-full text-center top-1 text-neutral-50 font-bold">{skus.split(',').length}</span>
-        </div>
-      }
-    }
-    return;
-  }
-
-  const draderAvailable = (draderSkus: string) => {
-    if (draderSkus === '') {
-      return true;
-    }
-
-    return false;
-  }
-
-  const draderAvailableInBin = (draders: BinItem[]) => {
-    const availableDrader = (drader:BinItem) => drader.sku === '';
-    return draders.every(availableDrader);
-  }
-
-  const productsInSameDrader = (skus: string) => {
-    if (skus !== ''){
-      if (skus.split(',').length > 1) {
-        return <div className="products-count absolute top-0 right-0 z-4">
-          <BookmarkIcon className="size-8 text-orange-900" />
-          <span className="absolute w-full text-center top-1 text-neutral-50 font-bold text-xs">{skus.split(',').length}</span>
-        </div>
-      }
-    }
-    return;
   }
 
   return (
@@ -217,65 +214,65 @@ export default function MapList() {
                   <ul className="grid grid-cols-7 gap-4">
                     {
                       binLocations
-                        .filter((location: BinGroup) => location.id.startsWith(section.initialNumber))
-                        .map((location: BinGroup) => (
+                        .filter((location: BinRenderProps) => location.id.startsWith(section.initialNumber))
+                        .map((bin: BinRenderProps) => (
                           <li
-                            key={location.id}
+                            key={bin.id}
                             className="relative">
-                            <div className="bin-card">
-                              <details className={`
-                                sub-bins
-                              `}>
-                                <summary className={`
-                                  relative
-                                  sub-bin--header
-                                  px-4!
-                                  py-2!
-                                  bg-neutral-200
-                                  text-neutral-600
-                                  text-lg
-                                  font-bold
-                                  cursor-pointer
-                                  rounded-t-lg
-                                  ${ binAvailable(location) ? draderAvailableInBin(location.bins) ? 'bg-green-300! text-green-900!' : 'bg-orange-300! text-orange-900!' : 'bg-red-300 text-red-900!' }
-                                `}>
-                                  <span>{location.id}</span>
-                                  { productsInSamePrincipalBin(location.sku) }
-                                </summary>
-                                <div className="sub-bin--body bg-neutral-200 rounded-b-lg overflow-hidden">
-                                  {
-                                    location.bins.length > 0 ? (
-                                      location.bins.map((bin: BinItem) => (
-                                        <div key={bin.id} className={`
-                                          px-9!
-                                          py-2!
-                                          flex
-                                          justify-between
-                                          relative
-                                          ${ draderAvailable(bin.sku) ? 'bg-green-300 text-green-900!' : 'bg-red-300 text-red-900!' }
-                                        `}>
-                                          <span className={`${ location.sku !== '' ? 'text-red-900!': '' }`}>
-                                            {bin.id}
-                                            { productsInSameDrader(bin.sku) }
-                                          </span>
-                                        </div>
-                                      ))
-                                    ) : (
-                                      <p className="px-9! py-2! text-sm text-neutral-400">
-                                        Not sub-bins
-                                      </p>
-                                    )
-                                  }
-                                  {
-                                    binAvailable(location) ?
-                                      draderAvailableInBin(location.bins) ?
-                                      '' :
-                                      <InfoBinLocation location={location} /> :
-                                      <InfoBinLocation location={location} />
-                                  }
-                                </div>
-                              </details>
-                            </div>
+                              <div className="bin-card">
+                                <details className={`sub-bins`}>
+                                  <summary className={`
+                                    relative
+                                    sub-bin--header
+                                    px-4!
+                                    py-2!
+                                    bg-neutral-200
+                                    text-neutral-600
+                                    text-lg
+                                    font-bold
+                                    cursor-pointer
+                                    rounded-t-lg
+                                    ${ binStatus(bin) }
+                                  `}>
+                                    <span>{bin.id}</span>
+                                    {
+                                      multiplesSkusInSameBinOrDrader(bin.sku, 'bin')
+                                    }
+                                  </summary>
+                                  <div className="sub-bin--body bg-neutral-200 rounded-b-lg overflow-hidden">
+                                    {
+                                      bin.bins.length > 0 ? (
+                                        bin.bins.map((drader:BinLocationProps) => (
+                                          <div key={drader.id} className={`
+                                            px-9!
+                                            py-2!
+                                            flex
+                                            justify-between
+                                            relative
+                                            ${ draderStatus(drader) }
+                                          `}>
+                                            <span className="">
+                                              {drader.id}
+                                              {
+                                                multiplesSkusInSameBinOrDrader(drader.sku, 'drader')
+                                              }
+                                            </span>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <p className="px-9! py-2! text-sm text-neutral-400">
+                                          Not sub-bins
+                                        </p>
+                                      )
+                                    }
+                                    {
+                                      <InfoBinLocation
+                                        location={bin}
+                                        onBinDataChange={binDataToChange} />
+                                    }
+                                  </div>
+                                </details>
+                              </div>
                           </li>
                         ))
                     }
