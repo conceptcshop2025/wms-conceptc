@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { fetchBulkProducts } from "./actions/shopify";
 // import { getSalesBetweenDates } from "./actions/sales-shopify";
 import Header from "./components/Header/Header";
@@ -334,12 +334,6 @@ export default function Home() {
     }
   };
 
-  /* New list function */
-  const handleNewList = async () => {
-    setProducts([]);
-    setMode("list");
-  }
-
   /* Get refresh product function */
   async function handleRefreshProduct(sku:string | undefined) {
     const findedProduct = products.find(p => p.sku === sku);
@@ -413,47 +407,6 @@ export default function Home() {
       console.error("Error en handle Add Product:", error);
     }
   };
-
-  /* Save List function */
-  const handleSaveList = async (nameList: string) => {
-    const listToSave = [...products];
-    const productList:ProductListProps[] = [];
-    listToSave.forEach((product) => {
-      const sku = product.sku ?? product.sku;
-      const cardKey = product.id;
-      const productDiv = document.querySelector(`[data-card-key="${cardKey}"]`) as HTMLElement;
-      if (sku) {
-        const remainingInput = productDiv?.querySelector(".remaining-input") as HTMLInputElement;
-        const restockInput = productDiv?.querySelector(".restock-input") as HTMLInputElement;
-        const item:ProductListProps = {
-          sku: sku,
-          remaining: remainingInput ? Number(remainingInput.value) : 0,
-          restock: restockInput ? Number(restockInput.value) : 0,
-          id: product.id
-        }
-        productList.push(item);
-      }
-    });
-    try {
-      const result = await fetch('/api/list', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: nameList.length > 0 ? nameList : `Restocking Bin - ${new Date().toISOString()}`,
-          products: productList,
-        }),
-      });
-
-      if (result.ok) {
-        alert("Liste enregistrée avec succès !");
-        setProducts([]);
-      }
-    } catch (error) {
-      console.error("Error saving list:", error);
-    }
-  }
 
   /* Show Modal */
   const handleShowProductListModal = async () => {
@@ -536,48 +489,6 @@ export default function Home() {
     setProducts(filteredList);
   }
 
-  /* save new products to neon DB */
-  /* const addNewProductInNeonDB = async (newProduct: ProductItemProps) => {
-    const sku = newProduct.sku; 
-    try {
-      const response = await fetch(`/api/ipacky?code=${sku}&type=sku`);
-      const result = await response.json();
-
-      if (response.ok && result.data[0]) {
-        newProduct.bin_location = result.data[0].binLocations || "",
-        newProduct.bin_max_quantity = result.data[0].htsUS || null,
-        newProduct.image_url = result.data[0].imageURL || '',
-        newProduct.inventory_quantity = result.data[0].quantityOnHand,
-        newProduct.bin_current_quantity = 0,
-        newProduct.b_alias = result.data[0].barcodeAliases
-      }
-
-      try {
-        const response = await fetch('/api/warehouse', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newProduct)
-        });
-
-        const data = await response.json();
-
-        if (data.data.length === 0) {
-          console.error('Error trying save product in DB');
-          return;
-        } else {
-          console.log('Product saved successfully');
-        }
-      } catch(error) {
-        console.error(`Error in api service for save product ${newProduct}:`, error);
-      }
-    } catch(error) {
-      console.error(`Error fetching data for SKU ${sku}:`, error);
-    }
-    console.log('NEW Product with iPacky data: ', newProduct);
-  } */
-
   const handleSyncGetAllProductsFromNeon = async () => {
     setProducts([]);
     setLoading(true);
@@ -599,6 +510,76 @@ export default function Home() {
   const toggleMenu = () => {
     setOpenMenu(prev => !prev);
   }
+
+  /* New list function */
+  const handleNewList = async () => {
+    setProducts([]);
+    setMode("list");
+  }
+
+  /* Save List function */
+  const handleSaveList = async (nameList: string) => {
+    const listToSave = [...products];
+    const productList:ProductListProps[] = [];
+    listToSave.forEach((product) => {
+      const sku = product.sku ?? product.sku;
+      const cardKey = product.id;
+      const productDiv = document.querySelector(`[data-card-key="${cardKey}"]`) as HTMLElement;
+      if (sku) {
+        const remainingInput = productDiv?.querySelector(".remaining-input") as HTMLInputElement;
+        const restockInput = productDiv?.querySelector(".restock-input") as HTMLInputElement;
+        const item:ProductListProps = {
+          sku: sku,
+          remaining: remainingInput ? Number(remainingInput.value) : 0,
+          restock: restockInput ? Number(restockInput.value) : 0,
+          id: product.id
+        }
+        productList.push(item);
+      }
+    });
+    try {
+      const result = await fetch('/api/list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: nameList.length > 0 ? nameList : `Restocking Bin - ${new Date().toISOString()}`,
+          products: productList,
+        }),
+      });
+
+      if (result.ok) {
+        alert("Liste enregistrée avec succès !");
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error("Error saving list:", error);
+    }
+  }
+
+  // Guarda la última versión NO vacía de products entre renders
+  const temporalListRef = useRef<ProductItemProps[]>([]);
+
+  useEffect(() => {
+    if (mode !== 'list') return;
+
+    console.log('previous list: ', temporalListRef.current);
+    console.log('new list: ', products);
+
+    if (products.length > 0) {
+      // Hay al menos 1 objeto -> actualizamos la lista guardada
+      temporalListRef.current = products;
+    } else if (temporalListRef.current.length > 0) {
+      // products pasó de tener objetos a estar vacío
+      console.warn(
+        `La lista quedó vacía. La versión anterior tenía ${temporalListRef.current.length} objeto(s):`,
+        temporalListRef.current
+      );
+      // Opcional: si además quieres borrar la guardada, descomenta:
+      // temporalListRef.current = [];
+    }
+  }, [products, mode]);
 
   return (
     <div>
