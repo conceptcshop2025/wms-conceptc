@@ -9,7 +9,7 @@ import ProductCounter from "./components/ProductCounter/ProductCounter";
 import PaginationBar from "./components/PaginationBar/PaginationBar";
 import ProductCard from "./components/ProductCard/ProductCard";
 import Loading from "./components/Loading/Loading";
-import { type ProductListProps, type ProductListHistoricProps, type ProductItemProps } from "./types/types";
+import { type ProductListHistoricProps, type ProductItemProps, type ProductsInSavedListProps } from "./types/types";
 import Modal from "./components/Modal/Modal";
 import Toast from "./components/Toast/Toast";
 import { getAllProductsFromNeon } from "./lib/data/getAllProductsFromNeon";
@@ -18,12 +18,12 @@ import { updateProducts } from "./lib/data/updateProducts";
 import { setProductsInDraftStatus } from "./lib/data/setProductsInDraftStatus";
 import { setProductsInActiveStatus } from "./lib/data/setProductsInActiveStatus";
 import { setProductsExpirationStatus } from "./lib/data/setProductsExpirationStatus";
+import { toast } from "sonner";
 import Menu from "./components/Menu/Menu";
 
 export default function Home() {
 
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
   const [products, setProducts] = useState<ProductItemProps[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState("");
@@ -35,6 +35,7 @@ export default function Home() {
   const [productListHistoric, setProductListHistoric] = useState<ProductListHistoricProps[]>([]);
   const [hideNotActiveProducts, setHideNotActiveProducts] = useState<boolean>(false);
   const [openMenu, setOpenMenu] = useState<boolean>(false);
+  const [listName, setListName] = useState<string>("");
 
   const ITEMS_PER_PAGE = 20;
 
@@ -151,14 +152,11 @@ export default function Home() {
 
   const handleSync = async () => {
     setLoading(true);
-    setStatus("Solicitando datos a Shopify...");
     setProducts([]);
     try {
 
-      setStatus("Shopify está preparando el archivo... (Bulk Operation)");
       const bulkProducts = await fetchBulkProducts();
       setCurrentPage(1);
-      setStatus(`¡Sincronización completa! ${bulkProducts.length} productos cargados.`);
       const dataFromShopify =  bulkProducts;
 
       const neonResult = await getAllProductsFromNeon();
@@ -200,7 +198,6 @@ export default function Home() {
 
     } catch (error: unknown) {
       console.error("Error:", error);
-      setStatus(`Error: ${error}`);
       setLoading(false);
     }
   };
@@ -222,7 +219,6 @@ export default function Home() {
   /* Get all products from Neon DB */
   const handleGetAllProductsFromNeon = async () => {
     setLoading(true);
-    setStatus("Connexion à la base de données...");
     setMode("warehouse");
 
     try {
@@ -233,27 +229,22 @@ export default function Home() {
       const firstData = await firstRes.json();
 
       let allProducts: ProductItemProps[] = [...firstData.products];
-      const { total, totalPages } = firstData as { total: number; totalPages: number };
+      const { totalPages } = firstData as { total: number; totalPages: number };
 
-      setStatus(`Chargement des produits... (${allProducts.length} / ${total})`);
 
       for (let page = 2; page <= totalPages; page++) {
         const res = await fetch(`/api/store-products?page=${page}&limit=${LIMIT}`);
         if (!res.ok) throw new Error(`Error ${res.status} en página ${page}`);
         const data = await res.json();
         allProducts = [...allProducts, ...data.products];
-        setStatus(`Chargement des produits... (${allProducts.length} / ${total})`);
       }
 
       setProducts(allProducts);
       setCurrentPage(1);
-      setStatus(`${allProducts.length} produits chargés depuis la base de données.`);
     } catch (error: unknown) {
       console.error("Error:", error);
-      setStatus(`Error: ${error}`);
     } finally {
       setLoading(false);
-      console.log(status);
     }
   }
   /* END Get all products from Neon DB */
@@ -321,7 +312,6 @@ export default function Home() {
         if (!responsePostDate.ok) {
           console.error(`Error ${responsePostDate.status} updating sync date in DB`);
         }
-        console.log("Sync date updated in DB successfully");
       } catch(error) {
         console.error("Error updating sync date in DB:", error);
       }
@@ -365,14 +355,6 @@ export default function Home() {
       const data = await result.json();
       if (!data.data || data.data.length === 0) {
         try {
-          /* const shopifyResult = await fetch(`/api/shopify?code=${code}`);
-          if (!result.ok) {
-            console.error('Error trying data from iPacky');
-          }
-          const shopifyResponse = await shopifyResult.json();
-          data = shopifyResponse;
-          console.log('get product from shopify: ', data);
-          await addNewProductInNeonDB(data.data[0]); */
           alert(`Produit avec code "${code}" non trouvé dans la base de données locale. Veuillez vérifier le code ou synchroniser les produits pour mettre à jour la base de données.`);
         } catch (error) {
           console.error("Error trying data from iPacky: ", error);
@@ -474,7 +456,6 @@ export default function Home() {
 
       const response = await result.json();
       if (response) {
-        console.log("Product list deleted successfully");
         const productListFiltered = productListHistoric.filter(key => key.id !== id);
         setProductListHistoric(productListFiltered)
       }
@@ -485,6 +466,7 @@ export default function Home() {
 
   /* Remove product from product List */
   const handleRemoveProductFromProductList = async (variantSku: string | undefined) => {
+    if (mode === 'list') captureListSnapshot(products);
     const filteredList = [...products].filter(key => key.sku !== variantSku);
     setProducts(filteredList);
   }
@@ -512,31 +494,20 @@ export default function Home() {
   }
 
   /* New list function */
-  const handleNewList = async () => {
+  const handleNewList = async (listName:string) => {
+    if (mode === 'list') captureListSnapshot(products);
     setProducts([]);
     setMode("list");
+    setListName(listName);
   }
 
   /* Save List function */
-  const handleSaveList = async (nameList: string) => {
-    const listToSave = [...products];
-    const productList:ProductListProps[] = [];
-    listToSave.forEach((product) => {
-      const sku = product.sku ?? product.sku;
-      const cardKey = product.id;
-      const productDiv = document.querySelector(`[data-card-key="${cardKey}"]`) as HTMLElement;
-      if (sku) {
-        const remainingInput = productDiv?.querySelector(".remaining-input") as HTMLInputElement;
-        const restockInput = productDiv?.querySelector(".restock-input") as HTMLInputElement;
-        const item:ProductListProps = {
-          sku: sku,
-          remaining: remainingInput ? Number(remainingInput.value) : 0,
-          restock: restockInput ? Number(restockInput.value) : 0,
-          id: product.id
-        }
-        productList.push(item);
-      }
-    });
+  const saveList = async(productListToSave:ProductsInSavedListProps[], nameList: string) => {
+    toast.info('Sauvegarde de données en cours...', {
+      position: 'top-center',
+      richColors: true
+    })
+
     try {
       const result = await fetch('/api/list', {
         method: 'POST',
@@ -545,41 +516,70 @@ export default function Home() {
         },
         body: JSON.stringify({
           name: nameList.length > 0 ? nameList : `Restocking Bin - ${new Date().toISOString()}`,
-          products: productList,
+          products: productListToSave,
         }),
       });
 
       if (result.ok) {
-        alert("Liste enregistrée avec succès !");
-        setProducts([]);
+        toast.success('Liste enregistrée avec succès!', {
+          position: 'top-center',
+          richColors: true
+        })
+        alert('funciona');
       }
     } catch (error) {
-      console.error("Error saving list:", error);
+      toast.error(`Il y a un problème dans le systhème, error: ${error}`, {
+        position: 'top-center',
+        richColors: true
+      })
     }
   }
 
-  // Guarda la última versión NO vacía de products entre renders
   const temporalListRef = useRef<ProductItemProps[]>([]);
+  const actualNameList = useRef<string>(listName);
+  const listSnapshotRef = useRef<ProductsInSavedListProps[]>([]);
+
+  const captureListSnapshot = (list: ProductItemProps[]) => {
+    const previous = new Map(listSnapshotRef.current.map(item => [item.id, item]));
+
+    listSnapshotRef.current = list.reduce<ProductsInSavedListProps[]>((acc, product) => {
+      if (!product.sku) return acc;
+
+      const productDiv = document.querySelector(`[data-product-id="${product.id}"]`) as HTMLElement | null;
+      const remainingInput = productDiv?.querySelector(".remaining-input") as HTMLInputElement | null;
+      const restockInput = productDiv?.querySelector(".restock-input") as HTMLInputElement | null;
+      const lastKnown = previous.get(product.id);
+
+      acc.push({
+        id: product.id,
+        sku: product.sku,
+        remaining: remainingInput ? Number(remainingInput.value) : lastKnown?.remaining ?? 0,
+        restock: restockInput ? Number(restockInput.value) : lastKnown?.restock ?? 0,
+      });
+      return acc;
+    }, []);
+
+    return listSnapshotRef.current;
+  }
+
+  const handlePageChange = (page: number) => {
+    if (mode === 'list') captureListSnapshot(products);
+    setCurrentPage(page);
+  }
 
   useEffect(() => {
     if (mode !== 'list') return;
 
-    console.log('previous list: ', temporalListRef.current);
-    console.log('new list: ', products);
-
     if (products.length > 0) {
-      // Hay al menos 1 objeto -> actualizamos la lista guardada
       temporalListRef.current = products;
-    } else if (temporalListRef.current.length > 0) {
-      // products pasó de tener objetos a estar vacío
-      console.warn(
-        `La lista quedó vacía. La versión anterior tenía ${temporalListRef.current.length} objeto(s):`,
-        temporalListRef.current
-      );
-      // Opcional: si además quieres borrar la guardada, descomenta:
-      // temporalListRef.current = [];
+      actualNameList.current = listName;
+      captureListSnapshot(products);
+    } else if (listSnapshotRef.current.length > 0) {
+      saveList(listSnapshotRef.current, actualNameList.current);
+      temporalListRef.current = [];
+      listSnapshotRef.current = [];
     }
-  }, [products, mode]);
+  }, [products, mode, listName]);
 
   return (
     <div>
@@ -593,7 +593,7 @@ export default function Home() {
         <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} onGetAllProductsFromNeon={handleSyncGetAllProductsFromNeon} onShowMenu={toggleMenu}/>
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
-        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onSaveList={handleSaveList} onTitleSearch={setTitleSearch} onChecked={handleHideNotActiveProducts} />
+        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onTitleSearch={setTitleSearch} onChecked={handleHideNotActiveProducts} />
 
         {/* ==================== MAIN CONTENT ==================== */}
         {
@@ -624,7 +624,7 @@ export default function Home() {
               }
 
               {/* ==================== PAGINATION ==================== */}
-              <PaginationBar currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+              <PaginationBar currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
 
             </div>
         }
