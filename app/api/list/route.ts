@@ -54,6 +54,38 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, products } = body;
+
+    if (!id || !products || !Array.isArray(products)) {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
+    const result = await sql`
+      UPDATE product_list_to_restock
+      SET products = ${JSON.stringify(products)}::jsonb
+      WHERE id = ${id}
+      returning id;
+    `;
+
+    if (result.length === 0) {
+      return NextResponse.json({ error: "List not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Restocking bin updated successfully", id: result?.[0]?.id }, { status: 200 });
+  } catch(error) {
+    return NextResponse.json(
+      { error: "Internal server error", details: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const body = await req.json();
