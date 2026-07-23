@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { fetchBulkProducts } from "./actions/shopify";
 // import { getSalesBetweenDates } from "./actions/sales-shopify";
 import Header from "./components/Header/Header";
@@ -9,7 +9,7 @@ import ProductCounter from "./components/ProductCounter/ProductCounter";
 import PaginationBar from "./components/PaginationBar/PaginationBar";
 import ProductCard from "./components/ProductCard/ProductCard";
 import Loading from "./components/Loading/Loading";
-import { type ProductListProps, type ProductListHistoricProps, type ProductItemProps } from "./types/types";
+import { type ProductListHistoricProps, type ProductItemProps, type ProductsInSavedListProps } from "./types/types";
 import Modal from "./components/Modal/Modal";
 import Toast from "./components/Toast/Toast";
 import { getAllProductsFromNeon } from "./lib/data/getAllProductsFromNeon";
@@ -18,12 +18,12 @@ import { updateProducts } from "./lib/data/updateProducts";
 import { setProductsInDraftStatus } from "./lib/data/setProductsInDraftStatus";
 import { setProductsInActiveStatus } from "./lib/data/setProductsInActiveStatus";
 import { setProductsExpirationStatus } from "./lib/data/setProductsExpirationStatus";
+import { toast } from "sonner";
 import Menu from "./components/Menu/Menu";
 
 export default function Home() {
 
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
   const [products, setProducts] = useState<ProductItemProps[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState("");
@@ -35,6 +35,7 @@ export default function Home() {
   const [productListHistoric, setProductListHistoric] = useState<ProductListHistoricProps[]>([]);
   const [hideNotActiveProducts, setHideNotActiveProducts] = useState<boolean>(false);
   const [openMenu, setOpenMenu] = useState<boolean>(false);
+  const [listName, setListName] = useState<string>("");
 
   const ITEMS_PER_PAGE = 20;
 
@@ -151,14 +152,11 @@ export default function Home() {
 
   const handleSync = async () => {
     setLoading(true);
-    setStatus("Solicitando datos a Shopify...");
     setProducts([]);
     try {
 
-      setStatus("Shopify está preparando el archivo... (Bulk Operation)");
       const bulkProducts = await fetchBulkProducts();
       setCurrentPage(1);
-      setStatus(`¡Sincronización completa! ${bulkProducts.length} productos cargados.`);
       const dataFromShopify =  bulkProducts;
 
       const neonResult = await getAllProductsFromNeon();
@@ -200,7 +198,6 @@ export default function Home() {
 
     } catch (error: unknown) {
       console.error("Error:", error);
-      setStatus(`Error: ${error}`);
       setLoading(false);
     }
   };
@@ -222,7 +219,6 @@ export default function Home() {
   /* Get all products from Neon DB */
   const handleGetAllProductsFromNeon = async () => {
     setLoading(true);
-    setStatus("Connexion à la base de données...");
     setMode("warehouse");
 
     try {
@@ -233,27 +229,22 @@ export default function Home() {
       const firstData = await firstRes.json();
 
       let allProducts: ProductItemProps[] = [...firstData.products];
-      const { total, totalPages } = firstData as { total: number; totalPages: number };
+      const { totalPages } = firstData as { total: number; totalPages: number };
 
-      setStatus(`Chargement des produits... (${allProducts.length} / ${total})`);
 
       for (let page = 2; page <= totalPages; page++) {
         const res = await fetch(`/api/store-products?page=${page}&limit=${LIMIT}`);
         if (!res.ok) throw new Error(`Error ${res.status} en página ${page}`);
         const data = await res.json();
         allProducts = [...allProducts, ...data.products];
-        setStatus(`Chargement des produits... (${allProducts.length} / ${total})`);
       }
 
       setProducts(allProducts);
       setCurrentPage(1);
-      setStatus(`${allProducts.length} produits chargés depuis la base de données.`);
     } catch (error: unknown) {
       console.error("Error:", error);
-      setStatus(`Error: ${error}`);
     } finally {
       setLoading(false);
-      console.log(status);
     }
   }
   /* END Get all products from Neon DB */
@@ -321,7 +312,6 @@ export default function Home() {
         if (!responsePostDate.ok) {
           console.error(`Error ${responsePostDate.status} updating sync date in DB`);
         }
-        console.log("Sync date updated in DB successfully");
       } catch(error) {
         console.error("Error updating sync date in DB:", error);
       }
@@ -333,12 +323,6 @@ export default function Home() {
       setLoading(false);
     }
   };
-
-  /* New list function */
-  const handleNewList = async () => {
-    setProducts([]);
-    setMode("list");
-  }
 
   /* Get refresh product function */
   async function handleRefreshProduct(sku:string | undefined) {
@@ -371,14 +355,6 @@ export default function Home() {
       const data = await result.json();
       if (!data.data || data.data.length === 0) {
         try {
-          /* const shopifyResult = await fetch(`/api/shopify?code=${code}`);
-          if (!result.ok) {
-            console.error('Error trying data from iPacky');
-          }
-          const shopifyResponse = await shopifyResult.json();
-          data = shopifyResponse;
-          console.log('get product from shopify: ', data);
-          await addNewProductInNeonDB(data.data[0]); */
           alert(`Produit avec code "${code}" non trouvé dans la base de données locale. Veuillez vérifier le code ou synchroniser les produits pour mettre à jour la base de données.`);
         } catch (error) {
           console.error("Error trying data from iPacky: ", error);
@@ -413,47 +389,6 @@ export default function Home() {
       console.error("Error en handle Add Product:", error);
     }
   };
-
-  /* Save List function */
-  const handleSaveList = async (nameList: string) => {
-    const listToSave = [...products];
-    const productList:ProductListProps[] = [];
-    listToSave.forEach((product) => {
-      const sku = product.sku ?? product.sku;
-      const cardKey = product.id;
-      const productDiv = document.querySelector(`[data-card-key="${cardKey}"]`) as HTMLElement;
-      if (sku) {
-        const remainingInput = productDiv?.querySelector(".remaining-input") as HTMLInputElement;
-        const restockInput = productDiv?.querySelector(".restock-input") as HTMLInputElement;
-        const item:ProductListProps = {
-          sku: sku,
-          remaining: remainingInput ? Number(remainingInput.value) : 0,
-          restock: restockInput ? Number(restockInput.value) : 0,
-          id: product.id
-        }
-        productList.push(item);
-      }
-    });
-    try {
-      const result = await fetch('/api/list', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: nameList.length > 0 ? nameList : `Restocking Bin - ${new Date().toISOString()}`,
-          products: productList,
-        }),
-      });
-
-      if (result.ok) {
-        alert("Liste enregistrée avec succès !");
-        setProducts([]);
-      }
-    } catch (error) {
-      console.error("Error saving list:", error);
-    }
-  }
 
   /* Show Modal */
   const handleShowProductListModal = async () => {
@@ -521,7 +456,6 @@ export default function Home() {
 
       const response = await result.json();
       if (response) {
-        console.log("Product list deleted successfully");
         const productListFiltered = productListHistoric.filter(key => key.id !== id);
         setProductListHistoric(productListFiltered)
       }
@@ -532,51 +466,10 @@ export default function Home() {
 
   /* Remove product from product List */
   const handleRemoveProductFromProductList = async (variantSku: string | undefined) => {
+    if (mode === 'list') captureListSnapshot(products);
     const filteredList = [...products].filter(key => key.sku !== variantSku);
     setProducts(filteredList);
   }
-
-  /* save new products to neon DB */
-  /* const addNewProductInNeonDB = async (newProduct: ProductItemProps) => {
-    const sku = newProduct.sku; 
-    try {
-      const response = await fetch(`/api/ipacky?code=${sku}&type=sku`);
-      const result = await response.json();
-
-      if (response.ok && result.data[0]) {
-        newProduct.bin_location = result.data[0].binLocations || "",
-        newProduct.bin_max_quantity = result.data[0].htsUS || null,
-        newProduct.image_url = result.data[0].imageURL || '',
-        newProduct.inventory_quantity = result.data[0].quantityOnHand,
-        newProduct.bin_current_quantity = 0,
-        newProduct.b_alias = result.data[0].barcodeAliases
-      }
-
-      try {
-        const response = await fetch('/api/warehouse', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newProduct)
-        });
-
-        const data = await response.json();
-
-        if (data.data.length === 0) {
-          console.error('Error trying save product in DB');
-          return;
-        } else {
-          console.log('Product saved successfully');
-        }
-      } catch(error) {
-        console.error(`Error in api service for save product ${newProduct}:`, error);
-      }
-    } catch(error) {
-      console.error(`Error fetching data for SKU ${sku}:`, error);
-    }
-    console.log('NEW Product with iPacky data: ', newProduct);
-  } */
 
   const handleSyncGetAllProductsFromNeon = async () => {
     setProducts([]);
@@ -600,6 +493,94 @@ export default function Home() {
     setOpenMenu(prev => !prev);
   }
 
+  /* New list function */
+  const handleNewList = async (listName:string) => {
+    if (mode === 'list') captureListSnapshot(products);
+    setProducts([]);
+    setMode("list");
+    setListName(listName);
+  }
+
+  /* Save List function */
+  const saveList = async(productListToSave:ProductsInSavedListProps[], nameList: string) => {
+    toast.info('Sauvegarde de données en cours...', {
+      position: 'top-center',
+      richColors: true
+    })
+
+    try {
+      const result = await fetch('/api/list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: nameList.length > 0 ? nameList : `Restocking Bin - ${new Date().toISOString()}`,
+          products: productListToSave,
+        }),
+      });
+
+      if (result.ok) {
+        toast.success('Liste enregistrée avec succès!', {
+          position: 'top-center',
+          richColors: true
+        })
+        alert('funciona');
+      }
+    } catch (error) {
+      toast.error(`Il y a un problème dans le systhème, error: ${error}`, {
+        position: 'top-center',
+        richColors: true
+      })
+    }
+  }
+
+  const temporalListRef = useRef<ProductItemProps[]>([]);
+  const actualNameList = useRef<string>(listName);
+  const listSnapshotRef = useRef<ProductsInSavedListProps[]>([]);
+
+  const captureListSnapshot = (list: ProductItemProps[]) => {
+    const previous = new Map(listSnapshotRef.current.map(item => [item.id, item]));
+
+    listSnapshotRef.current = list.reduce<ProductsInSavedListProps[]>((acc, product) => {
+      if (!product.sku) return acc;
+
+      const productDiv = document.querySelector(`[data-product-id="${product.id}"]`) as HTMLElement | null;
+      const remainingInput = productDiv?.querySelector(".remaining-input") as HTMLInputElement | null;
+      const restockInput = productDiv?.querySelector(".restock-input") as HTMLInputElement | null;
+      const lastKnown = previous.get(product.id);
+
+      acc.push({
+        id: product.id,
+        sku: product.sku,
+        remaining: remainingInput ? Number(remainingInput.value) : lastKnown?.remaining ?? 0,
+        restock: restockInput ? Number(restockInput.value) : lastKnown?.restock ?? 0,
+      });
+      return acc;
+    }, []);
+
+    return listSnapshotRef.current;
+  }
+
+  const handlePageChange = (page: number) => {
+    if (mode === 'list') captureListSnapshot(products);
+    setCurrentPage(page);
+  }
+
+  useEffect(() => {
+    if (mode !== 'list') return;
+
+    if (products.length > 0) {
+      temporalListRef.current = products;
+      actualNameList.current = listName;
+      captureListSnapshot(products);
+    } else if (listSnapshotRef.current.length > 0) {
+      saveList(listSnapshotRef.current, actualNameList.current);
+      temporalListRef.current = [];
+      listSnapshotRef.current = [];
+    }
+  }, [products, mode, listName]);
+
   return (
     <div>
       <main>
@@ -612,7 +593,7 @@ export default function Home() {
         <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} onGetAllProductsFromNeon={handleSyncGetAllProductsFromNeon} onShowMenu={toggleMenu}/>
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
-        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onSaveList={handleSaveList} onTitleSearch={setTitleSearch} onChecked={handleHideNotActiveProducts} />
+        <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onTitleSearch={setTitleSearch} onChecked={handleHideNotActiveProducts} />
 
         {/* ==================== MAIN CONTENT ==================== */}
         {
@@ -643,7 +624,7 @@ export default function Home() {
               }
 
               {/* ==================== PAGINATION ==================== */}
-              <PaginationBar currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+              <PaginationBar currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
 
             </div>
         }

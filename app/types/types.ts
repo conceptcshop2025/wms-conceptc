@@ -319,3 +319,10 @@ export type BinColorStatus = {
   partialOccuped: string;
   occuped: string;
 }
+
+export type ProductsInSavedListProps = {
+  id: string;
+  sku: string;
+  restock: number;
+  remaining: number;
+}
