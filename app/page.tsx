@@ -36,6 +36,10 @@ export default function Home() {
   const [hideNotActiveProducts, setHideNotActiveProducts] = useState<boolean>(false);
   const [openMenu, setOpenMenu] = useState<boolean>(false);
   const [listName, setListName] = useState<string>("");
+  // id de la fila en DB cuando la lista actual proviene del histórico; null si es nueva
+  const [currentListId, setCurrentListId] = useState<number | null>(null);
+  // valores guardados (remaining/restock) por id de producto, para sembrar las ProductCard al restaurar
+  const [restoredQtyById, setRestoredQtyById] = useState<Record<string, { remaining: number; restock: number }>>({});
 
   const ITEMS_PER_PAGE = 20;
 
@@ -319,7 +323,6 @@ export default function Home() {
     } catch(error) {
       console.error("error:", error);
     } finally {
-      alert("Stock mis à jour avec les ventes récentes !");
       setLoading(false);
     }
   };
@@ -341,12 +344,11 @@ export default function Home() {
       setProducts(prev =>
         prev.map(p => (p.sku === productToUpdate.sku ? productToUpdate : p))
       );
-      alert(`Produit avec sku ${productToUpdate.sku} est à jour correctement!`);
     }
   }
 
   /* Add product function */
-  const handleAddProduct = async (code: string) => {
+  const handleAddProduct = async (code: string, autoIncrement = true) => {
     try {
       const result = await fetch(`/api/list?sku=${encodeURIComponent(code)}`);
 
@@ -371,19 +373,23 @@ export default function Home() {
       );
 
       if (existingCard) {
-        setTimeout(() => {
-          const cardDiv = document.querySelector(`[data-card-key="${cardKey}"]`);
-          const buttonPlusOne = cardDiv?.querySelector('.plus-one') as HTMLElement;
-          if (buttonPlusOne) buttonPlusOne.click();
-        }, 100);
+        if (autoIncrement) {
+          setTimeout(() => {
+            const cardDiv = document.querySelector(`[data-card-key="${cardKey}"]`);
+            const buttonPlusOne = cardDiv?.querySelector('.plus-one') as HTMLElement;
+            if (buttonPlusOne) buttonPlusOne.click();
+          }, 100);
+        }
       } else {
         const productToAdd: ProductItemProps = { ...fetchedProduct };
         setProducts(prev => [productToAdd, ...prev]);
-        setTimeout(() => {
-          const cardDiv = document.querySelector(`[data-card-key="${cardKey}"]`);
-          const buttonPlusOne = cardDiv?.querySelector('.plus-one') as HTMLElement;
-          if (buttonPlusOne) buttonPlusOne.click();
-        }, 100);
+        if (autoIncrement) {
+          setTimeout(() => {
+            const cardDiv = document.querySelector(`[data-card-key="${cardKey}"]`);
+            const buttonPlusOne = cardDiv?.querySelector('.plus-one') as HTMLElement;
+            if (buttonPlusOne) buttonPlusOne.click();
+          }, 100);
+        }
       }
     } catch(error) {
       console.error("Error en handle Add Product:", error);
@@ -393,6 +399,9 @@ export default function Home() {
   /* Show Modal */
   const handleShowProductListModal = async () => {
     try {
+      // Capturamos las ediciones actuales antes de vaciar: al abrir el modal para
+      // cargar otra lista, las cards se desmontan y sus valores se perderían.
+      if (mode === 'list') captureListSnapshot(products);
       setProducts([]);
       const result = await fetch('/api/historylist');
       if (!result.ok) {
@@ -412,24 +421,23 @@ export default function Home() {
     setMode("list");
     setLoading(true);
     setShowModal(false);
+    // Recordamos que esta lista ya existe en DB para actualizarla (PUT) en vez de crear otra
+    setCurrentListId(list.id);
+    setListName(list.name);
+
+    // Sembramos los valores guardados ANTES de montar las cards para que su estado
+    // (inputs controlados) arranque con el remaining/restock correcto.
+    const savedQty: Record<string, { remaining: number; restock: number }> = {};
+    list.products.forEach((item) => {
+      savedQty[item.id] = { remaining: item.remaining, restock: item.restock };
+    });
+    setRestoredQtyById(savedQty);
 
     try {
       for (const item of list.products) {
-        await handleAddProduct(item.sku);
+        // autoIncrement=false: no sumamos +1; el restock viene de los valores guardados
+        await handleAddProduct(item.sku, false);
       }
-
-      setTimeout(() => {
-        list.products.forEach((item) => {
-          const cardKey = `${item.id}`;
-          const findProduct = document.querySelector(`[data-card-key="${cardKey}"]`) as HTMLElement;
-          if (findProduct) {
-            const remainingInput = findProduct.querySelector(".remaining-input") as HTMLInputElement;
-            const restockInput = findProduct.querySelector(".restock-input") as HTMLInputElement;
-            if (remainingInput) remainingInput.value = String(item.remaining);
-            if (restockInput) restockInput.value = String(item.restock);
-          }
-        });
-      }, 150);
     } catch (error) {
       console.error('Error trying show list of products from history list: ', error);
     } finally {
@@ -499,10 +507,18 @@ export default function Home() {
     setProducts([]);
     setMode("list");
     setListName(listName);
+    // Lista nueva: sin id de origen -> el guardado automático hará POST
+    setCurrentListId(null);
+    // Sin valores restaurados: los productos escaneados usan sus defaults
+    setRestoredQtyById({});
   }
 
   /* Save List function */
-  const saveList = async(productListToSave:ProductsInSavedListProps[], nameList: string) => {
+  const saveList = async(productListToSave:ProductsInSavedListProps[], nameList: string, listId: number | null = null) => {
+    // Si la lista proviene del histórico (tiene id) actualizamos sus productos (PUT),
+    // respetando el nombre original; si es nueva, la creamos (POST).
+    const isUpdate = listId != null;
+
     toast.info('Sauvegarde de données en cours...', {
       position: 'top-center',
       richColors: true
@@ -510,14 +526,18 @@ export default function Home() {
 
     try {
       const result = await fetch('/api/list', {
-        method: 'POST',
+        method: isUpdate ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: nameList.length > 0 ? nameList : `Restocking Bin - ${new Date().toISOString()}`,
-          products: productListToSave,
-        }),
+        body: JSON.stringify(
+          isUpdate
+            ? { id: listId, products: productListToSave }
+            : {
+                name: nameList.length > 0 ? nameList : `Restocking Bin - ${new Date().toISOString()}`,
+                products: productListToSave,
+              }
+        ),
       });
 
       if (result.ok) {
@@ -525,7 +545,6 @@ export default function Home() {
           position: 'top-center',
           richColors: true
         })
-        alert('funciona');
       }
     } catch (error) {
       toast.error(`Il y a un problème dans le systhème, error: ${error}`, {
@@ -537,6 +556,7 @@ export default function Home() {
 
   const temporalListRef = useRef<ProductItemProps[]>([]);
   const actualNameList = useRef<string>(listName);
+  const actualListIdRef = useRef<number | null>(null);
   const listSnapshotRef = useRef<ProductsInSavedListProps[]>([]);
 
   const captureListSnapshot = (list: ProductItemProps[]) => {
@@ -573,13 +593,14 @@ export default function Home() {
     if (products.length > 0) {
       temporalListRef.current = products;
       actualNameList.current = listName;
+      actualListIdRef.current = currentListId;
       captureListSnapshot(products);
     } else if (listSnapshotRef.current.length > 0) {
-      saveList(listSnapshotRef.current, actualNameList.current);
+      saveList(listSnapshotRef.current, actualNameList.current, actualListIdRef.current);
       temporalListRef.current = [];
       listSnapshotRef.current = [];
     }
-  }, [products, mode, listName]);
+  }, [products, mode, listName, currentListId]);
 
   return (
     <div>
@@ -619,6 +640,8 @@ export default function Home() {
                     onDelete={handleProductDelete}
                     foundedCardKey={foundedCardKey}
                     onRefresh={handleRefreshProduct}
+                    initialRemaining={restoredQtyById[product.id]?.remaining}
+                    initialRestock={restoredQtyById[product.id]?.restock}
                     onDeleteFromProductList={handleRemoveProductFromProductList} />
                 ))
               }
