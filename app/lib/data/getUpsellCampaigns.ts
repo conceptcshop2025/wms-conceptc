@@ -3,6 +3,13 @@ import { type UpsellCampaignProps } from "@/app/types/types"
 export function getUpsellCampaigns () {
   const activeCampaigns:UpsellCampaignProps[] = [
     {
+      name: "Festilitre PopUp",
+      id: "e172f0ef",
+      color: "oklch(0.58 0.25 20.48)",
+      begginingDate: "21-07-2026",
+      campaignStatus: "active"
+    },
+    {
       name: "Product List in PDP",
       id: "df4a206c",
       color: "oklch(68.5% 0.169 237.323)",
