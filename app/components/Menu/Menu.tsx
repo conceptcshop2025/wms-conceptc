@@ -10,11 +10,12 @@ export default function Menu({ isOpen, onCloseMenu }: MenuProps) {
         <div className="close-menu" onClick={onCloseMenu}>
           <XMarkIcon className="size-12 text-neutral-50 cursor-pointer" />
         </div>
-        <ul className="w-full flex flex-col gap-6 !mt-8">
+        <ul className="w-full flex flex-col gap-6 mt-8!">
           <Link href="/" className="link text-2xl text-neutral-50">Gestion d&apos;entrepôt</Link>
           <Link href="/map-bin" className="link text-2xl text-neutral-50">Localisation des Bins</Link>
           <Link href="/upsell-stats" className="link text-2xl text-neutral-50">Statistiques d&apos;upsell</Link>
           <Link href="/exports" className="link text-2xl text-neutral-50">Exports des données</Link>
+          <Link href="/skusavvy" className="link text-2xl text-neutral-50">Skusavvy</Link>
         </ul>
       </div>
     </div>

@@ -326,3 +326,32 @@ export type ProductsInSavedListProps = {
   restock: number;
   remaining: number;
 }
+
+export type skusavvyProductQueryProps = {
+  id: string;
+  name: string;
+  variants: {
+    id: string;
+    price: string;
+    sku: string;
+    totalQuantity: number;
+    unitCosts: {
+      cost: string;
+    }
+    inventory: {
+      quantity: string;
+      warehouse: {
+        id: string;
+        name: string;
+      }
+    }[]
+  }[]
+}
+
+export type skusavvyDataByWarehousesProps = {
+  id: string;
+  name: string;
+  totalProducts: number;
+  totalPrice: number;
+  totalCosts: number;
+}
