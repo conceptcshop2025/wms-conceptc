@@ -80,17 +80,17 @@ export default function UpsellStatsPage() {
             <InfoAppVersion />
           </div>
           <main className="p-8!">
+            <div className="flex gap-4 justify-start items-center">
+              <DatePicker onPickerDate={handlePickerDate} />
+              <button className="action-btn bg-sky-400! text-neutral-100!" onClick={getUpsellStats}>
+                <DocumentCurrencyDollarIcon className="size-6! text-neutral-100!" />
+                Consulter ventes
+              </button>
+            </div>
             {
               loading ?
                 <Loading text={"Chargement des données"} /> :
                   <>
-                    <div className="flex gap-4 justify-start items-center">
-                      <DatePicker onPickerDate={handlePickerDate} />
-                      <button className="action-btn bg-sky-400! text-neutral-100!" onClick={getUpsellStats}>
-                        <DocumentCurrencyDollarIcon className="size-6! text-neutral-100!" />
-                        Consulter ventes
-                      </button>
-                    </div>
                     <div className="campaigns-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4!">
                       {
                         selledProducts.length === 0 ? <p>Sélectionne un range des dates et cliques sur consulter ventes.</p>
