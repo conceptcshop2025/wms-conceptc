@@ -15,7 +15,10 @@ export default function Menu({ isOpen, onCloseMenu }: MenuProps) {
           <Link href="/map-bin" className="link text-2xl text-neutral-50">Localisation des Bins</Link>
           <Link href="/upsell-stats" className="link text-2xl text-neutral-50">Statistiques d&apos;upsell</Link>
           <Link href="/exports" className="link text-2xl text-neutral-50">Exports des données</Link>
-          <Link href="/skusavvy" className="link text-2xl text-neutral-50">Skusavvy</Link>
+          {
+            process.env.NODE_ENV === 'development' &&
+              <Link href="/skusavvy" className="link text-2xl text-neutral-50">Skusavvy</Link>
+          }
         </ul>
       </div>
     </div>
