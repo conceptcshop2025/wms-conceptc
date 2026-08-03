@@ -19,7 +19,6 @@ export default function SkusavvyPage() {
     if (!allProductsByWarehouse) return;
 
     setWarehouses(allProductsByWarehouse);
-    console.log('all products: ', allProductsByWarehouse);
   }
 
   const formatPrice = (unformattedPrice:number) => {

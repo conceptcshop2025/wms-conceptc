@@ -337,7 +337,7 @@ export type skusavvyProductQueryProps = {
     totalQuantity: number;
     unitCosts: {
       cost: string;
-    }
+    }[]
     inventory: {
       quantity: string;
       warehouse: {

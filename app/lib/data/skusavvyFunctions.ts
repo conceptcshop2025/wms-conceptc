@@ -1,6 +1,24 @@
 import { toast } from "sonner";
 import { type skusavvyProductQueryProps, type skusavvyDataByWarehousesProps } from "@/app/types/types";
 
+function getAverageCost(unitCosts?: {cost?:string | null}[] | null) {
+  if (!unitCosts?.length) return 0;
+
+  let total = 0;
+  let validCosts = 0;
+
+  for (const item of unitCosts) {
+    const cost = Number(item?.cost);
+
+    if (!Number.isFinite(cost) || cost <= 0) continue;
+
+    total += cost;
+    validCosts += 1;
+  }
+
+  return validCosts > 0 ? total / validCosts : 0;
+}
+
 async function formatData(data:skusavvyProductQueryProps[]) {
   const dataByWarehouses:skusavvyDataByWarehousesProps[] = [];
 
@@ -8,9 +26,7 @@ async function formatData(data:skusavvyProductQueryProps[]) {
     if (item.variants.length > 0) {
       item.variants.forEach((variant) => {
         variant.inventory.forEach((inventory) => {
-
-          //console.log("cost: ", variant.unitCosts.length);
-
+          
           const warehouseId = inventory.warehouse.id;
           const findWarehouse = dataByWarehouses.find(key => key.id === warehouseId)
           if (!findWarehouse) {
@@ -19,13 +35,13 @@ async function formatData(data:skusavvyProductQueryProps[]) {
               name: inventory.warehouse.name,
               totalProducts: Number(inventory.quantity),
               totalPrice: Number(inventory.quantity) * Number(variant.price),
-              totalCosts: Number(inventory.quantity) * Number(variant.unitCosts.cost)
+              totalCosts: Number(inventory.quantity) * getAverageCost(variant.unitCosts)
             }
             dataByWarehouses.push(newWarehouse);
           } else {
             findWarehouse.totalProducts += Number(inventory.quantity)
             findWarehouse.totalPrice += Number(inventory.quantity) * Number(variant.price)
-            findWarehouse.totalCosts += Number(inventory.quantity) * Number(variant.unitCosts.cost)
+            findWarehouse.totalCosts += Number(inventory.quantity) * getAverageCost(variant.unitCosts)
           }
         })
       })
