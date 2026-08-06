@@ -256,7 +256,10 @@ export default function StockyPage() {
             `${item.sku ? ` [SKU: ${item.sku}]` : ""}` +
             ` [ID: ${item.id}]` +
             ` [Status: ${item.status}]` +
-            ` [Updated: ${item.updated_at}]`
+            ` [Updated: ${item.updated_at}]` +
+            ` [CostPrice: ${item.cost_price}]` +
+            ` [RetailPrice: ${item.retail_price}]` +
+            ` [SupplierCostPrice: ${item.supplier_cost_price}]`,
         )
         .join(" | ");
 
