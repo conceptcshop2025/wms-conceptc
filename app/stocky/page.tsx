@@ -358,6 +358,154 @@ export default function StockyPage() {
     URL.revokeObjectURL(url);
   };
 
+  /* ---------------------------------------------------------------------- */
+  /* Purchase Items by Purchase Orders                                       */
+  /* Self contained export: it does not share helpers with the exports above */
+  /* so changing one can never affect the other.                             */
+  /* ---------------------------------------------------------------------- */
+
+  const escapeSplitCsvValue = (value: unknown): string => {
+    const str = value === null || value === undefined ? "" : String(value);
+    if (/[",\n]/.test(str)) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const downloadSplitCsvFile = (rows: string[], fileName: string) => {
+    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  /** One row per purchase order, without the purchase_items column. */
+  const buildSplitPurchaseOrdersRows = (purchaseOrders: PurchaseOrder[]): string[] => {
+    const headers = [
+      "purchase_order_id",
+      "number",
+      "sequential_id",
+      "invoice_number",
+      "supplier_name",
+      "supplier_id",
+      "currency",
+      "created_at",
+      "ordered_at",
+      "expected_on",
+      "ship_on",
+      "archived",
+      "paid",
+      "adjustments",
+      "shipping",
+      "items_count",
+      "total_quantity",
+      "shopify_receive_location_id"
+    ];
+
+    const rows: string[] = [headers.join(",")];
+
+    purchaseOrders.forEach((order) => {
+      const items = order.purchase_items || [];
+
+      const totalQuantity = items.reduce(
+        (sum, item) => sum + (item.quantity || 0),
+        0
+      );
+
+      const row = [
+        order.id,
+        order.number,
+        order.sequential_id,
+        order.invoice_number,
+        order.supplier_name,
+        order.supplier_id,
+        order.currency,
+        order.created_at,
+        order.ordered_at,
+        order.expected_on,
+        order.ship_on,
+        order.archived,
+        order.paid,
+        order.adjustments,
+        order.shipping,
+        items.length,
+        totalQuantity,
+        getLocationNameById(order.shopify_receive_location_id)
+      ];
+
+      rows.push(row.map(escapeSplitCsvValue).join(","));
+    });
+
+    return rows;
+  };
+
+  /** One row per purchase item, linked back to its order through purchase_order_id. */
+  const buildSplitPurchaseItemsRows = (purchaseOrders: PurchaseOrder[]): string[] => {
+    const headers = [
+      "purchase_order_id",
+      "quantity",
+      "product_title",
+      "variant_title",
+      "sku",
+      "id",
+      "status",
+      "retail_price",
+      "cost_price",
+      "supplier_cost_price",
+      "updated_at"
+    ];
+
+    const rows: string[] = [headers.join(",")];
+
+    purchaseOrders.forEach((order) => {
+      const items = order.purchase_items || [];
+
+      items.forEach((item) => {
+        const row = [
+          order.id,
+          item.quantity,
+          item.product_title,
+          item.variant_title,
+          item.sku,
+          item.id,
+          item.status,
+          item.retail_price,
+          item.cost_price,
+          item.supplier_cost_price,
+          item.updated_at
+        ];
+
+        rows.push(row.map(escapeSplitCsvValue).join(","));
+      });
+    });
+
+    return rows;
+  };
+
+  const exportPurchaseItemsByPurchaseOrders = async () => {
+    if (orders.length === 0) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    downloadSplitCsvFile(
+      buildSplitPurchaseOrdersRows(orders),
+      `stocky-purchase-orders-only-${today}.csv`
+    );
+
+    // Browsers drop the second file when two downloads fire in the same tick.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    downloadSplitCsvFile(
+      buildSplitPurchaseItemsRows(orders),
+      `stocky-purchase-items-${today}.csv`
+    );
+  };
+
   return (
     <div className="stocky" style={{ padding: "1.5rem" }}>
       <h1>Stocky - Purchase Orders</h1>
@@ -379,6 +527,15 @@ export default function StockyPage() {
           </button>
           <button onClick={exportAdjustmentsToCsv} disabled={adjustments.length === 0} className="bg-green-600 rounded-lg py-1! px-2! text-neutral-50">
             Export to CSV
+          </button>
+        </div>
+        <div className="p-8! shadow-xl rounded-lg mr-4!">
+          <h2 className="text-2xl mb-4!">Purchase Items by Purchase Orders</h2>
+          <button onClick={fetchPurchaseOrders} disabled={loading} className="bg-sky-600 rounded-lg py-1! px-2! text-neutral-50 mr-4!">
+            {loading ? "Loading..." : "Get Purchase Orders"}
+          </button>
+          <button onClick={exportPurchaseItemsByPurchaseOrders} disabled={orders.length === 0} className="bg-green-600 rounded-lg py-1! px-2! text-neutral-50">
+            Export 2 CSV
           </button>
         </div>
       </div>
