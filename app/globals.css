@@ -65,6 +65,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Custom colors */
+  --color-base: 228, 192, 174;;
+  --color-button-primary: 44, 95, 111;;
+  --color-text-primary: 59, 42, 36;;
+  --color-background-primary: 250, 243, 239;;
+  --color-accent-primary: 232, 120, 90;;
 }
 
 @theme inline {
@@ -111,7 +117,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; box-sizing: border-box; }
 
   html {
     font-size: 14px;
@@ -1045,4 +1051,37 @@
   html {
     @apply font-sans;
   }
+}
+
+.scheme-concept-c  {
+  background-color: rgb(var(--color-background-primary)) !important;
+  min-height: 100dvh;
+}
+
+.scheme-concept-c button {
+  padding: 10px 20px !important;
+  line-height: 1;
+  height: auto;
+  cursor: pointer;
+  background-color: rgb(var(--color-button-primary)) !important;
+  color: rgb(var(--color-background-primary)) !important;
+  transition: all .3s ease-in-out;
+}
+
+.scheme-concept-c button:hover {
+  background-color: rgb(var(--color-base)) !important;
+  color: rgb(var(--color-text-primary)) !important;
+}
+
+.scheme-concept-c div[data-slot="card"] {
+  background-color: rgb(var(--color-background)) !important;
+  box-shadow: 0 0 2px rgb(var(--color-base));
+}
+
+.scheme-concept-c div[data-slot="card"] div[data-slot="skeleton"] {
+  background-color: rgba(var(--color-base), 0.3) !important;
+}
+
+.scheme-concept-c .warehouse-card .info-item {
+  background-color: rgba(var(--color-base), 0.3) !important;
 }
