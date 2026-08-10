@@ -56,7 +56,7 @@ export default function SkusavvyPage() {
   return (
     <main>
       <div className="skusavvy-page p-8! scheme-concept-c">
-        <div className="flex justify-start items-start">
+        <div className="flex items-start justify-start">
           <Button
             onClick={getAllProducts}
             className="">
@@ -81,17 +81,17 @@ export default function SkusavvyPage() {
           }`}>
           {
             showSkeletons ?
-              <div className="skeleton-loaders flex flex-col gap-4 w-full">
+              <div className="flex flex-col w-full gap-4 skeleton-loaders">
                 { 
                   [1,2,3].map((item) => (
                     <Card className="w-full" key={item}>
                       <CardHeader>
                         <Skeleton className="h-8 w-75" />
                       </CardHeader>
-                      <CardContent className="flex justify-around items-center gap-4">
-                        <Skeleton className="aspect-video w-full h-24" />
-                        <Skeleton className="aspect-video w-full h-24" />
-                        <Skeleton className="aspect-video w-full h-24" />
+                      <CardContent className="flex items-center justify-around gap-4">
+                        <Skeleton className="w-full h-24 aspect-video" />
+                        <Skeleton className="w-full h-24 aspect-video" />
+                        <Skeleton className="w-full h-24 aspect-video" />
                       </CardContent>
                     </Card>
                   ))
@@ -101,24 +101,24 @@ export default function SkusavvyPage() {
               <>
                 {
                   warehouses.map((warehouse) => (
-                    <Card className="warehouse-card w-full" key={warehouse.id}>
+                    <Card className="w-full warehouse-card" key={warehouse.id}>
                       <CardHeader>
                         <p className="text-2xl">{warehouse.name}</p>
                       </CardHeader>
-                      <CardContent className="flex justify-around items-center gap-4">
+                      <CardContent className="flex items-center justify-around gap-4">
                         <div className="info-item rounded-lg shadow-md  p-4! w-full">
                           <p>Total items</p>
-                          <p className="text-center text-3xl">{ warehouse.totalProducts }</p>
+                          <p className="text-3xl text-center">{ warehouse.totalProducts }</p>
                         </div>
                         <div className="info-item rounded-lg shadow-md  p-4! w-full">
                           <p>Total retail</p>
-                          <p className="text-center text-3xl">
+                          <p className="text-3xl text-center">
                             { formatPrice(warehouse.totalPrice) }
                           </p>
                         </div>
                         <div className="info-item rounded-lg shadow-md  p-4! w-full">
                           <p>Total cost</p>
-                          <p className="text-center text-3xl">{ formatPrice(warehouse.totalCosts) }</p>
+                          <p className="text-3xl text-center">{ formatPrice(warehouse.totalCosts) }</p>
                         </div>
                       </CardContent>
                     </Card>
