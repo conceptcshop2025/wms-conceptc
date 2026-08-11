@@ -19,7 +19,6 @@ import { setProductsInDraftStatus } from "./lib/data/setProductsInDraftStatus";
 import { setProductsInActiveStatus } from "./lib/data/setProductsInActiveStatus";
 import { setProductsExpirationStatus } from "./lib/data/setProductsExpirationStatus";
 import { toast } from "sonner";
-import Menu from "./components/Menu/Menu";
 
 export default function Home() {
 
@@ -34,7 +33,6 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [productListHistoric, setProductListHistoric] = useState<ProductListHistoricProps[]>([]);
   const [hideNotActiveProducts, setHideNotActiveProducts] = useState<boolean>(false);
-  const [openMenu, setOpenMenu] = useState<boolean>(false);
   const [listName, setListName] = useState<string>("");
   // id de la fila en DB cuando la lista actual proviene del histórico; null si es nueva
   const [currentListId, setCurrentListId] = useState<number | null>(null);
@@ -497,10 +495,6 @@ export default function Home() {
     setHideNotActiveProducts(value);
   }
 
-  const toggleMenu = () => {
-    setOpenMenu(prev => !prev);
-  }
-
   /* New list function */
   const handleNewList = async (listName:string) => {
     if (mode === 'list') captureListSnapshot(products);
@@ -608,10 +602,8 @@ export default function Home() {
         {/* TOAST */}
         <Toast type={"success"} title={"Lorem ipsum!"} text={"Lorem ipsum dolor sit amet!"} />
         
-        {/* TOAST */}
-        <Menu isOpen={openMenu} onCloseMenu={toggleMenu} />
         {/* <!-- ==================== TOP BAR ==================== --> */}
-        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} onGetAllProductsFromNeon={handleSyncGetAllProductsFromNeon} onShowMenu={toggleMenu}/>
+        <Header onSync={handleSync} onGetAllProducts={handleGetAllProductsFromNeon} onGetSelledProducts={handleGetSelledProducts} mode={mode} onShowProductListModal={handleShowProductListModal} onGetAllProductsFromNeon={handleSyncGetAllProductsFromNeon}/>
 
         {/* <!-- ==================== CONTROLS PANEL ==================== --> */}
         <ControlPanel onFilterChange={handleFilterChange} onSortChange={handleSortChange} onProductSearch={handleProductSearch} onNewList={handleNewList} mode={mode} onAddProduct={handleAddProduct} onTitleSearch={setTitleSearch} onChecked={handleHideNotActiveProducts} />
@@ -658,12 +650,12 @@ export default function Home() {
         message={
           <div>
             <p>Listes d&apos;approvisionnement</p>
-            <div className="product-list-content flex flex-col gap-2">
+            <div className="flex flex-col gap-2 product-list-content">
               {
                 productListHistoric.length > 0 ? (
                   productListHistoric.map(list => (
-                    <div key={list.id} className="product-list-item flex justify-between items-center px-4 py-2 bg-gray-100 rounded">
-                      <h4 className=" px-4 block cursor-pointer" onClick={() => setProductListFromHistory(list)}>
+                    <div key={list.id} className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded product-list-item">
+                      <h4 className="block px-4 cursor-pointer " onClick={() => setProductListFromHistory(list)}>
                         <span className="pl-4!">{list.name}</span>
                       </h4>
                       <button className="action-btn-delete-list action-btn" onClick={() => deleteProductList(list.id)}>

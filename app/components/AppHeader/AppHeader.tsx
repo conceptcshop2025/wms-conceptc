@@ -66,13 +66,14 @@ export default function AppHeader() {
             ? <button
                 type="button"
                 onClick={() => signOut({ redirectTo: "/" })}
-                className="cursor-pointer link text-[rgb(var(--color-text-primary))]"
+                className="c-hover cursor-pointer link text-[rgb(var(--color-text-primary))] flex items-center justify-center gap-2 px-4 py-2 rounded-lg"
               >
                 Se déconnecter
+                <UserCircleIcon className="size-6 text-[rgb(var(--color-base))]" />
               </button>
-            : <Link href="/login" className="cursor-pointer link text-[rgb(var(--color-text-primary))] flex items-center justify-center gap-2">
+            : <Link href="/login" className="c-hover cursor-pointer link text-[rgb(var(--color-text-primary))] flex items-center justify-center gap-2 px-4 py-2 rounded-lg">
                 Connexion
-                <UserCircleIcon className="size-6" />
+                <UserCircleIcon className="size-6 text-[rgb(var(--color-base))]" />
               </Link>
         }
       </div>
