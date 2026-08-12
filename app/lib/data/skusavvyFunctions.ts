@@ -24,9 +24,9 @@ async function formatData(data:skusavvyProductQueryProps[]) {
   
   data.forEach((item:skusavvyProductQueryProps) => {
 
-    /* if(item.variants.find(key => key.sku === "210000014216")) {
+    if(item.variants.find(key => key.sku === "210000014216")) {
       console.log(item);
-    } */
+    }
 
     if (item.variants.length > 0) {
       item.variants.forEach((variant) => {
@@ -41,13 +41,13 @@ async function formatData(data:skusavvyProductQueryProps[]) {
               name: inventory.warehouse.name,
               totalProducts: Number(inventory.quantity),
               totalPrice: Number(inventory.quantity) * Number(variant.price),
-              totalCosts: Number(inventory.quantity) * Number(variant.inventoryItem.weightedAvgCost)
+              totalCosts: Number(inventory.quantity) * Number(variant.inventoryItem.weightedAvgCost !== null ? variant.inventoryItem.weightedAvgCost : 0)
             }
             dataByWarehouses.push(newWarehouse);
           } else {
             findWarehouse.totalProducts += Number(inventory.quantity)
             findWarehouse.totalPrice += Number(inventory.quantity) * Number(variant.price)
-            findWarehouse.totalCosts += Number(inventory.quantity) * Number(variant.inventoryItem.weightedAvgCost)
+            findWarehouse.totalCosts += Number(inventory.quantity) * Number(variant.inventoryItem.weightedAvgCost !== null ? variant.inventoryItem.weightedAvgCost : 0)
           }
         })
       })
