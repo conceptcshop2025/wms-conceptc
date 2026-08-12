@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
 const baseUrl = process.env.SKUSAVVY_BASE_URL || "";
-const apiKey = process.env.SKUSAVVY_API_KEY_TEST || "";
+const apiKey = process.env.SKUSAVVY_API_KEY || "";
 
 export async function POST() {
   const session = await auth();
