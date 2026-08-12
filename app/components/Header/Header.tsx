@@ -1,8 +1,4 @@
 "use client";
-
-import { Bars3Icon } from "@heroicons/react/24/outline";
-import InfoAppVersion from "../InfoAppVersion/InfoAppVersion";
-
 interface HeaderProps {
   onSync: () => void;
   onGetAllProducts: () => void;
@@ -10,10 +6,9 @@ interface HeaderProps {
   mode: "list" | "warehouse";
   onShowProductListModal: () => void;
   onGetAllProductsFromNeon: () => void;
-  onShowMenu: () => void;
 }
 
-export default function Header({ onSync, onGetAllProducts, onGetSelledProducts, onShowProductListModal, onGetAllProductsFromNeon, onShowMenu }: HeaderProps) {
+export default function Header({ onSync, onGetAllProducts, onGetSelledProducts, onShowProductListModal, onGetAllProductsFromNeon }: HeaderProps) {
 
   // const modeDev = process.env.NODE_ENV === "development";
 
@@ -21,15 +16,10 @@ export default function Header({ onSync, onGetAllProducts, onGetSelledProducts, 
     <header className="topbar">
       <div className="topbar-left">
         <div className="logo">
-          <div className="logo-mark cursor-pointer bg-green-800!" onClick={onShowMenu}>
-            <Bars3Icon className="size-6" />
-          </div>
           <div>
-            <div className="logo-text">CONCEPT C</div>
-            <div className="logo-sub">WMS · Québec</div>
+            <div className="logo-text">GESTION D&apos;ENTREPOT</div>
           </div>
         </div>
-        <InfoAppVersion />
       </div>
       <div className="topbar-actions">
         <button

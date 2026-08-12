@@ -1,18 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Menu from "../components/Menu/Menu";
-import { Bars3Icon } from "@heroicons/react/24/outline";
-import InfoAppVersion from "../components/InfoAppVersion/InfoAppVersion";
 import { Button } from "@/components/ui/button";
 import { type ProductExportProps } from "../types/types"; 
 
 export default function ExportsPage() {
-
-  const [openMenu, setOpenMenu] = useState<boolean>(false);
-  const toggleMenu = () => {
-    setOpenMenu(prev => !prev);
-  }
 
   const getData = async () => {
     try {
@@ -78,19 +69,6 @@ export default function ExportsPage() {
 
   return (
     <div className="map-bin-page">
-      <Menu isOpen={openMenu} onCloseMenu={toggleMenu} />
-      <div className="topbar">
-        <div className="topbar-left">
-          <div className="logo-mark cursor-pointer bg-green-800!" onClick={toggleMenu}>
-            <Bars3Icon className="size-6" />
-          </div>  
-          <div>
-            <div className="logo-text">CONCEPT C</div>
-            <div className="logo-sub">WMS · Québec</div>
-          </div>
-        </div> 
-        <InfoAppVersion />
-      </div>
       <main className="p-8!">
         <div className="item-export p-8! rounded-lg shadow-2xl ">
           <h2 className="text-3xl">Exporter tous les produits</h2>

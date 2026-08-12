@@ -30,6 +30,9 @@ export async function POST() {
             name
           }
         }
+        inventoryItem {
+          weightedAvgCost
+        }
       }
     }
   }`;
