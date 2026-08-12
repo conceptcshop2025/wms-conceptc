@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import { type skusavvyProductQueryProps, type skusavvyDataByWarehousesProps } from "@/app/types/types";
 
-function getAverageCost(unitCosts?: {cost?:string | null}[] | null) {
+/* function getAverageCost(unitCosts?: {cost?:string | null}[] | null) {
   if (!unitCosts?.length) return 0;
 
   let total = 0;
@@ -17,14 +17,20 @@ function getAverageCost(unitCosts?: {cost?:string | null}[] | null) {
   }
 
   return validCosts > 0 ? total / validCosts : 0;
-}
+} */
 
 async function formatData(data:skusavvyProductQueryProps[]) {
   const dataByWarehouses:skusavvyDataByWarehousesProps[] = [];
-
+  
   data.forEach((item:skusavvyProductQueryProps) => {
+
+    /* if(item.variants.find(key => key.sku === "210000014216")) {
+      console.log(item);
+    } */
+
     if (item.variants.length > 0) {
       item.variants.forEach((variant) => {
+
         variant.inventory.forEach((inventory) => {
           
           const warehouseId = inventory.warehouse.id;
@@ -35,13 +41,13 @@ async function formatData(data:skusavvyProductQueryProps[]) {
               name: inventory.warehouse.name,
               totalProducts: Number(inventory.quantity),
               totalPrice: Number(inventory.quantity) * Number(variant.price),
-              totalCosts: Number(inventory.quantity) * getAverageCost(variant.unitCosts)
+              totalCosts: Number(inventory.quantity) * Number(variant.inventoryItem.weightedAvgCost)
             }
             dataByWarehouses.push(newWarehouse);
           } else {
             findWarehouse.totalProducts += Number(inventory.quantity)
             findWarehouse.totalPrice += Number(inventory.quantity) * Number(variant.price)
-            findWarehouse.totalCosts += Number(inventory.quantity) * getAverageCost(variant.unitCosts)
+            findWarehouse.totalCosts += Number(inventory.quantity) * Number(variant.inventoryItem.weightedAvgCost)
           }
         })
       })
@@ -70,6 +76,7 @@ export async function getAllProductsFromSkusavvy() {
 
     const result = await response.json()
     const formattedData = await formatData(result.data.products)
+
     return formattedData;
   } catch (error) {
     toast.error(`N'est pas possible d'ontenir l'information en ce moment, essayez plus tard. Error: ${error}`, {

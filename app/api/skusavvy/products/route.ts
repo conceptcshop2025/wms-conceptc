@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
 const baseUrl = process.env.SKUSAVVY_BASE_URL || "";
-const apiKey = process.env.SKUSAVVY_API_KEY || "";
+const apiKey = process.env.SKUSAVVY_API_KEY_TEST || "";
 
 export async function POST() {
   const session = await auth();
@@ -29,6 +29,9 @@ export async function POST() {
             id
             name
           }
+        }
+        inventoryItem {
+          weightedAvgCost
         }
       }
     }

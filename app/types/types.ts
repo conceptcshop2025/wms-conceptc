@@ -345,6 +345,9 @@ export type skusavvyProductQueryProps = {
         name: string;
       }
     }[]
+    inventoryItem: {
+      weightedAvgCost: string;
+    }
   }[]
 }
 
