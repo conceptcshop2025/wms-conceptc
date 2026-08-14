@@ -330,6 +330,7 @@ export type ProductsInSavedListProps = {
 export type skusavvyProductQueryProps = {
   id: string;
   name: string;
+  status:string;
   variants: {
     id: string;
     price: string;
@@ -357,4 +358,31 @@ export type skusavvyDataByWarehousesProps = {
   totalProducts: number;
   totalPrice: number;
   totalCosts: number;
+}
+
+export type skusavvyVariantProps = {
+  id: string;
+  price: string;
+  sku: string;
+  totalQuantity: number;
+  unitCosts: {
+    cost: string;
+  }[]
+  inventory: {
+    quantity: string;
+    warehouse: {
+      id: string;
+      name: string;
+    }
+  }[]
+  inventoryItem: {
+    weightedAvgCost: string;
+  }
+}
+
+export type skusavvyProductProps = {
+  id: string;
+  name: string;
+  status: string;
+  variants: skusavvyVariantProps[];
 }

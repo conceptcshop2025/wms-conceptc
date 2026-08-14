@@ -15,6 +15,7 @@ export async function POST() {
     products {
       name
       id
+      status
       variants {
         id
         sku
