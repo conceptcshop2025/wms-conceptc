@@ -50,13 +50,15 @@ export async function formatDataByWarehouse(data:skusavvyProductQueryProps[]) {
               name: inventory.warehouse.name,
               totalProducts: Number(inventory.quantity),
               totalPrice: Number(inventory.quantity) * Number(variant.price),
-              totalCosts: Number(inventory.quantity) * Number(getAverageCost(variant.inventoryItem.weightedAvgCost, variant.unitCosts, variant.sku, variant.totalQuantity))
+              totalCosts: Number(inventory.quantity) * Number(getAverageCost(variant.inventoryItem.weightedAvgCost, variant.unitCosts, variant.sku, variant.totalQuantity)),
+              totalCommitted: Number(inventory.quantity) * Number(variant.committedQuantity)
             }
             dataByWarehouses.push(newWarehouse);
           } else {
             findWarehouse.totalProducts += Number(inventory.quantity)
             findWarehouse.totalPrice += Number(inventory.quantity) * Number(variant.price)
             findWarehouse.totalCosts += Number(inventory.quantity) * Number(getAverageCost(variant.inventoryItem.weightedAvgCost, variant.unitCosts, variant.sku, variant.totalQuantity))
+            findWarehouse.totalCommitted += Number(inventory.quantity) * Number(variant.committedQuantity)
           }
         })
       })

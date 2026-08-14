@@ -341,6 +341,7 @@ export type skusavvyProductQueryProps = {
     }[]
     inventory: {
       quantity: string;
+      committedQuantity:number;
       warehouse: {
         id: string;
         name: string;
@@ -349,6 +350,7 @@ export type skusavvyProductQueryProps = {
     inventoryItem: {
       weightedAvgCost: string;
     }
+    committedQuantity:number;
   }[]
 }
 
@@ -358,6 +360,7 @@ export type skusavvyDataByWarehousesProps = {
   totalProducts: number;
   totalPrice: number;
   totalCosts: number;
+  totalCommitted: number;
 }
 
 export type skusavvyVariantProps = {
