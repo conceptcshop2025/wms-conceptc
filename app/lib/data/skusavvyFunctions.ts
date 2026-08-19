@@ -1,25 +1,34 @@
 import { toast } from "sonner";
 import { type skusavvyProductQueryProps, type skusavvyDataByWarehousesProps } from "@/app/types/types";
 
-/* function getAverageCost(unitCosts?: {cost?:string | null}[] | null) {
-  if (!unitCosts?.length) return 0;
+const getAverageCost = (weightedAvgCost:string, unitCosts:{cost:string}[], sku:string, totalQuantity:number) => {
+  // console.log('weightAvgCost', weightedAvgCost);
+  // console.log('unitCosts', unitCosts);
 
-  let total = 0;
-  let validCosts = 0;
-
-  for (const item of unitCosts) {
-    const cost = Number(item?.cost);
-
-    if (!Number.isFinite(cost) || cost <= 0) continue;
-
-    total += cost;
-    validCosts += 1;
+  if (weightedAvgCost === null) {
+    if (unitCosts.length === 0) {
+      return 0;
+    } else if (unitCosts.length === 1) {
+      return unitCosts[0]?.cost;
+    } else {
+      if (totalQuantity <= 0) {
+        return 0;
+      } else {
+        console.log("---------------------------------------");
+        console.log('Product SKU: ', sku)
+        console.log('length of unitCosts: ', unitCosts.length)
+        console.log('weightAvgCost', weightedAvgCost);
+        console.log('unitCosts', unitCosts);
+        console.log('totalQuantity: ', totalQuantity);
+      }
+    }
+    return 0;
   }
 
-  return validCosts > 0 ? total / validCosts : 0;
-} */
+  return weightedAvgCost;
+}
 
-async function formatData(data:skusavvyProductQueryProps[]) {
+export async function formatDataByWarehouse(data:skusavvyProductQueryProps[]) {
   const dataByWarehouses:skusavvyDataByWarehousesProps[] = [];
   
   data.forEach((item:skusavvyProductQueryProps) => {
@@ -41,13 +50,15 @@ async function formatData(data:skusavvyProductQueryProps[]) {
               name: inventory.warehouse.name,
               totalProducts: Number(inventory.quantity),
               totalPrice: Number(inventory.quantity) * Number(variant.price),
-              totalCosts: Number(inventory.quantity) * Number(variant.inventoryItem.weightedAvgCost !== null ? variant.inventoryItem.weightedAvgCost : 0)
+              totalCosts: Number(inventory.quantity) * Number(getAverageCost(variant.inventoryItem.weightedAvgCost, variant.unitCosts, variant.sku, variant.totalQuantity)),
+              totalCommitted: Number(inventory.quantity) * Number(variant.committedQuantity)
             }
             dataByWarehouses.push(newWarehouse);
           } else {
             findWarehouse.totalProducts += Number(inventory.quantity)
             findWarehouse.totalPrice += Number(inventory.quantity) * Number(variant.price)
-            findWarehouse.totalCosts += Number(inventory.quantity) * Number(variant.inventoryItem.weightedAvgCost !== null ? variant.inventoryItem.weightedAvgCost : 0)
+            findWarehouse.totalCosts += Number(inventory.quantity) * Number(getAverageCost(variant.inventoryItem.weightedAvgCost, variant.unitCosts, variant.sku, variant.totalQuantity))
+            findWarehouse.totalCommitted += Number(inventory.quantity) * Number(variant.committedQuantity)
           }
         })
       })
@@ -57,7 +68,7 @@ async function formatData(data:skusavvyProductQueryProps[]) {
   return dataByWarehouses;
 }
 
-export async function getAllProductsFromSkusavvy() {
+export async function getAllProductVariantsFromSkusavvy() {
   try {
     const response = await fetch('/api/skusavvy/products', {
       method: "POST",
@@ -75,9 +86,8 @@ export async function getAllProductsFromSkusavvy() {
     }
 
     const result = await response.json()
-    const formattedData = await formatData(result.data.products)
 
-    return formattedData;
+    return result.data.products;
   } catch (error) {
     toast.error(`N'est pas possible d'ontenir l'information en ce moment, essayez plus tard. Error: ${error}`, {
       position: 'top-center',
@@ -85,4 +95,9 @@ export async function getAllProductsFromSkusavvy() {
     })
     return;
   }
+}
+
+export async function allVariantList(variants:skusavvyProductQueryProps[]) {
+  console.log(variants);
+  return variants;
 }

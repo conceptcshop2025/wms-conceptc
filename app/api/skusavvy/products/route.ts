@@ -15,6 +15,7 @@ export async function POST() {
     products {
       name
       id
+      status
       variants {
         id
         sku
@@ -25,6 +26,7 @@ export async function POST() {
         }
         inventory {
           quantity
+          committedQuantity
           warehouse {
             id
             name
@@ -33,6 +35,7 @@ export async function POST() {
         inventoryItem {
           weightedAvgCost
         }
+        committedQuantity
       }
     }
   }`;
