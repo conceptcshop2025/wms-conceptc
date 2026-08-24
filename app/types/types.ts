@@ -389,3 +389,8 @@ export type skusavvyProductProps = {
   status: string;
   variants: skusavvyVariantProps[];
 }
+
+export type WarehouseProps = {
+  id: string;
+  name: string;
+}

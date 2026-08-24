@@ -7,19 +7,21 @@ const apiKey = process.env.SKUSAVVY_API_KEY || "";
 export const maxDuration = 60;
 
 const PAGE_SIZE = 100;
-const WAREHOUSE_ID = "019ed719-70dc-717e-b011-78ef1e665bc8";
 
-const QUERY = `
-  query InventoryTotals($limit: Int, $offset: Int) {
-    inventoryItems(limit: $limit, offset: $offset) {
-      totalQuantity(warehouseId: "${WAREHOUSE_ID}")
-    }
-  }
-`;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function POST() {
+export async function POST(req:Request) {
+  const { warehouseId } = await req.json();
+  const WAREHOUSE_ID = warehouseId;
+
+  const QUERY = `
+    query InventoryTotals($limit: Int, $offset: Int) {
+      inventoryItems(limit: $limit, offset: $offset) {
+        totalQuantity(warehouseId: "${WAREHOUSE_ID}")
+      }
+    }
+  `;
   const session = await auth();
 
   if (!session?.user?.canAccessSkusavvy) {
