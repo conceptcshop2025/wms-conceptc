@@ -29,6 +29,7 @@ export default function SkusavvyPage() {
   const [selectedWarehouse, setSelectedWarehouse] = useState<string | null>(null);
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
   const [totalPrice, setTotalPrice] = useState<number>(0);
+  const [totalCommitted, setTotalCommitted] = useState<number>(0);
 
   const formatPrice = (unformattedPrice:number) => {
     const price = unformattedPrice / 1000;
@@ -52,6 +53,7 @@ export default function SkusavvyPage() {
     const infoWarehouse = await getInfoWarehouse(selectedWarehouse);
     setTotalQuantity(infoWarehouse.totalQuantity);
     setTotalPrice(infoWarehouse.totalPrice);
+    setTotalCommitted(infoWarehouse.totalCommitted);
 
     setContentVisible(true);
     setLoading(false);
@@ -146,13 +148,13 @@ export default function SkusavvyPage() {
                     <div className="info-item rounded-lg shadow-md  p-4! w-full">
                       <p>Total cost</p>
                       <p className="text-3xl text-center">
-                        warehouse cost price
+                        total AVG Cost
                       </p>
                     </div>
                     <div className="info-item rounded-lg shadow-md  p-4! w-full">
                       <p>Total Commited</p>
                       <p className="text-3xl text-center">
-                        warehouse commited price
+                        {formatPrice(totalCommitted)}
                       </p>
                     </div>
                   </CardContent>
