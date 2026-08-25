@@ -131,7 +131,7 @@ export async function getWarehousesFromSkusavvy() {
   }
 }
 
-export async function getTotalItems(warehouseId: string | null) {
+export async function getInfoWarehouse(warehouseId: string | null) {
   try {
     const response = await fetch('/api/skusavvy/products', {
       method: "POST",
@@ -151,7 +151,7 @@ export async function getTotalItems(warehouseId: string | null) {
 
     const result = await response.json()
 
-    return result.data.totalQuantity;
+    return result.data;
   } catch (error) {
     toast.error(`N'est pas possible d'ontenir l'information en ce moment, essayez plus tard. Error: ${error}`, {
       position: 'top-center',

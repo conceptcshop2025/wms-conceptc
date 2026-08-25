@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { getWarehousesFromSkusavvy, getTotalItems } from "../lib/data/skusavvyFunctions";
+import { getWarehousesFromSkusavvy, getInfoWarehouse } from "../lib/data/skusavvyFunctions";
 import { type WarehouseProps } from "../types/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,8 +28,9 @@ export default function SkusavvyPage() {
   const [warehouseList, setWarehouseList] = useState<WarehouseProps[]>([]);
   const [selectedWarehouse, setSelectedWarehouse] = useState<string | null>(null);
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
+  const [totalPrice, setTotalPrice] = useState<number>(0);
 
-  /* const formatPrice = (unformattedPrice:number) => {
+  const formatPrice = (unformattedPrice:number) => {
     const price = unformattedPrice / 1000;
     const CADprice = new Intl.NumberFormat("en-CA", {
       style: "currency",
@@ -37,7 +38,7 @@ export default function SkusavvyPage() {
     }).format(price);
 
     return CADprice;
-  } */
+  }
 
   const getStats = async () => {
     setLoading(true);
@@ -48,8 +49,9 @@ export default function SkusavvyPage() {
     }
     setContentVisible(true);
 
-    const totalQuantityProducts = await getTotalItems(selectedWarehouse);
-    setTotalQuantity(totalQuantityProducts);
+    const infoWarehouse = await getInfoWarehouse(selectedWarehouse);
+    setTotalQuantity(infoWarehouse.totalQuantity);
+    setTotalPrice(infoWarehouse.totalPrice);
 
     setContentVisible(true);
     setLoading(false);
@@ -138,7 +140,7 @@ export default function SkusavvyPage() {
                     <div className="info-item rounded-lg shadow-md  p-4! w-full">
                       <p>Total retail</p>
                       <p className="text-3xl text-center">
-                        warehouse retail price
+                        {formatPrice(totalPrice)}
                       </p>
                     </div>
                     <div className="info-item rounded-lg shadow-md  p-4! w-full">

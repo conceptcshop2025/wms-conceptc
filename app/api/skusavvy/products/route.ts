@@ -19,6 +19,9 @@ export async function POST(req:Request) {
     query InventoryTotals($limit: Int, $offset: Int) {
       inventoryItems(limit: $limit, offset: $offset) {
         totalQuantity(warehouseId: "${WAREHOUSE_ID}")
+        variants {
+          price
+        }
       }
     }
   `;
@@ -30,6 +33,7 @@ export async function POST(req:Request) {
 
   try {
     let totalQuantity = 0;
+    let totalPrice = 0;
     let offset = 0;
 
     for (let page = 0; page < 1000; page++) {
@@ -52,10 +56,11 @@ export async function POST(req:Request) {
         return NextResponse.json({ error: json.errors }, { status: 400 });
       }
 
-      const batch: Array<{ totalQuantity: number }> = json?.data?.inventoryItems ?? [];
+      const batch: Array<{ totalQuantity: number, variants: Array<{ price: string }> }> = json?.data?.inventoryItems ?? [];
 
       for (const item of batch) {
         totalQuantity += Number(item?.totalQuantity) || 0;
+        totalPrice += item?.variants?.reduce((sum, variant) => sum + (Number(variant?.price) * Number(item?.totalQuantity) || 0), 0) || 0;
       }
 
       if (batch.length < PAGE_SIZE) break;
@@ -64,7 +69,7 @@ export async function POST(req:Request) {
       await sleep(150);
     }
 
-    return NextResponse.json({ data: { totalQuantity } }, { status: 200 });
+    return NextResponse.json({ data: { totalQuantity, totalPrice } }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       { error: "Internal server error", details: String(error) },
