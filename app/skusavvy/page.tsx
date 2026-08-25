@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { getWarehousesFromSkusavvy, getInfoWarehouse } from "../lib/data/skusavvyFunctions";
+import { getWarehousesFromSkusavvy, getInfoWarehouse, getWeightedAvgCosts } from "../lib/data/skusavvyFunctions";
 import { type WarehouseProps } from "../types/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +30,7 @@ export default function SkusavvyPage() {
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [totalCommitted, setTotalCommitted] = useState<number>(0);
+  const [totalWeightedAvgCosts, setTotalWeightedAvgCosts] = useState<number>(0);
 
   const formatPrice = (unformattedPrice:number) => {
     const price = unformattedPrice / 1000;
@@ -54,6 +55,9 @@ export default function SkusavvyPage() {
     setTotalQuantity(infoWarehouse.totalQuantity);
     setTotalPrice(infoWarehouse.totalPrice);
     setTotalCommitted(infoWarehouse.totalCommitted);
+    
+    const infoWeightedAvgCosts = await getWeightedAvgCosts(selectedWarehouse);
+    setTotalWeightedAvgCosts(infoWeightedAvgCosts.totalWeightedAvgCosts);
 
     setContentVisible(true);
     setLoading(false);
@@ -148,7 +152,7 @@ export default function SkusavvyPage() {
                     <div className="info-item rounded-lg shadow-md  p-4! w-full">
                       <p>Total cost</p>
                       <p className="text-3xl text-center">
-                        total AVG Cost
+                        {formatPrice(totalWeightedAvgCosts)}
                       </p>
                     </div>
                     <div className="info-item rounded-lg shadow-md  p-4! w-full">
