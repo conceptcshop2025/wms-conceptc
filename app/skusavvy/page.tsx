@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getWarehousesFromSkusavvy, getInfoWarehouse, getWeightedAvgCosts } from "../lib/data/skusavvyFunctions";
-import { type WarehouseProps } from "../types/types";
+import { type WarehouseProps, type SkusavvyFullReportProps } from "../types/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
@@ -31,6 +31,10 @@ export default function SkusavvyPage() {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [totalCommitted, setTotalCommitted] = useState<number>(0);
   const [totalWeightedAvgCosts, setTotalWeightedAvgCosts] = useState<number>(0);
+
+  const [loadingAllReport, setLoadingAllReport] = useState<boolean>(false);
+  // const [fullReport, setFullReport] = useState<SkusavvyFullReportProps | null>(null);
+
 
   const formatPrice = (unformattedPrice:number) => {
     const price = unformattedPrice / 1000;
@@ -63,6 +67,51 @@ export default function SkusavvyPage() {
     setLoading(false);
   }
 
+  const getFullReport = async () => {
+    setLoadingAllReport(true);
+
+    const report:SkusavvyFullReportProps = {
+      warehouses: [],
+    }
+
+    const getAllWarehouses = await getWarehousesFromSkusavvy();
+    if (getAllWarehouses) {
+      for (const warehouse of getAllWarehouses) {
+        const warehouseObject = {
+          id: warehouse.id,
+          name: warehouse.name,
+          totalProducts: "0",
+          totalPrice: "0",
+          totalCosts: "0",
+          totalCommitted: "0",
+        };
+
+        report.warehouses.push(warehouseObject);
+
+        const getStatsFromWarehouse = await getInfoWarehouse(warehouse.id);
+        if (getStatsFromWarehouse) {
+          const warehouseFinded = report.warehouses.find((w) => w.id === warehouse.id);
+          if (warehouseFinded) {
+            warehouseFinded.totalProducts = getStatsFromWarehouse.totalQuantity;
+            warehouseFinded.totalPrice = formatPrice(getStatsFromWarehouse.totalPrice);
+            warehouseFinded.totalCommitted = formatPrice(getStatsFromWarehouse.totalCommitted);
+          }
+        }
+
+        const getWeightedAvgCostsFromWarehouse = await getWeightedAvgCosts(warehouse.id);
+        if (getWeightedAvgCostsFromWarehouse) {
+          const warehouseFinded = report.warehouses.find((w) => w.id === warehouse.id);
+          if (warehouseFinded) {
+            warehouseFinded.totalCosts = formatPrice(getWeightedAvgCostsFromWarehouse.totalWeightedAvgCosts);
+          }
+        }
+      }
+    }
+
+    // setFullReport(report);
+    setLoadingAllReport(false);
+  }
+
   useEffect(() => {
     const getWarehouses = async () => {
       const listOfWarehouses = await getWarehousesFromSkusavvy();
@@ -75,40 +124,63 @@ export default function SkusavvyPage() {
   return (
     <main>
       <div className="skusavvy-page p-8! scheme-concept-c">
-        <div className="flex items-start justify-start gap-4">
-          {
-            warehouseList.length > 0 ?
-              <Select value={selectedWarehouse || undefined} onValueChange={setSelectedWarehouse}>
-                <SelectTrigger className="w-[180px] h-[43px]! bg-[rgb(var(--color-background-primary))]! border-1 border-[rgb(var(--color-base))] text-[rgb(var(--color-text))]! placeholder:text-[rgb(var(--color-text))]">
-                  <SelectValue placeholder="Select a warehouse" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {warehouseList.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select> :
-              <Skeleton className="h-[43px] w-[180px] bg-[rgba(var(--color-base,.3))]" />
-          }
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-start justify-start gap-4">
+            {
+              !loadingAllReport &&
+                <>
+                  {
+                    warehouseList.length > 0 ?
+                      <Select value={selectedWarehouse || undefined} onValueChange={setSelectedWarehouse}>
+                        <SelectTrigger className="w-[180px] h-[43px]! bg-[rgb(var(--color-background-primary))]! border-1 border-[rgb(var(--color-base))] text-[rgb(var(--color-text))]! placeholder:text-[rgb(var(--color-text))]">
+                          <SelectValue placeholder="Select a warehouse" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {warehouseList.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select> :
+                      <Skeleton className="h-[43px] w-[180px] bg-[rgba(var(--color-base,.3))]" />
+                  }
+                  <Button
+                    onClick={getStats}
+                    className={`h-[43px]! ${ !selectedWarehouse || loading && 'disabled' }`}
+                    disabled={!selectedWarehouse || loading}>
+                      {
+                        loading ?
+                          <>
+                            <Spinner className="size-6"/>
+                            <span>Chargement...</span>
+                          </>
+                          :
+                          <>
+                            <span className="h-[21px] flex items-center">Obtenir rapport de Skusavvy</span>
+                          </>
+                      }
+                  </Button>
+                </>
+            }
+          </div>
           <Button
-            onClick={getStats}
-            className={`h-[43px]! ${ !selectedWarehouse || loading && 'disabled' }`}
-            disabled={!selectedWarehouse || loading}>
-              {
-                loading ?
-                  <>
-                    <Spinner className="size-6"/>
-                    <span>Chargement...</span>
-                  </>
-                  :
-                  <>
-                    <span className="h-[21px] flex items-center">Obtenir rapport de Skusavvy</span>
-                  </>
-              }
+            className={`h-[43px]! ${ loadingAllReport && 'disabled' }`}
+            disabled={loadingAllReport}
+            onClick={getFullReport}>
+            {
+              loadingAllReport ?
+                <>
+                  <Spinner className="size-6"/>
+                  <span>Chargement...</span>
+                </>
+                :
+                <>
+                  <span className="h-[21px] flex items-center">Obtenir tout le rapport</span>
+                </>
+            }
           </Button>
         </div>
         <div
