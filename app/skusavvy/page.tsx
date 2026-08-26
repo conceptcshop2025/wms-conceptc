@@ -14,7 +14,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
+import { downloadFullReportCsv } from "../lib/data/exportReportsToCsv";
 
 
 const FADE_MS = 200;
@@ -109,6 +110,7 @@ export default function SkusavvyPage() {
     }
 
     // setFullReport(report);
+    downloadFullReportCsv(report);
     setLoadingAllReport(false);
   }
 
