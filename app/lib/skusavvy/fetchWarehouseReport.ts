@@ -1,3 +1,4 @@
+import "server-only";
 import { neon } from "@neondatabase/serverless";
 
 interface warehouseReportRow {
@@ -9,7 +10,13 @@ interface warehouseReportRow {
   totalCommitted: string;
 }
 
-const sql = neon(process.env.DATABASE_URL || "");
+function db() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL no está configurada");
+  return neon(url);
+}
+
+const sql = db();
 const CHUNK_SIZE = 25;
 
 async function upsertWarehouse(warehouse: warehouseReportRow) {
@@ -41,29 +48,24 @@ async function upsertWarehouse(warehouse: warehouseReportRow) {
 }
 
 export async function fetchWarehouseReport(report: { warehouses: warehouseReportRow[] }) {
-  try {
-    const warehouses: warehouseReportRow[] = report.warehouses;
-    const failed: { warehouse: warehouseReportRow; error: string }[] = [];
+  const warehouses: warehouseReportRow[] = report.warehouses;
+  const failed: { warehouse: warehouseReportRow; error: string }[] = [];
 
-    for (let i = 0; i < warehouses.length; i += CHUNK_SIZE) {
-      const chunk = warehouses.slice(i, i + CHUNK_SIZE);
-      const results = await Promise.all(chunk.map(upsertWarehouse));
+  for (let i = 0; i < warehouses.length; i += CHUNK_SIZE) {
+    const chunk = warehouses.slice(i, i + CHUNK_SIZE);
+    const results = await Promise.all(chunk.map(upsertWarehouse));
 
-      for (const r of results) {
-        if (!r.success) {
-          failed.push({ warehouse: r.warehouse, error: r.error || "Unknown error" });
-        }
+    for (const r of results) {
+      if (!r.success) {
+        failed.push({ warehouse: r.warehouse, error: r.error || "Unknown error" });
       }
     }
-
-    return {
-      success: failed.length === 0,
-      count: warehouses.length,
-      failedCount: failed.length,
-      failed,
-    };
-
-  } catch (error) {
-    return error;
   }
+
+  return {
+    success: failed.length === 0,
+    count: warehouses.length,
+    failedCount: failed.length,
+    failed,
+  };
 }

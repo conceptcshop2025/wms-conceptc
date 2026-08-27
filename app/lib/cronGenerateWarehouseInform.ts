@@ -29,7 +29,7 @@ export async function cronGenerateWarehouseInform() {
       if (getStatsFromWarehouse) {
         const warehouseFinded = report.warehouses.find((w) => w.id === warehouse.id);
         if (warehouseFinded) {
-          warehouseFinded.totalProducts = getStatsFromWarehouse.totalQuantity;
+          warehouseFinded.totalProducts = getStatsFromWarehouse.totalQuantity.toString();
           warehouseFinded.totalPrice = formatPrice(getStatsFromWarehouse.totalPrice);
           warehouseFinded.totalCommitted = formatPrice(getStatsFromWarehouse.totalCommitted);
         }
