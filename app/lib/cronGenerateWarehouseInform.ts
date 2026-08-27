@@ -45,5 +45,9 @@ export async function cronGenerateWarehouseInform() {
     }
   }
 
-  await fetchWarehouseReport(report);
+  const result = await fetchWarehouseReport(report);
+  if (!result.success) {
+    throw new Error(`${result.failedCount}/${result.count} inserts fallaron`);
+  }
+  return result;
 }
