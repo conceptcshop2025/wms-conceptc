@@ -389,3 +389,19 @@ export type skusavvyProductProps = {
   status: string;
   variants: skusavvyVariantProps[];
 }
+
+export type WarehouseProps = {
+  id: string;
+  name: string;
+}
+
+export type SkusavvyFullReportProps = {
+  warehouses: {
+    id: string;
+    name: string;
+    totalProducts: string;
+    totalPrice: string;
+    totalCosts: string;
+    totalCommitted: string;
+  }[];
+}
