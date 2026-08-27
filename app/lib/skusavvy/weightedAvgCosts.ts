@@ -19,44 +19,43 @@ export async function fetchWeightedAvgCosts(warehouseId: string) {
     }
   `;
 
-  try {
-    let totalWeightedAvgCosts = 0;
-    let offset = 0;
+  let totalWeightedAvgCosts = 0;
+  let offset = 0;
 
-    for (let page = 0; page < 1000; page++) {
-      const res = await fetch(baseUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Token": apiKey,
-        },
-        body: JSON.stringify({
-          query: QUERY,
-          variables: { limit: PAGE_SIZE, offset },
-        }),
-        cache: "no-store",
-      });
+  for (let page = 0; page < 1000; page++) {
+    const res = await fetch(baseUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Token": apiKey,
+      },
+      body: JSON.stringify({
+        query: QUERY,
+        variables: { limit: PAGE_SIZE, offset },
+      }),
+      cache: "no-store",
+    });
 
-      const json = await res.json();
+    const json = await res.json();
 
-      if (json.errors) {
-        return json.errors;
-      }
-
-      const batch: Array<{ totalCost: string }> = json?.data?.weightedAvgCosts ?? [];
-
-      for (const item of batch) {
-        totalWeightedAvgCosts += Number(item.totalCost || 0);
-      }
-
-      if (batch.length < PAGE_SIZE) break;
-
-      offset += batch.length;
-      await sleep(150);
+    if (!res.ok) {
+      throw new Error(`Skusavvy HTTP ${res.status}: ${await res.text()}`);
+    }
+    if (json.errors) {
+      throw new Error(`Skusavvy GraphQL: ${JSON.stringify(json.errors)}`);
     }
 
-    return { data: { totalWeightedAvgCosts } };
-  } catch (error) {
-    return error;
+    const batch: Array<{ totalCost: string }> = json?.data?.weightedAvgCosts ?? [];
+
+    for (const item of batch) {
+      totalWeightedAvgCosts += Number(item.totalCost || 0);
+    }
+
+    if (batch.length < PAGE_SIZE) break;
+
+    offset += batch.length;
+    await sleep(150);
   }
+
+  return { totalWeightedAvgCosts };
 }

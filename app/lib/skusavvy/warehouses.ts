@@ -11,26 +11,24 @@ const query = `
 `;
 
 export async function fetchWarehouses() {
+  const res = await fetch(baseUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Token": apiKey,
+    },
+    body: JSON.stringify({ query }),
+    cache: "no-store",
+  });
 
-  try {
-    const res = await fetch(baseUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Token": apiKey,
-      },
-      body: JSON.stringify({ query }),
-      cache: "no-store",
-    });
+  const json = await res.json();
 
-    const json = await res.json();
-
-    if (json.errors) {
-      return json.errors;
-    }
-
-    return json.data.warehouses;
-  } catch (error) {
-    return { error: "Failed to fetch warehouses", data: error };
+  if (!res.ok) {
+    throw new Error(`Skusavvy HTTP ${res.status}: ${await res.text()}`);
   }
+  if (json.errors) {
+    throw new Error(`Skusavvy GraphQL: ${JSON.stringify(json.errors)}`);
+  }
+
+  return json.data.warehouses;
 }
