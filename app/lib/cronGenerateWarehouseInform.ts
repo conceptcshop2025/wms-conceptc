@@ -1,6 +1,70 @@
 import { type SkusavvyFullReportProps } from "../types/types";
-import { getWarehousesFromSkusavvy, getInfoWarehouse, getWeightedAvgCosts } from "./data/skusavvyFunctions";
 import { formatPrice } from "./functions/formatPrice";
+
+async function getWeightedAvgCosts(warehouseId: string | null) {
+  try {
+    const response = await fetch('/api/skusavvy/weighted-avg-costs', {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({warehouseId})
+    })
+
+    if (!response.ok) {
+      throw new Error(`N'est pas possible d'ontenir l'information en ce moment, essayez plus tard.`);
+    }
+
+    const result = await response.json()
+
+    return result.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getInfoWarehouse(warehouseId: string | null) {
+  try {
+    const response = await fetch('/api/skusavvy/products', {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({warehouseId})
+    })
+
+    if (!response.ok) {
+      throw new Error(`N'est pas possible d'ontenir l'information en ce moment, essayez plus tard.`);
+    }
+
+    const result = await response.json()
+
+    return result.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getWarehousesFromSkusavvy() {
+  try {
+    const response = await fetch('/api/skusavvy/warehouses', {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`N'est pas possible d'ontenir l'information en ce moment, essayez plus tard.`);
+    }
+
+    const result = await response.json()
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
 
 const PostSkusavvyReports = async (report: SkusavvyFullReportProps) => {
   try {
