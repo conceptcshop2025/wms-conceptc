@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getWarehousesFromSkusavvy, getInfoWarehouse, getWeightedAvgCosts } from "../lib/data/skusavvyFunctions";
-import { type WarehouseProps, type SkusavvyFullReportProps } from "../types/types";
+import { type WarehouseProps } from "../types/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
@@ -15,8 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { downloadFullReportCsv } from "../lib/data/exportReportsToCsv";
-import { PostSkusavvyReports } from "../lib/data/postSkusavvyReports";
+import { generateWarehouseInform } from "../lib/generateWarehouseInform";
+import { formatPrice } from "../lib/functions/formatPrice";
 
 
 const FADE_MS = 200;
@@ -35,18 +35,6 @@ export default function SkusavvyPage() {
   const [totalWeightedAvgCosts, setTotalWeightedAvgCosts] = useState<number>(0);
 
   const [loadingAllReport, setLoadingAllReport] = useState<boolean>(false);
-  // const [fullReport, setFullReport] = useState<SkusavvyFullReportProps | null>(null);
-
-
-  const formatPrice = (unformattedPrice:number) => {
-    const price = unformattedPrice / 1000;
-    const CADprice = new Intl.NumberFormat("en-CA", {
-      style: "currency",
-      currency: "CAD",
-    }).format(price);
-
-    return CADprice;
-  }
 
   const getStats = async () => {
     setLoading(true);
@@ -72,47 +60,8 @@ export default function SkusavvyPage() {
   const getFullReport = async () => {
     setLoadingAllReport(true);
 
-    const report:SkusavvyFullReportProps = {
-      warehouses: [],
-    }
+    await generateWarehouseInform();
 
-    const getAllWarehouses = await getWarehousesFromSkusavvy();
-    if (getAllWarehouses) {
-      for (const warehouse of getAllWarehouses) {
-        const warehouseObject = {
-          id: warehouse.id,
-          name: warehouse.name,
-          totalProducts: "0",
-          totalPrice: "0",
-          totalCosts: "0",
-          totalCommitted: "0",
-        };
-
-        report.warehouses.push(warehouseObject);
-
-        const getStatsFromWarehouse = await getInfoWarehouse(warehouse.id);
-        if (getStatsFromWarehouse) {
-          const warehouseFinded = report.warehouses.find((w) => w.id === warehouse.id);
-          if (warehouseFinded) {
-            warehouseFinded.totalProducts = getStatsFromWarehouse.totalQuantity;
-            warehouseFinded.totalPrice = formatPrice(getStatsFromWarehouse.totalPrice);
-            warehouseFinded.totalCommitted = formatPrice(getStatsFromWarehouse.totalCommitted);
-          }
-        }
-
-        const getWeightedAvgCostsFromWarehouse = await getWeightedAvgCosts(warehouse.id);
-        if (getWeightedAvgCostsFromWarehouse) {
-          const warehouseFinded = report.warehouses.find((w) => w.id === warehouse.id);
-          if (warehouseFinded) {
-            warehouseFinded.totalCosts = formatPrice(getWeightedAvgCostsFromWarehouse.totalWeightedAvgCosts);
-          }
-        }
-      }
-    }
-
-    // setFullReport(report);
-    downloadFullReportCsv(report);
-    await PostSkusavvyReports(report);
     setLoadingAllReport(false);
   }
 
