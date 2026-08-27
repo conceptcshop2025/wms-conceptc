@@ -16,10 +16,11 @@ function db() {
   return neon(url);
 }
 
-const sql = db();
 const CHUNK_SIZE = 25;
 
 async function upsertWarehouse(warehouse: warehouseReportRow) {
+  const sql = db();
+
   try {
     await sql`
       INSERT INTO warehouse_reports (
@@ -43,6 +44,7 @@ async function upsertWarehouse(warehouse: warehouseReportRow) {
     `;
     return { success: true, warehouse };
   } catch (error) {
+    console.error(`[cron] failed insert warehouse ${warehouse.id}:`, error);
     return { success: false, warehouse, error: String(error) };
   }
 }

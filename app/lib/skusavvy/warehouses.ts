@@ -21,11 +21,12 @@ export async function fetchWarehouses() {
     cache: "no-store",
   });
 
-  const json = await res.json();
-
   if (!res.ok) {
     throw new Error(`Skusavvy HTTP ${res.status}: ${await res.text()}`);
   }
+
+  const json = await res.json();
+
   if (json.errors) {
     throw new Error(`Skusavvy GraphQL: ${JSON.stringify(json.errors)}`);
   }
