@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateWarehouseInform } from "@/app/lib/generateWarehouseInform";
+import { cronGenerateWarehouseInform } from "@/app/lib/cronGenerateWarehouseInform";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 600;
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const result = await generateWarehouseInform();
+    const result = await cronGenerateWarehouseInform();
     return NextResponse.json({ ok: true, result });
   } catch (e) {
     console.error(e);
