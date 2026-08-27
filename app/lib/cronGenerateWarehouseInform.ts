@@ -3,7 +3,7 @@ import { formatPrice } from "./functions/formatPrice";
 
 async function getWeightedAvgCosts(warehouseId: string | null) {
   try {
-    const response = await fetch('/api/skusavvy/weighted-avg-costs', {
+    const response = await fetch('../api/skusavvy/weighted-avg-costs', {
       method: "POST",
       headers: {
         'Content-Type': 'application/json'
@@ -25,7 +25,7 @@ async function getWeightedAvgCosts(warehouseId: string | null) {
 
 async function getInfoWarehouse(warehouseId: string | null) {
   try {
-    const response = await fetch('/api/skusavvy/products', {
+    const response = await fetch('../api/skusavvy/products', {
       method: "POST",
       headers: {
         'Content-Type': 'application/json'
@@ -47,7 +47,7 @@ async function getInfoWarehouse(warehouseId: string | null) {
 
 async function getWarehousesFromSkusavvy() {
   try {
-    const response = await fetch('/api/skusavvy/warehouses', {
+    const response = await fetch('../api/skusavvy/warehouses', {
       method: "POST",
       headers: {
         'Content-Type': 'application/json'
@@ -68,7 +68,7 @@ async function getWarehousesFromSkusavvy() {
 
 const PostSkusavvyReports = async (report: SkusavvyFullReportProps) => {
   try {
-    const response = await fetch("/api/warehouse/reports", {
+    const response = await fetch("../api/warehouse/reports", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
