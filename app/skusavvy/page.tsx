@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { downloadFullReportCsv } from "../lib/data/exportReportsToCsv";
+import { PostSkusavvyReports } from "../lib/data/postSkusavvyReports";
 
 
 const FADE_MS = 200;
@@ -111,6 +112,7 @@ export default function SkusavvyPage() {
 
     // setFullReport(report);
     downloadFullReportCsv(report);
+    await PostSkusavvyReports(report);
     setLoadingAllReport(false);
   }
 
