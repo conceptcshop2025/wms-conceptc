@@ -6,7 +6,7 @@ export const maxDuration = 600;
 
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.GENERATE_WAREHOUSE_INFORM_CRON_SECRET}`) {
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
