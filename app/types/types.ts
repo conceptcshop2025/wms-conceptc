@@ -405,3 +405,27 @@ export type SkusavvyFullReportProps = {
     totalCommitted: string;
   }[];
 }
+
+export type warehouseReportByNeonProps = {
+  id: number;
+  created_at: string;
+  total_committed: string;
+  total_costs: string;
+  total_price: string;
+  total_products: string;
+  warehouse_id: string;
+  warehouse_name: string;
+}
+
+export type WarehouseReportWithLocalTime = warehouseReportByNeonProps & {
+  localDate: string;
+  localTime: string;
+  localDateTime: string;
+  timeZone: string;
+  timeZoneLabel: string;
+};
+
+export type WarehouseReportGroup = {
+  report_name: string;
+  reports: WarehouseReportWithLocalTime[];
+};
