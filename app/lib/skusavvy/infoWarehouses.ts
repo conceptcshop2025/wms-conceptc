@@ -1,7 +1,7 @@
 const baseUrl = process.env.SKUSAVVY_BASE_URL || "";
 const apiKey = process.env.SKUSAVVY_API_KEY || "";
 
-export const maxDuration = 60;
+export const maxDuration = 600;
 
 const PAGE_SIZE = 100;
 
@@ -63,7 +63,7 @@ export async function fetchInfoWarehouses(warehouseId: string) {
     if (batch.length < PAGE_SIZE) break;
 
     offset += batch.length;
-    await sleep(150);
+    await sleep(400);
   }
 
   return { totalQuantity, totalPrice, totalCommitted };
