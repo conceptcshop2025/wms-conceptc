@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { generateWarehouseInform } from "../lib/generateWarehouseInform";
 import { formatPrice } from "../lib/functions/formatPrice";
+import HistoryReports from "../components/HistoricReports/HistoryReports";
 
 
 const FADE_MS = 200;
@@ -33,6 +34,7 @@ export default function SkusavvyPage() {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [totalCommitted, setTotalCommitted] = useState<number>(0);
   const [totalWeightedAvgCosts, setTotalWeightedAvgCosts] = useState<number>(0);
+  const [showHisticReports, setShowHistoricReports] = useState<boolean>(false);
 
   const [loadingAllReport, setLoadingAllReport] = useState<boolean>(false);
 
@@ -119,22 +121,29 @@ export default function SkusavvyPage() {
                 </>
             }
           </div>
-          <Button
-            className={`h-[43px]! ${ loadingAllReport && 'disabled' }`}
-            disabled={loadingAllReport}
-            onClick={getFullReport}>
-            {
-              loadingAllReport ?
-                <>
-                  <Spinner className="size-6"/>
-                  <span>Chargement...</span>
-                </>
-                :
-                <>
-                  <span className="h-[21px] flex items-center">Obtenir tout le rapport</span>
-                </>
-            }
-          </Button>
+          <div className="flex justify-end items-center gap-4">
+            <Button
+              className={`h-[43px]! ${ loadingAllReport && 'disabled' }`}
+              disabled={loadingAllReport}
+              onClick={getFullReport}>
+              {
+                loadingAllReport ?
+                  <>
+                    <Spinner className="size-6"/>
+                    <span>Chargement...</span>
+                  </>
+                  :
+                  <>
+                    <span className="h-[21px] flex items-center">Obtenir tout le rapport</span>
+                  </>
+              }
+            </Button>
+            <Button
+              className="h-[43px]! bg-[rgb(var(--color-background-primary))]! text-[rgb(var(--color-accent-primary))]! hover:underline hover:text-[rgb(var(--color-base))]!"
+              onClick={() => setShowHistoricReports(true)}>
+              Voir l&apos;historique des rapports
+            </Button>
+          </div>
         </div>
         <div
           className={`warehouses-container flex flex-col gap-4 justify-center items-center py-4! transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none ${
@@ -190,6 +199,9 @@ export default function SkusavvyPage() {
                 </Card>
           }
         </div>
+        {
+          showHisticReports && <HistoryReports />
+        }
       </div>
     </main>
   )
