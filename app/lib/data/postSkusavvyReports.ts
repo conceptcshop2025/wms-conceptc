@@ -20,7 +20,7 @@ export const PostSkusavvyReports = async (report: SkusavvyFullReportProps) => {
     }
 
     const result = await response.json();
-    toast.success(`Rapport de Skusavvy envoyé avec succès en date: ${result.created_at}`, {
+    toast.success(`Rapport de Skusavvy envoyé avec succès, warehouses obtenus: ${result.count}`, {
       position: 'top-center',
       richColors: true
     });

@@ -34,7 +34,7 @@ export default function SkusavvyPage() {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [totalCommitted, setTotalCommitted] = useState<number>(0);
   const [totalWeightedAvgCosts, setTotalWeightedAvgCosts] = useState<number>(0);
-  const [showHisticReports, setShowHistoricReports] = useState<boolean>(false);
+  const [showHistoricReports, setShowHistoricReports] = useState<boolean>(false);
 
   const [loadingAllReport, setLoadingAllReport] = useState<boolean>(false);
 
@@ -61,6 +61,7 @@ export default function SkusavvyPage() {
 
   const getFullReport = async () => {
     setLoadingAllReport(true);
+    setShowHistoricReports(false);
 
     await generateWarehouseInform();
 
@@ -200,7 +201,7 @@ export default function SkusavvyPage() {
           }
         </div>
         {
-          showHisticReports && <HistoryReports />
+          showHistoricReports && <HistoryReports />
         }
       </div>
     </main>
