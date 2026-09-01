@@ -22,8 +22,7 @@ async function upsertWarehouse(warehouse: warehouseReportRow) {
         total_products,
         total_price,
         total_costs,
-        total_committed,
-        created_at
+        total_committed
       )
       VALUES (
         ${warehouse.id},
@@ -31,8 +30,7 @@ async function upsertWarehouse(warehouse: warehouseReportRow) {
         ${warehouse.totalProducts},
         ${warehouse.totalPrice},
         ${warehouse.totalCosts},
-        ${warehouse.totalCommitted},
-        NOW()
+        ${warehouse.totalCommitted}
       ) returning id
     `;
     return { success: true, warehouse };

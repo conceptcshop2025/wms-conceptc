@@ -27,7 +27,7 @@ export default function DatePicker({ onPickerDate }:DatePickerProps) {
   }, [date?.from, date?.to, onPickerDate]);
 
   return (
-    <Field className="mx-auto w-60">
+    <Field className={'mx-auto w-60'}>
       <Popover>
         <PopoverTrigger asChild>
           <Button

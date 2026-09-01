@@ -406,17 +406,6 @@ export type SkusavvyFullReportProps = {
   }[];
 }
 
-export type warehouseReportByNeonProps = {
-  id: number;
-  created_at: string;
-  total_committed: string;
-  total_costs: string;
-  total_price: string;
-  total_products: string;
-  warehouse_id: string;
-  warehouse_name: string;
-}
-
 export type WarehouseReportWithLocalTime = warehouseReportByNeonProps & {
   localDate: string;
   localTime: string;
@@ -428,4 +417,19 @@ export type WarehouseReportWithLocalTime = warehouseReportByNeonProps & {
 export type WarehouseReportGroup = {
   report_name: string;
   reports: WarehouseReportWithLocalTime[];
+};
+
+export type WarehouseReportRow = {
+  id: number;
+  created_at: Date;
+  total_committed: string;
+  total_costs: string;
+  total_price: string;
+  total_products: string;
+  warehouse_id: string;
+  warehouse_name: string;
+};
+
+export type warehouseReportByNeonProps = Omit<WarehouseReportRow, "created_at"> & {
+  created_at: string; // ISO 8601 con Z
 };
