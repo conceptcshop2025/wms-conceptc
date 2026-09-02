@@ -34,9 +34,9 @@ export default function SkusavvyPage() {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [totalCommitted, setTotalCommitted] = useState<number>(0);
   const [totalWeightedAvgCosts, setTotalWeightedAvgCosts] = useState<number>(0);
-  const [showHistoricReports, setShowHistoricReports] = useState<boolean>(false);
 
   const [loadingAllReport, setLoadingAllReport] = useState<boolean>(false);
+  const [hideHistoryReports, setHideHistoryReports] = useState<boolean>(false);
 
   const getStats = async () => {
     setLoading(true);
@@ -61,11 +61,12 @@ export default function SkusavvyPage() {
 
   const getFullReport = async () => {
     setLoadingAllReport(true);
-    setShowHistoricReports(false);
+    setHideHistoryReports(true);
 
     await generateWarehouseInform();
 
     setLoadingAllReport(false);
+    setHideHistoryReports(false);
   }
 
   useEffect(() => {
@@ -135,14 +136,9 @@ export default function SkusavvyPage() {
                   </>
                   :
                   <>
-                    <span className="h-[21px] flex items-center">Obtenir tout le rapport</span>
+                    <span className="h-[21px] flex items-center">Obtenir tout le rapport le plus récent</span>
                   </>
               }
-            </Button>
-            <Button
-              className="h-[43px]! bg-[rgb(var(--color-background-primary))]! text-[rgb(var(--color-accent-primary))]! hover:underline hover:text-[rgb(var(--color-base))]!"
-              onClick={() => setShowHistoricReports(true)}>
-              Voir l&apos;historique des rapports
             </Button>
           </div>
         </div>
@@ -201,7 +197,7 @@ export default function SkusavvyPage() {
           }
         </div>
         {
-          showHistoricReports && <HistoryReports />
+          !hideHistoryReports && <HistoryReports />
         }
       </div>
     </main>

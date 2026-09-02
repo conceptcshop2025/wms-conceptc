@@ -1,0 +1,6 @@
+.historic-reports #date-picker-range {
+  background-color: transparent !important;
+  color: rgb(var(--color-text-primary)) !important;
+  box-shadow: 0 5px 10px -10px rgb(var(--color-text-primary));
+  border: 0 !important;
+}
