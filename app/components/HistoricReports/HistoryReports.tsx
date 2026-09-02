@@ -44,13 +44,14 @@ export default function HistoryReports() {
         loading ? <Loading /> :
           <div className="reports-list mt-4!">
             {
-              reportsList.length > 0 &&
+              reportsList.length > 0 ?
                 reportsList.map((report:WarehouseReportGroup, index:number) => (
                   <div className="report flex justify-between items-center gap-4 odd:bg-[rgba(var(--color-base),.3)] pl-4" key={index}>
                     <div className="text-xl">{ report.report_name }</div>
                     <button className="h-[43px]!" onClick={() => downloadHistoricFullReportCsv(report)}>Exporter report en .CSV</button>
                   </div>
-                ))
+                )) :
+                <p className="text-xl">Il n&apos;y a pas de rapports pour cette période.</p>
             }
           </div>
       }
