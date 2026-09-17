@@ -433,3 +433,59 @@ export type WarehouseReportRow = {
 export type warehouseReportByNeonProps = Omit<WarehouseReportRow, "created_at"> & {
   created_at: string; // ISO 8601 con Z
 };
+
+export type ProductReportRow = {
+  id: string;
+  sku:string;
+  price: string;
+  product: {
+    name: string;
+    status: string;
+    __typename: string;
+  };
+  __typename: string;
+  totalQuantity: number;
+  inventoryItem: {
+    __typename: string;
+    barcodes: {
+      value: string;
+      __typename: string;
+    }[];
+    weightedAvgCost: string;
+  };
+  inventory: {
+    quantity: string;
+    warehouseId: string;
+    __typename: string;
+    committedQuantity: number;
+  }[]
+}
+
+export type ProductReport = {
+  id: string;
+  name: string;
+  status: string;
+  totalQuantity: number;
+  variantId: string;
+  sku: string;
+  barcode: string;
+  price: string;
+  variantInventoryQuantity: number;
+  variantCost: string;
+  warehouses: {
+    name: string;
+    id: string;
+    quantity: string;
+    committedQuantity: number;
+  }[];
+}
+
+export type ProductReportPage = {
+  data: ProductReport[];
+  nextOffset: number | null;
+  waitTimeInSeconds: number;
+}
+
+/* ------------------------------------------------------- */
+/* APP V6 NEW TYPES -------------------------------------- */
+/* ------------------------------------------------------- */
