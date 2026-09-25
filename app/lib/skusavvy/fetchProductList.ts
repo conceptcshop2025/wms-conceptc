@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import type { ProductReportRow, ProductReport, ProductReportPage } from "@/app/types/types";
+import type {
+  ProductReportRow,
+  ProductReportToInsert,
+  FetchProductListResult,
+} from "@/app/types/types";
 
 const baseUrl = process.env.SKUSAVVY_BASE_URL || "";
 const apiKey = process.env.SKUSAVVY_API_KEY || "";
@@ -23,12 +25,14 @@ type GraphQLError = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const startOffset = Number(body?.offset ?? 0);
+export async function fetchProductList(
+  offset: number,
+  reportId: string
+): Promise<FetchProductListResult> {
+  const startOffset = Number(offset ?? 0);
 
   if (!Number.isInteger(startOffset) || startOffset < 0) {
-    return NextResponse.json({ error: "Invalid offset" }, { status: 400 });
+    return { success: false, status: 400 };
   }
 
   const QUERY = `
@@ -56,22 +60,17 @@ export async function POST(req: Request) {
       }
     }
   `;
-  const session = await auth();
-
-  if (!session?.user?.canAccessSkusavvy) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   try {
-    const productReportList: ProductReport[] = [];
+    const productReportList: ProductReportToInsert[] = [];
     const startedAt = Date.now();
     let offset = startOffset;
 
-    const respond = (nextOffset: number | null, waitTimeInSeconds = 0) =>
-      NextResponse.json<ProductReportPage>(
-        { data: productReportList, nextOffset, waitTimeInSeconds },
-        { status: 200 }
-      );
+    const respond = (
+      nextOffset: number | null,
+      waitTimeInSeconds = 0
+    ): FetchProductListResult =>
+      ({ success: true, data: productReportList, nextOffset, waitTimeInSeconds, status: 200 });
 
     for (let page = 0; page < 1000; page++) {
       if (Date.now() - startedAt > TIME_BUDGET_MS) {
@@ -103,13 +102,14 @@ export async function POST(req: Request) {
           return respond(offset, rateLimit.extensions?.cost?.waitTimeInSeconds ?? 60);
         }
 
-        return NextResponse.json({ error: json.errors }, { status: 400 });
+        return { success: false, data: json.errors, status: 400 }
       }
 
       const batch: Array<ProductReportRow> = json?.data.variants ?? [];
 
       for (const item of batch) {
         const product = {
+          reportId: reportId,
           id: item.id,
           name: item.product.name,
           status: item.product.status,
@@ -139,9 +139,6 @@ export async function POST(req: Request) {
 
     return respond(null);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error", details: String(error) },
-      { status: 500 }
-    );
+    return { success: false, data: `Internal server error, details: ${String(error)}`, status: 500 };
   }
 }
